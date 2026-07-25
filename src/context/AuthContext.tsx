@@ -9,7 +9,7 @@ import {
   RecaptchaVerifier,
   ConfirmationResult
 } from 'firebase/auth';
-import { doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 
 interface MemberProfile {

@@ -77,9 +77,9 @@ export const DevBar: React.FC = () => {
 
       setStatusMsg(`Success! Signed in as ${role}`);
       setTimeout(() => setStatusMsg(''), 2000);
-    } catch (err: any) {
+    } catch (err) {
       console.error("DevBar login error:", err);
-      setStatusMsg(`Error: ${err.message || 'Authentication failed'}`);
+      setStatusMsg(`Error: ${(err as Error).message || 'Authentication failed'}`);
     } finally {
       setLoading(false);
     }

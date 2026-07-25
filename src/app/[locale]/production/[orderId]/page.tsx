@@ -1,16 +1,13 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { 
   doc, 
   onSnapshot, 
   collection, 
-  updateDoc, 
   setDoc,
-  getDocs,
-  query,
-  where
+  getDocs
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/context/AuthContext';
@@ -45,7 +42,6 @@ interface WeaverProgress {
 export default function ProductionTrackingPage() {
   const t = useTranslations('screen6');
   const params = useParams();
-  const router = useRouter();
   const { user, memberProfile } = useAuth();
   
   const orderId = params.orderId as string;
@@ -157,8 +153,8 @@ export default function ProductionTrackingPage() {
         unitsCompleted: maxUnits,
         timestamp: new Date()
       }, { merge: true });
-    } catch (err: any) {
-      alert("Error updating progress: " + err.message);
+    } catch (err) {
+      alert("Error updating progress: " + (err as Error).message);
     } finally {
       setUpdating(false);
     }
@@ -166,6 +162,7 @@ export default function ProductionTrackingPage() {
 
   // Voice Log: Web Speech API notes
   const startVoiceLog = () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
       alert("Speech recognition not supported in this browser. Please use Google Chrome.");
@@ -187,7 +184,7 @@ export default function ProductionTrackingPage() {
       setVoiceLogText('');
     };
 
-    recognition.onerror = (e: any) => {
+    recognition.onerror = (e: unknown) => {
       console.error(e);
       setIsListening(false);
     };
@@ -196,6 +193,7 @@ export default function ProductionTrackingPage() {
       setIsListening(false);
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     recognition.onresult = (event: any) => {
       const speechText = event.results[0][0].transcript;
       setVoiceLogText(speechText);
@@ -316,7 +314,7 @@ export default function ProductionTrackingPage() {
 
               {voiceLogText && (
                 <p className="text-xs text-on-surface-variant italic bg-surface-container-low p-2 rounded border border-outline-variant/20">
-                  Logged: "{voiceLogText}"
+                  Logged: &quot;{voiceLogText}&quot;
                 </p>
               )}
             </div>

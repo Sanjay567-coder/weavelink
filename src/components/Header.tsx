@@ -17,12 +17,11 @@ export const Header: React.FC<HeaderProps> = ({ showBack = false, backPath, titl
   const t = useTranslations('common');
   const router = useRouter();
   const pathname = usePathname();
-  const { user, logout, memberProfile } = useAuth();
-  const [isOnline, setIsOnline] = useState(true);
+  const { user, logout } = useAuth();
+  const [isOnline, setIsOnline] = useState(typeof window !== 'undefined' ? navigator.onLine : true);
   const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
-    setIsOnline(navigator.onLine);
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
 
