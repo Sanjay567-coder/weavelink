@@ -43,7 +43,7 @@ export default function ShareOrderPage() {
   const [sent, setSent] = useState(false);
 
   useEffect(() => {
-    if (!orderId) return;
+    if (!orderId || !user) return;
 
     // Load order data
     const unsubOrder = onSnapshot(doc(db, 'orders', orderId), (docSnap) => {
@@ -76,7 +76,7 @@ export default function ShareOrderPage() {
     loadMembers();
 
     return () => unsubOrder();
-  }, [orderId]);
+  }, [orderId, user]);
 
   const handleRegenerate = () => {
     if (!order) return;

@@ -17,6 +17,7 @@ import { db } from '@/lib/firebase';
 import { useTranslations } from 'next-intl';
 import { Header } from '@/components/Header';
 import { DevBar } from '@/components/DevBar';
+import { useAuth } from '@/context/AuthContext';
 
 interface OrderData {
   coopId: string;
@@ -44,6 +45,7 @@ export default function WorkAllocationPage() {
   const t = useTranslations('screen5');
   const router = useRouter();
   const params = useParams();
+  const { user } = useAuth();
   
   const orderId = params.orderId as string;
   
@@ -56,7 +58,7 @@ export default function WorkAllocationPage() {
   const [voiceCommandText, setVoiceCommandText] = useState('');
 
   useEffect(() => {
-    if (!orderId) return;
+    if (!orderId || !user) return;
 
     // Load order data
     const unsubOrder = onSnapshot(doc(db, 'orders', orderId), (docSnap) => {
@@ -137,7 +139,7 @@ export default function WorkAllocationPage() {
     return () => {
       unsubOrder();
     };
-  }, [orderId]);
+  }, [orderId, user]);
 
   // Total allocated sum
   const totalAllocated = Object.values(allocations).reduce((sum, v) => sum + v, 0);

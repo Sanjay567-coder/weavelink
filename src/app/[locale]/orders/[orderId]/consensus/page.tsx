@@ -9,6 +9,7 @@ import { Header } from '@/components/Header';
 import { Navbar } from '@/components/Navbar';
 import { DevBar } from '@/components/DevBar';
 import { usePWA } from '@/hooks/usePWA';
+import { useAuth } from '@/context/AuthContext';
 
 interface OrderData {
   coopId: string;
@@ -33,6 +34,7 @@ export default function ConsensusCheckPage() {
   const router = useRouter();
   const params = useParams();
   const { isInstallable, triggerInstall } = usePWA();
+  const { user } = useAuth();
   
   const orderId = params.orderId as string;
   const [order, setOrder] = useState<OrderData | null>(null);
@@ -41,7 +43,7 @@ export default function ConsensusCheckPage() {
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!orderId) return;
+    if (!orderId || !user) return;
 
     // Load order info
     const unsubOrder = onSnapshot(doc(db, 'orders', orderId), (docSnap) => {
@@ -80,7 +82,7 @@ export default function ConsensusCheckPage() {
       unsubOrder();
       unsubResponses();
     };
-  }, [orderId]);
+  }, [orderId, user]);
 
   // Calculations for donut chart
   const total = responses.length || 1; // prevent divide by zero

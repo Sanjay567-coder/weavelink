@@ -33,7 +33,7 @@ export default function OrderDetailsPage() {
   const [voiceText, setVoiceText] = useState('');
 
   useEffect(() => {
-    if (!orderId) return;
+    if (!orderId || !user) return;
 
     // Real-time listener for order updates
     const unsub = onSnapshot(doc(db, 'orders', orderId), (docSnap) => {
@@ -49,7 +49,7 @@ export default function OrderDetailsPage() {
     });
 
     return () => unsub();
-  }, [orderId]);
+  }, [orderId, user]);
 
   // Action: Discuss with Members
   const handleDiscuss = async () => {

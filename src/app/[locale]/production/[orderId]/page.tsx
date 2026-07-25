@@ -61,7 +61,7 @@ export default function ProductionTrackingPage() {
   const [voiceLogText, setVoiceLogText] = useState('');
 
   useEffect(() => {
-    if (!orderId) return;
+    if (!orderId || !user) return;
 
     // 1. Listen to Order
     const unsubOrder = onSnapshot(doc(db, 'orders', orderId), (docSnap) => {

@@ -50,7 +50,7 @@ export default function PaymentLedgerPage() {
   }, [memberProfile]);
 
   useEffect(() => {
-    if (!orderId) return;
+    if (!orderId || !user) return;
 
     // Listen to real-time payment log updates
     const unsub = onSnapshot(collection(db, 'orders', orderId, 'payments'), (snap) => {
@@ -90,7 +90,7 @@ export default function PaymentLedgerPage() {
     });
 
     return () => unsub();
-  }, [orderId]);
+  }, [orderId, user]);
 
   // Mark all pending splits as paid (Admin action)
   const handleMarkAllPaid = async () => {

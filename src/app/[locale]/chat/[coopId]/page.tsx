@@ -65,6 +65,7 @@ export default function GroupChatPage() {
   const chatEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
+    if (!user) return;
     // 1. Fetch active order (e.g. order-8922 or order-4421)
     // We listen to the orders collection where status is discussing
     const unsubOrder = onSnapshot(doc(db, 'orders', 'order-8922'), (docSnap) => {
