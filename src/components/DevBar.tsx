@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
 import { signInWithPhoneNumber, RecaptchaVerifier } from 'firebase/auth';
@@ -13,6 +13,8 @@ export const DevBar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [statusMsg, setStatusMsg] = useState('');
+  
+  const verifierRef = useRef<RecaptchaVerifier | null>(null);
 
   const locale = pathname.split('/')[1] || 'en';
 
@@ -21,6 +23,13 @@ export const DevBar: React.FC = () => {
     return () => {
       const container = document.getElementById('dev-recaptcha');
       if (container) container.innerHTML = '';
+      if (verifierRef.current) {
+        try {
+          verifierRef.current.clear();
+        } catch (e) {
+          console.warn(e);
+        }
+      }
     };
   }, []);
 
@@ -36,7 +45,17 @@ export const DevBar: React.FC = () => {
       
       const phone = phoneMap[role];
 
-      // 1. Create a temporary element for recaptcha
+      // Clean up old verifier if it exists
+      if (verifierRef.current) {
+        try {
+          verifierRef.current.clear();
+        } catch (e) {
+          console.warn("Error clearing verifier:", e);
+        }
+        verifierRef.current = null;
+      }
+
+      // Create a temporary element for recaptcha
       let recaptchaContainer = document.getElementById('dev-recaptcha');
       if (!recaptchaContainer) {
         recaptchaContainer = document.createElement('div');
@@ -48,6 +67,7 @@ export const DevBar: React.FC = () => {
       const verifier = new RecaptchaVerifier(auth, recaptchaContainer, {
         size: 'invisible',
       });
+      verifierRef.current = verifier;
 
       // 2. Trigger Phone Auth
       const confirmationResult = await signInWithPhoneNumber(auth, phone, verifier);

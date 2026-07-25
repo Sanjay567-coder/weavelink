@@ -21,6 +21,20 @@ export default function LoginPage() {
   const [authLoading, setAuthLoading] = useState(false);
   
   const confirmationResultRef = useRef<ConfirmationResult | null>(null);
+  const verifierRef = useRef<RecaptchaVerifier | null>(null);
+
+  // Clean up verifier on unmount
+  useEffect(() => {
+    return () => {
+      if (verifierRef.current) {
+        try {
+          verifierRef.current.clear();
+        } catch (e) {
+          console.warn(e);
+        }
+      }
+    };
+  }, []);
 
   // If already authenticated and member profile loaded, redirect automatically
   useEffect(() => {
@@ -85,6 +99,15 @@ export default function LoginPage() {
     setAuthLoading(true);
     setStatusMsg('Logging in with test account...');
     try {
+      if (verifierRef.current) {
+        try {
+          verifierRef.current.clear();
+        } catch (e) {
+          console.warn("Error clearing verifier:", e);
+        }
+        verifierRef.current = null;
+      }
+
       let recaptchaContainer = document.getElementById('recaptcha-container');
       if (!recaptchaContainer) {
         recaptchaContainer = document.createElement('div');
@@ -96,6 +119,7 @@ export default function LoginPage() {
       const verifier = new RecaptchaVerifier(auth, recaptchaContainer, {
         size: 'invisible',
       });
+      verifierRef.current = verifier;
 
       const confirmationResult = await sendOtp(phone, verifier);
       await confirmationResult.confirm('123456');
