@@ -363,7 +363,7 @@ export default function ProductionTrackingPage() {
                       <span className="material-symbols-outlined text-white text-xl">priority_high</span>
                     </div>
                     <div>
-                      <h4 class="font-label-lg text-label-lg text-error">{t('alertTitle')}</h4>
+                      <h4 className="font-label-lg text-label-lg text-error">{t('alertTitle')}</h4>
                       <p className="font-body-md text-body-md text-on-surface mt-1">
                         {weaverProgressList.find(wp => wp.status === 'late')?.name || 'Lakshmi S.'} is behind schedule
                       </p>
