@@ -45,6 +45,7 @@ export default function PaymentLedgerPage() {
   // Set default view mode based on role
   useEffect(() => {
     if (memberProfile) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setViewMode(memberProfile.role === 'admin' || memberProfile.role === 'treasurer' ? 'admin' : 'weaver');
     }
   }, [memberProfile]);
