@@ -1,0 +1,69 @@
+========================================================================
+             WEAVELINK - DIGITAL COOPERATIVE PLATFORM SUBMISSION
+========================================================================
+
+Dear Hackathon Organizers & Evaluators,
+
+Thank you for reviewing WeaveLink, a mobile-first Progressive Web App (PWA)
+designed to connect handloom weavers' cooperatives.
+
+Below is the live deployment link and the guide on how to navigate the app
+for evaluation.
+
+------------------------------------------------------------------------
+1. LIVE DEPLOYMENT LINK
+------------------------------------------------------------------------
+👉 Live PWA Link: https://weavelink-wheat.vercel.app/
+
+*Note: This is our basic deployment. The codebase is fully active, backed by
+a live Firestore database, and will be further updated and polished in the
+upcoming week as we approach final evaluations.*
+
+------------------------------------------------------------------------
+2. EVALUATOR QUCK-START GUIDE (THE HACKATHON DEMO BAR)
+------------------------------------------------------------------------
+To make reviewing each screen and user role simple, we have built a custom
+floating Developer Hackathon Panel directly into the application.
+
+👉 Look for the floating "Indigo Console/Terminal" icon ( >_ ) on the 
+   bottom-left corner of any screen.
+
+Click it to expand the panel and access the following functions:
+
+- ROLE SWITCHER: Log in instantly with one click as Admin, Weaver, or 
+  Treasurer. The app handles Phone OTP Authentication automatically in the 
+  background, switching database roles and permissions on the fly.
+  
+- SCREEN JUMP: Skip directly to any of the 8 screens to inspect the user 
+  interfaces and workflows:
+  - Screen 1: Order Details received (Admin review)
+  - Screen 2: Share to coop group chat
+  - Screen 3: Live cooperative chat room (Weaver voting & consensus)
+  - Screen 4: Real-time consensus check SVG donut chart
+  - Screen 5: Workforce allocation using a proportional suggest algorithm
+  - Screen 6: Loom station production tracking dashboard
+  - Screen 7: Wage payout splits ledger (Mark-as-Paid transfers)
+  - Screen 8: Regional yarn price-benchmarking graphs & cooperative pooling map
+
+------------------------------------------------------------------------
+3. TEST ACCOUNT CREDENTIALS (FOR MANUAL SIGN-IN)
+------------------------------------------------------------------------
+If you prefer to type numbers manually on the login screen, we have pre-seeded
+the following test accounts inside the Firebase Authentication console:
+
+- Amit Patel (Admin)
+  Phone: +91 99999 99999  | Verification Code: 123456
+
+- Ramesh Vankar (Weaver)
+  Phone: +91 88888 88888  | Verification Code: 123456
+
+- Meera Devi (Treasurer)
+  Phone: +91 77777 77777  | Verification Code: 123456
+
+------------------------------------------------------------------------
+For questions or live assistance, please feel free to reach out. We look
+forward to showcasing our updates in the upcoming week!
+
+Sincerely,
+The WeaveLink Team
+========================================================================
