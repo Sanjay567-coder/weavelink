@@ -38,13 +38,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [recaptchaVerifier, setRecaptchaVerifier] = useState<RecaptchaVerifier | null>(null);
 
   useEffect(() => {
+    let unsubProfile: (() => void) | null = null;
+
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (unsubProfile) {
+        unsubProfile();
+        unsubProfile = null;
+      }
+
       setUser(currentUser);
       
       if (currentUser) {
         // Real-time listener for member profile updates
         const memberRef = doc(db, 'members', currentUser.uid);
-        const unsubProfile = onSnapshot(memberRef, (docSnap) => {
+        unsubProfile = onSnapshot(memberRef, (docSnap) => {
           if (docSnap.exists()) {
             setMemberProfile(docSnap.data() as MemberProfile);
           } else {
@@ -56,15 +63,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.error("Error fetching member profile:", error);
           setLoading(false);
         });
-
-        return () => unsubProfile();
       } else {
         setMemberProfile(null);
         setLoading(false);
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      if (unsubProfile) {
+        unsubProfile();
+      }
+    };
   }, []);
 
   const logout = async () => {
