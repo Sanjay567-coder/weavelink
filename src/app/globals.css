@@ -1,26 +1,175 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #faf9f5;
+  --foreground: #1b1c1a;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+@theme {
+  --color-primary: #9b2f00;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #c2410c;
+  --color-on-primary-container: #ffece7;
+  --color-secondary: #5b598c;
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: #c7c3fe;
+  --color-on-secondary-container: #514f81;
+  --color-tertiary: #6c5100;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-container: #8a6800;
+  --color-on-tertiary-container: #ffeed1;
+  --color-error: #ba1a1a;
+  --color-on-error: #ffffff;
+  --color-error-container: #ffdad6;
+  --color-on-error-container: #93000a;
+  --color-background: #faf9f5;
+  --color-on-background: #1b1c1a;
+  --color-surface: #faf9f5;
+  --color-on-surface: #1b1c1a;
+  --color-surface-variant: #e3e2df;
+  --color-on-surface-variant: #59413a;
+  --color-outline: #8d7168;
+  --color-outline-variant: #e1bfb5;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f4f4f0;
+  --color-surface-container: #efeeea;
+  --color-surface-container-high: #e9e8e4;
+  --color-surface-container-highest: #e3e2df;
+  --color-inverse-surface: #2f312e;
+  --color-inverse-on-surface: #f2f1ed;
+  --color-inverse-primary: #ffb59d;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --radius-default: 0.25rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+
+  --spacing-stack-sm: 8px;
+  --spacing-gutter: 16px;
+  --spacing-touch-target: 48px;
+  --spacing-stack-md: 16px;
+  --spacing-container-padding: 24px;
+  --spacing-stack-lg: 32px;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'IBM Plex Sans', sans-serif;
+  min-height: 100vh;
+}
+
+/* Custom Utilities for Typography */
+@utility font-body-lg {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 28px;
+}
+@utility font-label-lg {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 20px;
+  letter-spacing: 0.01em;
+}
+@utility font-headline-lg-mobile {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 32px;
+}
+@utility font-headline-lg {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 32px;
+  font-weight: 600;
+  line-height: 40px;
+  letter-spacing: -0.02em;
+}
+@utility font-headline-md {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 32px;
+}
+@utility font-label-sm {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 18px;
+}
+@utility font-body-md {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+}
+
+/* Texture & Patterns */
+.ikat-pattern {
+  background-color: transparent;
+  background-image:  linear-gradient(30deg, #9b2f00 12%, transparent 12.5%, transparent 87%, #9b2f00 87.5%, #9b2f00),
+  linear-gradient(150deg, #9b2f00 12%, transparent 12.5%, transparent 87%, #9b2f00 87.5%, #9b2f00),
+  linear-gradient(30deg, #9b2f00 12%, transparent 12.5%, transparent 87%, #9b2f00 87.5%, #9b2f00),
+  linear-gradient(150deg, #9b2f00 12%, transparent 12.5%, transparent 87%, #9b2f00 87.5%, #9b2f00),
+  linear-gradient(60deg, #9b2f0077 25%, transparent 25.5%, transparent 75%, #9b2f0077 75%, #9b2f0077),
+  linear-gradient(60deg, #9b2f0077 25%, transparent 25.5%, transparent 75%, #9b2f0077 75%, #9b2f0077);
+  background-size: 40px 70px;
+  background-position: 0 0, 0 0, 20px 35px, 20px 35px, 0 0, 20px 35px;
+  opacity: 0.05;
+}
+
+.texture-overlay {
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l15 30-15 30-15-30z' fill='%239b2f00' fill-opacity='0.03' fill-rule='evenodd'/%3E%3C/svg%3E");
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(225, 191, 181, 0.5);
+}
+
+.ikat-overlay {
+  mask-image: url('https://www.transparenttextures.com/patterns/cubes.png');
+  opacity: 0.05;
+}
+
+.ledger-line {
+  background-image: linear-gradient(to right, #e1bfb5 33%, rgba(255,255,255,0) 0%);
+  background-position: bottom;
+  background-size: 8px 1px;
+  background-repeat: repeat-x;
+}
+
+/* Animations */
+.voice-pulse {
+  animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.95); opacity: 0.7; }
+  50% { transform: scale(1.05); opacity: 0.3; }
+  100% { transform: scale(0.95); opacity: 0.7; }
+}
+
+.voice-wave {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 20px;
+}
+
+.voice-bar {
+  width: 2px;
+  background-color: currentColor;
+  border-radius: 1px;
+  animation: wave-anim 1.2s ease-in-out infinite;
+}
+
+@keyframes wave-anim {
+  0%, 100% { height: 4px; }
+  50% { height: 16px; }
+}
+
+.capacity-bar-transition {
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
