@@ -412,7 +412,7 @@ export default function ProductionTrackingPage() {
                     <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>
                       {wp.status === 'track' ? 'check_circle' : 'warning'}
                     </span>
-                    {wp.status === 'track' ? t('onTrack') : t('late', { days: wp.lateDays })}
+                    {wp.status === 'track' ? t('onTrack') : t('late', { days: wp.lateDays ?? 0 })}
                   </span>
                 </div>
               ))}
