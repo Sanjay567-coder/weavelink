@@ -28,7 +28,8 @@
     "item": "Item",
     "quantity": "Quantity",
     "deadline": "Deadline",
-    "discuss": "Discuss with Members"
+    "discuss": "Discuss with Members",
+    "decline": "Decline"
   },
   "screen2": {
     "title": "Discuss with Members",
