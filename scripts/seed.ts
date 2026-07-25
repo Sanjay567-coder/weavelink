@@ -1,6 +1,7 @@
-import { getApps, initializeApp, credential } from 'firebase-admin/app';
+import { getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
+import admin from 'firebase-admin';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 
@@ -31,7 +32,7 @@ if (process.env.FIRESTORE_EMULATOR_HOST) {
   }
   if (getApps().length === 0) {
     initializeApp({
-      credential: credential.cert({
+      credential: admin.credential.cert({
         clientEmail: serviceAccountEmail,
         privateKey: privateKey,
         projectId: projectId,
