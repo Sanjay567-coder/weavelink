@@ -1,0 +1,26 @@
+{
+  "name": "WeaveLink Handloom Cooperative PWA",
+  "short_name": "WeaveLink",
+  "description": "Progressive Web App connecting handloom weaving cooperatives with digital commerce, consensus voting, and transparent payment tracking.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#faf9f5",
+  "theme_color": "#9b2f00",
+  "orientation": "portrait",
+  "scope": "/",
+  "categories": ["business", "productivity"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
