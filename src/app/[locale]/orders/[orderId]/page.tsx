@@ -21,6 +21,9 @@ interface OrderData {
   status: string;
   enteredBy?: string;
   enteredAt?: any;
+  buyerPhone?: string;
+  buyerConfirmed?: boolean;
+  buyerConfirmedAt?: any;
 }
 
 export default function OrderDetailsPage() {
@@ -34,6 +37,15 @@ export default function OrderDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [isListening, setIsListening] = useState(false);
   const [voiceText, setVoiceText] = useState('');
+  
+  const locale = (params.locale as string) || 'en';
+  const [buyerPhone, setBuyerPhone] = useState('');
+  const [toastMsg, setToastMsg] = useState('');
+
+  const triggerToast = (msg: string) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(''), 3000);
+  };
 
   useEffect(() => {
     if (!orderId || !user) return;
@@ -41,7 +53,11 @@ export default function OrderDetailsPage() {
     // Real-time listener for order updates
     const unsub = onSnapshot(doc(db, 'orders', orderId), (docSnap) => {
       if (docSnap.exists()) {
-        setOrder(docSnap.data() as OrderData);
+        const data = docSnap.data() as OrderData;
+        setOrder(data);
+        if (data.buyerPhone) {
+          setBuyerPhone(data.buyerPhone);
+        }
       } else {
         console.warn(`Order ${orderId} not found in Firestore.`);
       }
@@ -58,15 +74,25 @@ export default function OrderDetailsPage() {
   const handleDiscuss = async () => {
     if (!order) return;
     try {
-      // Update order status to discussing
+      // Update order status to discussing, and log who entered it and buyer confirmation phone
       await updateDoc(doc(db, 'orders', orderId), {
-        status: 'discussing'
+        status: 'discussing',
+        enteredBy: memberProfile?.name ? `${memberProfile.name} (${memberProfile.role === 'admin' ? 'Admin' : 'Treasurer'})` : 'Amit Patel (Admin)',
+        enteredAt: new Date(),
+        buyerPhone: buyerPhone
       });
       // Redirect to Screen 2
-      router.push(`/en/orders/${orderId}/share`);
+      router.push(`/${locale}/orders/${orderId}/share`);
     } catch (err: any) {
       alert("Error sharing order: " + err.message);
     }
+  };
+
+  // Action: Share Confirmation Link
+  const handleShareLink = () => {
+    const confirmLink = `${window.location.origin}/${locale}/confirm/${orderId}`;
+    navigator.clipboard.writeText(confirmLink);
+    triggerToast("Confirmation link copied! Share this with the buyer.");
   };
 
   // Action: Decline Order
@@ -210,7 +236,20 @@ export default function OrderDetailsPage() {
               </div>
               <div>
                 <span className="font-label-sm text-label-sm text-on-surface-variant block mb-1">{t('price')}</span>
-                <span className="font-headline-md text-headline-md font-bold text-on-surface">₹{order.price.toLocaleString('en-IN')}</span>
+                <div className="flex flex-col gap-1 items-start">
+                  <span className="font-headline-md text-headline-md font-bold text-on-surface">₹{order.price.toLocaleString('en-IN')}</span>
+                  {order.buyerConfirmed ? (
+                    <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-0.5 mt-0.5">
+                      <span className="material-symbols-outlined text-[12px] font-extrabold">check_circle</span>
+                      Buyer Confirmed ✓
+                    </span>
+                  ) : (
+                    <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-0.5 mt-0.5">
+                      <span className="material-symbols-outlined text-[12px] font-extrabold">pending</span>
+                      Awaiting Buyer Confirmation
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
             
@@ -243,7 +282,7 @@ export default function OrderDetailsPage() {
                 </div>
                 <span className="font-body-md text-body-md font-medium">{order.enteredBy || 'System'}</span>
               </div>
-              <div className="flex justify-between items-center py-3">
+              <div className="flex justify-between items-center py-3 border-b border-surface-container">
                 <div className="flex items-center gap-3">
                   <span className="material-symbols-outlined text-outline">calendar_month</span>
                   <span className="font-body-md text-body-md">Entered At</span>
@@ -251,6 +290,32 @@ export default function OrderDetailsPage() {
                 <span className="font-body-md text-body-md font-medium text-on-surface-variant">
                   {order.enteredAt ? (order.enteredAt.seconds ? new Date(order.enteredAt.seconds * 1000).toLocaleString(params.locale === 'hi' ? 'hi-IN' : 'en-IN') : new Date(order.enteredAt).toLocaleString(params.locale === 'hi' ? 'hi-IN' : 'en-IN')) : 'System'}
                 </span>
+              </div>
+              <div className="flex flex-col md:flex-row md:justify-between md:items-center py-3 gap-2">
+                <div className="flex items-center gap-3">
+                  <span className="material-symbols-outlined text-outline">call</span>
+                  <span className="font-body-md text-body-md">Buyer Phone</span>
+                </div>
+                <div className="flex flex-col items-end gap-1.5 w-full md:w-auto">
+                  {order.status === 'pending_review' ? (
+                    <input 
+                      type="tel"
+                      value={buyerPhone}
+                      onChange={(e) => setBuyerPhone(e.target.value)}
+                      placeholder="Enter buyer phone"
+                      className="px-2 py-1 text-xs border border-outline rounded bg-white text-right w-full md:w-48 font-mono focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
+                    />
+                  ) : (
+                    <span className="font-body-md text-body-md font-medium">{order.buyerPhone || 'Not Entered'}</span>
+                  )}
+                  <button 
+                    onClick={handleShareLink}
+                    className="flex items-center gap-0.5 text-primary text-[11px] font-bold hover:underline cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-[13px]">share</span>
+                    Share Confirmation Link
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -293,6 +358,14 @@ export default function OrderDetailsPage() {
           </button>
         </div>
       </main>
+
+      {/* Styled toast feedback */}
+      {toastMsg && (
+        <div className="fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl z-50 font-sans text-sm font-semibold flex items-center gap-2 border border-slate-700 animate-in fade-in slide-in-from-bottom-5 duration-300">
+          <span className="material-symbols-outlined text-emerald-400 text-[18px]">verified</span>
+          {toastMsg}
+        </div>
+      )}
 
       <Navbar />
       <DevBar />

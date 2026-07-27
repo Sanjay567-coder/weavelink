@@ -40,6 +40,8 @@ interface OrderData {
   status: string;
   enteredBy?: string;
   enteredAt?: any;
+  buyerConfirmed?: boolean;
+  buyerConfirmedAt?: any;
 }
 
 interface MemberResponse {
@@ -280,6 +282,19 @@ export default function GroupChatPage() {
                   <div className="mt-1 flex items-center gap-1 text-[11px] text-on-surface-variant/80 font-medium">
                     <span className="material-symbols-outlined text-[13px] text-outline">person_check</span>
                     <span>Entered by: {activeOrder.enteredBy || 'System'} ({activeOrder.enteredAt ? (activeOrder.enteredAt.seconds ? new Date(activeOrder.enteredAt.seconds * 1000).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : new Date(activeOrder.enteredAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })) : 'System'})</span>
+                  </div>
+                  <div className="mt-1.5 flex items-center gap-1.5 text-[9px] font-bold">
+                    {activeOrder.buyerConfirmed ? (
+                      <span className="bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                        <span className="material-symbols-outlined text-[11px]">check_circle</span>
+                        Buyer Confirmed ✓
+                      </span>
+                    ) : (
+                      <span className="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                        <span className="material-symbols-outlined text-[11px]">pending</span>
+                        Awaiting Buyer Confirmation
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>

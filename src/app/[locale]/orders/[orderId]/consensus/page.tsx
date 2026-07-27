@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { collection, onSnapshot, doc, updateDoc } from 'firebase/firestore';
+import { collection, onSnapshot, doc, updateDoc, getDocs, writeBatch } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useTranslations } from 'next-intl';
 import { Header } from '@/components/Header';
@@ -22,6 +22,8 @@ interface OrderData {
   status: string;
   enteredBy?: string;
   enteredAt?: any;
+  buyerConfirmed?: boolean;
+  buyerConfirmedAt?: any;
 }
 
 interface MemberResponse {
@@ -45,13 +47,19 @@ export default function ConsensusCheckPage() {
   const [loading, setLoading] = useState(true);
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
 
+  const [showRenegotiateModal, setShowRenegotiateModal] = useState(false);
+  const [newPrice, setNewPrice] = useState('');
+  const [isRenegotiating, setIsRenegotiating] = useState(false);
+
   useEffect(() => {
     if (!orderId || !user) return;
 
     // Load order info
     const unsubOrder = onSnapshot(doc(db, 'orders', orderId), (docSnap) => {
       if (docSnap.exists()) {
-        setOrder(docSnap.data() as OrderData);
+        const data = docSnap.data() as OrderData;
+        setOrder(data);
+        setNewPrice(String(data.price));
       }
     });
 
@@ -106,6 +114,8 @@ export default function ConsensusCheckPage() {
   const concernStrokeOffset = circumference * (1 - (concern / total));
   const rejectStrokeOffset = circumference * (1 - (reject / total));
 
+  const locale = (params.locale as string) || 'en';
+
   // Switch to screen 5: allocation
   const handleConfirmOrder = async () => {
     try {
@@ -113,7 +123,7 @@ export default function ConsensusCheckPage() {
         status: 'confirmed'
       });
       // Redirect to Screen 5
-      router.push(`/en/orders/${orderId}/allocate`);
+      router.push(`/${locale}/orders/${orderId}/allocate`);
     } catch (err: any) {
       alert("Error confirming order: " + err.message);
     }
@@ -121,7 +131,51 @@ export default function ConsensusCheckPage() {
 
   const handleReviewConcerns = () => {
     // Navigate to Chat to discuss concerns
-    router.push(`/en/chat/coop-kanchipuram`);
+    router.push(`/${locale}/chat/coop-kanchipuram?orderId=${orderId}`);
+  };
+
+  const handleRenegotiateSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPrice || isNaN(Number(newPrice))) {
+      alert("Please enter a valid price.");
+      return;
+    }
+    setIsRenegotiating(true);
+    try {
+      const priceVal = Number(newPrice);
+      const orderRef = doc(db, 'orders', orderId);
+
+      // Step 1: Reset status, buyerConfirmed, and enteredBy info
+      await updateDoc(orderRef, {
+        status: 'pending_review',
+        buyerConfirmed: false,
+        buyerConfirmedAt: null,
+        enteredAt: new Date()
+      });
+
+      // Step 2: Set the new price
+      await updateDoc(orderRef, {
+        price: priceVal
+      });
+
+      // Step 3: Delete all weaver response documents in responses subcollection
+      const responsesRef = collection(db, 'orders', orderId, 'responses');
+      const snap = await getDocs(responsesRef);
+      const batch = writeBatch(db);
+      snap.forEach((docSnap) => {
+        batch.delete(docSnap.ref);
+      });
+      await batch.commit();
+
+      setShowRenegotiateModal(false);
+      alert("Order reset to pending review. Price updated successfully.");
+      router.push(`/${locale}/orders/${orderId}`);
+    } catch (err: any) {
+      console.error(err);
+      alert("Error renegotiating order: " + err.message);
+    } finally {
+      setIsRenegotiating(false);
+    }
   };
 
   const togglePlayVoice = (id: string) => {
@@ -147,11 +201,28 @@ export default function ConsensusCheckPage() {
 
       <main className="max-w-xl mx-auto px-container-padding pt-stack-lg flex-grow w-full">
         {/* Title Section */}
-        <div className="mb-stack-lg">
-          <h1 className="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">{t('title')}</h1>
-          <p className="text-on-surface-variant font-body-md mt-1">
-            {t('subtitle', { batch: order?.item || 'Spring Jamdani Batch #402' })}
-          </p>
+        <div className="mb-stack-lg flex flex-col sm:flex-row justify-between items-start gap-4">
+          <div>
+            <h1 className="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">{t('title')}</h1>
+            <p className="text-on-surface-variant font-body-md mt-1">
+              {t('subtitle', { batch: order?.item || 'Spring Jamdani Batch #402' })}
+            </p>
+          </div>
+          <div className="bg-white border border-outline-variant p-3 rounded-xl shadow-sm text-left sm:text-right min-w-[160px]">
+            <span className="text-[10px] text-on-surface-variant uppercase font-bold tracking-wider block">Coop Target Price</span>
+            <span className="font-headline-md text-headline-md font-bold block text-primary mt-0.5">₹{order?.price.toLocaleString('en-IN')}</span>
+            {order?.buyerConfirmed ? (
+              <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-0.5 mt-1.5">
+                <span className="material-symbols-outlined text-[12px] font-extrabold">check_circle</span>
+                Buyer Confirmed ✓
+              </span>
+            ) : (
+              <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-0.5 mt-1.5">
+                <span className="material-symbols-outlined text-[12px] font-extrabold">pending</span>
+                Awaiting Confirmation
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Donut Chart & Legend Bento */}
@@ -325,6 +396,13 @@ export default function ConsensusCheckPage() {
               {t('confirmOrder')}
             </button>
             <button 
+              onClick={() => setShowRenegotiateModal(true)}
+              className="w-full h-14 bg-white text-secondary border-2 border-outline-variant hover:border-secondary rounded-xl font-label-lg flex items-center justify-center gap-2 active:scale-95 duration-150 cursor-pointer"
+            >
+              <span className="material-symbols-outlined">gavel</span>
+              Renegotiate Price
+            </button>
+            <button 
               onClick={handleReviewConcerns}
               className="w-full h-14 bg-secondary text-white rounded-xl font-label-lg flex items-center justify-center gap-2 active:scale-95 duration-150 cursor-pointer border border-secondary-container"
             >
@@ -333,6 +411,59 @@ export default function ConsensusCheckPage() {
             </button>
           </div>
         </div>
+
+        {/* Renegotiate Modal Dialog */}
+        {showRenegotiateModal && (
+          <div className="fixed inset-0 bg-black/60 z-[150] flex items-center justify-center p-container-padding animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl border border-outline-variant animate-in zoom-in-95 duration-200">
+              <h3 className="font-headline-md text-headline-md text-on-surface mb-2">Renegotiate Target Price</h3>
+              <p className="text-xs text-on-surface-variant mb-4">
+                Changing the price will reset the order status back to Pending Review, clear all current weaver votes, and require a fresh consensus round.
+              </p>
+              
+              <form onSubmit={handleRenegotiateSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1.5">New Price (INR)</label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant font-bold text-sm">₹</span>
+                    <input 
+                      type="number"
+                      value={newPrice}
+                      onChange={(e) => setNewPrice(e.target.value)}
+                      required
+                      placeholder="e.g. 72000"
+                      className="w-full pl-7 pr-3 py-3 border border-outline rounded-xl font-bold text-base focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none bg-white text-on-surface"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowRenegotiateModal(false)}
+                    className="flex-1 h-12 border border-outline text-outline font-label-lg rounded-xl active:scale-95 duration-100 cursor-pointer bg-white"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isRenegotiating}
+                    className="flex-1 h-12 bg-primary text-on-primary font-label-lg rounded-xl flex items-center justify-center gap-1 active:scale-95 duration-100 disabled:opacity-50 cursor-pointer"
+                  >
+                    {isRenegotiating ? (
+                      <span className="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>
+                    ) : (
+                      <>
+                        <span className="material-symbols-outlined text-[16px]">sync_alt</span>
+                        Submit Price
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </main>
 
       <Navbar />
