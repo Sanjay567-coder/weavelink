@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl';
 import { RecaptchaVerifier, ConfirmationResult } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { DevBar } from '@/components/DevBar';
+import { BrandedLoader } from '@/components/BrandedLoader';
 
 export default function LoginPage() {
   const t = useTranslations('common');
@@ -133,14 +134,7 @@ export default function LoginPage() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <span className="material-symbols-outlined text-primary text-5xl animate-spin">progress_activity</span>
-          <p className="font-label-lg text-on-surface-variant">Loading WeaveLink...</p>
-        </div>
-      </div>
-    );
+    return <BrandedLoader message="Loading WeaveLink..." fullScreen />;
   }
 
   return (

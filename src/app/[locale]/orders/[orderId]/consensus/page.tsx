@@ -10,6 +10,7 @@ import { Navbar } from '@/components/Navbar';
 import { DevBar } from '@/components/DevBar';
 import { usePWA } from '@/hooks/usePWA';
 import { useAuth } from '@/context/AuthContext';
+import { BrandedLoader } from '@/components/BrandedLoader';
 
 interface OrderData {
   coopId: string;
@@ -19,6 +20,8 @@ interface OrderData {
   price: number;
   deadline: string;
   status: string;
+  enteredBy?: string;
+  enteredAt?: any;
 }
 
 interface MemberResponse {
@@ -133,11 +136,7 @@ export default function ConsensusCheckPage() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <span className="material-symbols-outlined text-primary text-5xl animate-spin">progress_activity</span>
-      </div>
-    );
+    return <BrandedLoader message="Loading consensus report..." fullScreen />;
   }
 
   const concernsList = responses.filter(r => r.response === 'concern' || r.response === 'reject');
@@ -250,7 +249,7 @@ export default function ConsensusCheckPage() {
                     <span className={`px-2 py-0.5 rounded-full font-label-sm text-[10px] uppercase ${
                       c.response === 'concern' ? 'bg-tertiary-fixed text-on-tertiary-fixed' : 'bg-error-container text-on-error-container'
                     }`}>
-                      {c.response === 'concern' ? 'Mustard Alert' : 'Reject Claim'}
+                      {c.response === 'concern' ? t('concern') : t('reject')}
                     </span>
                   </div>
                   

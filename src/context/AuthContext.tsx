@@ -7,7 +7,8 @@ import {
   signOut,
   signInWithPhoneNumber,
   RecaptchaVerifier,
-  ConfirmationResult
+  ConfirmationResult,
+  UserCredential
 } from 'firebase/auth';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
@@ -27,6 +28,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   setupRecaptcha: (containerId: string) => Promise<RecaptchaVerifier>;
   sendOtp: (phone: string, verifier: RecaptchaVerifier) => Promise<ConfirmationResult>;
+  demoLogin: (role: 'admin' | 'weaver' | 'treasurer') => Promise<UserCredential>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -105,8 +107,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return await signInWithPhoneNumber(auth, phone, verifier);
   };
 
+  const demoLogin = async (role: 'admin' | 'weaver' | 'treasurer') => {
+    const phoneMap = {
+      admin: '+919999999999',
+      weaver: '+918888888888',
+      treasurer: '+917777777777',
+    };
+    const phone = phoneMap[role];
+    
+    // Create temporary recaptcha container
+    let container = document.getElementById('demo-recaptcha-helper');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'demo-recaptcha-helper';
+      document.body.appendChild(container);
+    }
+    container.innerHTML = '';
+    
+    const verifier = new RecaptchaVerifier(auth, container, { size: 'invisible' });
+    const confirmationResult = await signInWithPhoneNumber(auth, phone, verifier);
+    const result = await confirmationResult.confirm('123456');
+    try {
+      verifier.clear();
+    } catch (e) {
+      console.warn(e);
+    }
+    return result;
+  };
+
   return (
-    <AuthContext.Provider value={{ user, memberProfile, loading, logout, setupRecaptcha, sendOtp }}>
+    <AuthContext.Provider value={{ user, memberProfile, loading, logout, setupRecaptcha, sendOtp, demoLogin }}>
       {children}
     </AuthContext.Provider>
   );

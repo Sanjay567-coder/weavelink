@@ -9,7 +9,7 @@ import { auth } from '../lib/firebase';
 export const DevBar: React.FC = () => {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, memberProfile } = useAuth();
+  const { user, memberProfile, demoLogin } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [statusMsg, setStatusMsg] = useState('');
@@ -37,44 +37,7 @@ export const DevBar: React.FC = () => {
     setLoading(true);
     setStatusMsg(`Signing in as ${role}...`);
     try {
-      const phoneMap = {
-        admin: '+919999999999',
-        weaver: '+918888888888',
-        treasurer: '+917777777777',
-      };
-      
-      const phone = phoneMap[role];
-
-      // Clean up old verifier if it exists
-      if (verifierRef.current) {
-        try {
-          verifierRef.current.clear();
-        } catch (e) {
-          console.warn("Error clearing verifier:", e);
-        }
-        verifierRef.current = null;
-      }
-
-      // Create a temporary element for recaptcha
-      let recaptchaContainer = document.getElementById('dev-recaptcha');
-      if (!recaptchaContainer) {
-        recaptchaContainer = document.createElement('div');
-        recaptchaContainer.id = 'dev-recaptcha';
-        document.body.appendChild(recaptchaContainer);
-      }
-      recaptchaContainer.innerHTML = '';
-
-      const verifier = new RecaptchaVerifier(auth, recaptchaContainer, {
-        size: 'invisible',
-      });
-      verifierRef.current = verifier;
-
-      // 2. Trigger Phone Auth
-      const confirmationResult = await signInWithPhoneNumber(auth, phone, verifier);
-      
-      // 3. Confirm with the test code configured in Firebase
-      await confirmationResult.confirm('123456');
-
+      await demoLogin(role);
       setStatusMsg(`Success! Signed in as ${role}`);
       setTimeout(() => setStatusMsg(''), 2000);
     } catch (err) {

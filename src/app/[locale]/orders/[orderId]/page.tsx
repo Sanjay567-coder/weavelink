@@ -9,6 +9,7 @@ import { useTranslations } from 'next-intl';
 import { Header } from '@/components/Header';
 import { Navbar } from '@/components/Navbar';
 import { DevBar } from '@/components/DevBar';
+import { BrandedLoader } from '@/components/BrandedLoader';
 
 interface OrderData {
   coopId: string;
@@ -18,6 +19,8 @@ interface OrderData {
   price: number;
   deadline: string;
   status: string;
+  enteredBy?: string;
+  enteredAt?: any;
 }
 
 export default function OrderDetailsPage() {
@@ -135,11 +138,7 @@ export default function OrderDetailsPage() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <span className="material-symbols-outlined text-primary text-5xl animate-spin">progress_activity</span>
-      </div>
-    );
+    return <BrandedLoader message="Loading details..." fullScreen />;
   }
 
   if (!order) {
@@ -230,12 +229,28 @@ export default function OrderDetailsPage() {
                 </div>
                 <span className="font-body-md text-body-md font-medium">{order.quantity} units</span>
               </div>
-              <div className="flex justify-between items-center py-3">
+              <div className="flex justify-between items-center py-3 border-b border-surface-container">
                 <div className="flex items-center gap-3">
                   <span className="material-symbols-outlined text-outline">event_available</span>
                   <span className="font-body-md text-body-md">{t('deadline')}</span>
                 </div>
                 <span className="font-body-md text-body-md font-medium text-primary">{new Date(order.deadline).toLocaleDateString(params.locale === 'hi' ? 'hi-IN' : 'en-IN', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+              </div>
+              <div className="flex justify-between items-center py-3 border-b border-surface-container">
+                <div className="flex items-center gap-3">
+                  <span className="material-symbols-outlined text-outline">person</span>
+                  <span className="font-body-md text-body-md">Entered By</span>
+                </div>
+                <span className="font-body-md text-body-md font-medium">{order.enteredBy || 'System'}</span>
+              </div>
+              <div className="flex justify-between items-center py-3">
+                <div className="flex items-center gap-3">
+                  <span className="material-symbols-outlined text-outline">calendar_month</span>
+                  <span className="font-body-md text-body-md">Entered At</span>
+                </div>
+                <span className="font-body-md text-body-md font-medium text-on-surface-variant">
+                  {order.enteredAt ? (order.enteredAt.seconds ? new Date(order.enteredAt.seconds * 1000).toLocaleString(params.locale === 'hi' ? 'hi-IN' : 'en-IN') : new Date(order.enteredAt).toLocaleString(params.locale === 'hi' ? 'hi-IN' : 'en-IN')) : 'System'}
+                </span>
               </div>
             </div>
           </div>

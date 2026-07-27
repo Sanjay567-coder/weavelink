@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useRef } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { 
   collection, 
   onSnapshot, 
@@ -18,6 +18,7 @@ import { useTranslations } from 'next-intl';
 import { Header } from '@/components/Header';
 import { Navbar } from '@/components/Navbar';
 import { DevBar } from '@/components/DevBar';
+import { BrandedLoader } from '@/components/BrandedLoader';
 
 interface ChatMessage {
   id: string;
@@ -37,6 +38,8 @@ interface OrderData {
   price: number;
   deadline: string;
   status: string;
+  enteredBy?: string;
+  enteredAt?: any;
 }
 
 interface MemberResponse {
@@ -49,14 +52,18 @@ export default function GroupChatPage() {
   const t = useTranslations('screen3');
   const params = useParams();
   const router = useRouter();
-  const { user, memberProfile } = useAuth();
+  const searchParams = useSearchParams();
+  const { user, memberProfile, loading: authLoading } = useAuth();
   
   const coopId = (params.coopId as string) || 'coop-kanchipuram';
+  const locale = (params.locale as string) || 'en';
+  const orderId = searchParams.get('orderId') || 'order-8922';
   
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [activeOrder, setActiveOrder] = useState<OrderData | null>(null);
   const [responsesCount, setResponsesCount] = useState({ agreed: 0, total: 18 });
   const [userResponse, setUserResponse] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   
   const [inputText, setInputText] = useState('');
   const [isListening, setIsListening] = useState(false);
@@ -64,18 +71,30 @@ export default function GroupChatPage() {
 
   const chatEndRef = useRef<HTMLDivElement | null>(null);
 
+  const formatMessageTime = (timestamp: any) => {
+    if (!timestamp) return '';
+    if (typeof timestamp.seconds === 'number') {
+      return new Date(timestamp.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    const d = new Date(timestamp);
+    if (!isNaN(d.getTime())) {
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    return '';
+  };
+
   useEffect(() => {
-    if (!user) return;
-    // 1. Fetch active order (e.g. order-8922 or order-4421)
-    // We listen to the orders collection where status is discussing
-    const unsubOrder = onSnapshot(doc(db, 'orders', 'order-8922'), (docSnap) => {
+    if (!user || !orderId) return;
+
+    // 1. Fetch active order dynamically
+    const unsubOrder = onSnapshot(doc(db, 'orders', orderId), (docSnap) => {
       if (docSnap.exists()) {
         setActiveOrder({ id: docSnap.id, ...docSnap.data() } as OrderData);
       }
     });
 
-    // 2. Fetch responses list to calculate live tally
-    const unsubResponses = onSnapshot(collection(db, 'orders', 'order-8922', 'responses'), (snap) => {
+    // 2. Fetch responses list for the active order
+    const unsubResponses = onSnapshot(collection(db, 'orders', orderId, 'responses'), (snap) => {
       let count = 0;
       snap.forEach((docSnap) => {
         const data = docSnap.data() as MemberResponse;
@@ -100,6 +119,7 @@ export default function GroupChatPage() {
         msgList.push({ id: docSnap.id, ...docSnap.data() } as ChatMessage);
       });
       setMessages(msgList);
+      setLoading(false);
       
       // Scroll to bottom
       setTimeout(() => {
@@ -112,7 +132,13 @@ export default function GroupChatPage() {
       unsubResponses();
       unsubMessages();
     };
-  }, [coopId, user]);
+  }, [coopId, user, orderId]);
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push(`/${locale}`);
+    }
+  }, [user, authLoading, router, locale]);
 
   // Send Message
   const handleSendMessage = async (e?: React.FormEvent) => {
@@ -224,6 +250,10 @@ export default function GroupChatPage() {
     }
   };
 
+  if (loading || authLoading) {
+    return <BrandedLoader message="Loading cooperative chat..." fullScreen />;
+  }
+
   return (
     <div className="bg-background font-body-md text-on-surface min-h-screen flex flex-col ikat-pattern pb-48">
       <Header />
@@ -234,7 +264,7 @@ export default function GroupChatPage() {
         {activeOrder && (
           <div className="pt-stack-md">
             <div 
-              onClick={() => router.push(`/en/orders/${activeOrder.id}`)}
+              onClick={() => router.push(`/${locale}/orders/${activeOrder.id}`)}
               className="bg-white border border-outline-variant rounded-xl p-4 shadow-sm flex items-center justify-between gap-4 cursor-pointer hover:border-primary transition-colors"
             >
               <div className="flex items-center gap-4">
@@ -247,6 +277,10 @@ export default function GroupChatPage() {
                   <p className="text-sm text-on-surface-variant">
                     {t('remaining', { date: new Date(activeOrder.deadline).toLocaleDateString('en-US', { day: 'numeric', month: 'short' }), meters: 45 })}
                   </p>
+                  <div className="mt-1 flex items-center gap-1 text-[11px] text-on-surface-variant/80 font-medium">
+                    <span className="material-symbols-outlined text-[13px] text-outline">person_check</span>
+                    <span>Entered by: {activeOrder.enteredBy || 'System'} ({activeOrder.enteredAt ? (activeOrder.enteredAt.seconds ? new Date(activeOrder.enteredAt.seconds * 1000).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : new Date(activeOrder.enteredAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })) : 'System'})</span>
+                  </div>
                 </div>
               </div>
               <span className="material-symbols-outlined text-on-surface-variant">push_pin</span>
@@ -286,7 +320,7 @@ export default function GroupChatPage() {
                 <div className="flex items-center gap-2 mb-1">
                   {!isMe && <span className="font-label-sm text-on-surface-variant text-xs">{msg.senderName}</span>}
                   <span className="text-[9px] text-on-surface-variant">
-                    {msg.timestamp ? new Date(msg.timestamp.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                    {formatMessageTime(msg.timestamp)}
                   </span>
                   {isMe && <span className="font-label-sm text-primary text-xs">You</span>}
                 </div>

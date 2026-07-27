@@ -174,6 +174,8 @@ const seedData = async () => {
     deadline: '2026-10-15',
     status: 'pending_review',
     createdAt: FieldValue.serverTimestamp(),
+    enteredBy: 'Amit Patel (Admin)',
+    enteredAt: new Date('2026-07-24T09:30:00Z'),
   };
   await db.collection('orders').doc(order1.id).set(order1, { merge: true });
 
@@ -199,6 +201,8 @@ const seedData = async () => {
     deadline: '2026-11-22',
     status: 'confirmed',
     createdAt: FieldValue.serverTimestamp(),
+    enteredBy: 'Amit Patel (Admin)',
+    enteredAt: new Date('2026-07-20T14:15:00Z'),
   };
   await db.collection('orders').doc(order2.id).set(order2, { merge: true });
 

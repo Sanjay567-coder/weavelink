@@ -8,6 +8,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useTranslations } from 'next-intl';
 import { Header } from '@/components/Header';
 import { DevBar } from '@/components/DevBar';
+import { BrandedLoader } from '@/components/BrandedLoader';
 
 interface OrderData {
   coopId: string;
@@ -34,6 +35,7 @@ export default function ShareOrderPage() {
   const { user } = useAuth();
   
   const orderId = params.orderId as string;
+  const locale = (params.locale as string) || 'en';
   const [order, setOrder] = useState<OrderData | null>(null);
   const [members, setMembers] = useState<MemberData[]>([]);
   const [summary, setSummary] = useState('');
@@ -144,7 +146,7 @@ export default function ShareOrderPage() {
 
       // Redirect to group chat after 1.5 seconds
       setTimeout(() => {
-        router.push(`/en/chat/${coopId}`);
+        router.push(`/${locale}/chat/${coopId}?orderId=${orderId}`);
       }, 1500);
     } catch (err: any) {
       console.error(err);
@@ -154,11 +156,7 @@ export default function ShareOrderPage() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <span className="material-symbols-outlined text-primary text-5xl animate-spin">progress_activity</span>
-      </div>
-    );
+    return <BrandedLoader message="Preparing contract summary..." fullScreen />;
   }
 
   return (

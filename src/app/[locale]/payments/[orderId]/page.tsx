@@ -16,6 +16,7 @@ import { useTranslations } from 'next-intl';
 import { Header } from '@/components/Header';
 import { Navbar } from '@/components/Navbar';
 import { DevBar } from '@/components/DevBar';
+import { BrandedLoader } from '@/components/BrandedLoader';
 
 interface PaymentData {
   memberId: string;
@@ -40,7 +41,13 @@ export default function PaymentLedgerPage() {
   const [payments, setPayments] = useState<PaymentData[]>([]);
   const [loading, setLoading] = useState(true);
   const [isListening, setIsListening] = useState(false);
+  const [toastMsg, setToastMsg] = useState('');
   const [voiceQueryText, setVoiceQueryText] = useState('');
+
+  const triggerToast = (msg: string) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(''), 3000);
+  };
 
   // Set default view mode based on role
   useEffect(() => {
@@ -163,24 +170,20 @@ export default function PaymentLedgerPage() {
       const myPay = payments.find(p => p.memberId === user?.uid);
       if (myPay) {
         if (myPay.status === 'paid') {
-          alert(`Your payout of ₹${myPay.amountOwed} is marked as PAID. Check your linked bank account.`);
+          triggerToast(`Your payout of ₹${myPay.amountOwed} is marked as PAID. Check your linked bank account.`);
         } else {
-          alert(`Your expected payout of ₹${myPay.amountOwed} is PENDING. Funds will arrive within 48 hours of bank batch release.`);
+          triggerToast(`Your expected payout of ₹${myPay.amountOwed} is PENDING. Funds will arrive within 48 hours of bank batch release.`);
         }
       } else {
-        alert("Could not locate your weaver profile allocations. Default process estimate: 48 hour processing window.");
+        triggerToast("Could not locate your weaver profile allocations. Default process estimate: 48 hour processing window.");
       }
     } else {
-      alert(`Voice Query: "${command}". Try saying "When is my payment due?"`);
+      triggerToast(`Voice Query: "${command}". Try saying "When is my payment due?"`);
     }
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <span className="material-symbols-outlined text-primary text-5xl animate-spin">progress_activity</span>
-      </div>
-    );
+    return <BrandedLoader message="Syncing ledger sheets..." fullScreen />;
   }
 
   // Admin stats
@@ -260,7 +263,7 @@ export default function PaymentLedgerPage() {
               <div className="p-container-padding border-b border-outline-variant bg-surface-container-high flex justify-between items-center">
                 <h3 className="font-label-lg text-on-surface">{t('disbursement')}</h3>
                 <button 
-                  onClick={() => alert("PDF exported successfully.")}
+                  onClick={() => triggerToast("PDF ledger report exported successfully!")}
                   className="text-primary font-label-sm flex items-center gap-1 cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-[18px]">download</span> 
@@ -329,7 +332,7 @@ export default function PaymentLedgerPage() {
                 
                 <div className="pt-4 border-t border-outline-variant flex justify-between items-center">
                   <button 
-                    onClick={() => alert("History: showing past ledger cycles")}
+                    onClick={() => triggerToast("Loading past ledger history...")}
                     className="text-primary font-label-lg flex items-center gap-1 hover:underline cursor-pointer"
                   >
                     <span className="material-symbols-outlined text-[20px]">history</span> 
@@ -382,6 +385,14 @@ export default function PaymentLedgerPage() {
           </button>
         </div>
       </main>
+
+      {/* Styled toast feedback */}
+      {toastMsg && (
+        <div className="fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl z-50 font-sans text-sm font-semibold flex items-center gap-2 border border-slate-700 animate-in fade-in slide-in-from-bottom-5 duration-300">
+          <span className="material-symbols-outlined text-emerald-400 text-[18px]">verified</span>
+          {toastMsg}
+        </div>
+      )}
 
       <Navbar />
       <DevBar />

@@ -18,6 +18,7 @@ import { useTranslations } from 'next-intl';
 import { Header } from '@/components/Header';
 import { DevBar } from '@/components/DevBar';
 import { useAuth } from '@/context/AuthContext';
+import { BrandedLoader } from '@/components/BrandedLoader';
 
 interface OrderData {
   coopId: string;
@@ -303,11 +304,7 @@ export default function WorkAllocationPage() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <span className="material-symbols-outlined text-primary text-5xl animate-spin">progress_activity</span>
-      </div>
-    );
+    return <BrandedLoader message="Analyzing looms capacity..." fullScreen />;
   }
 
   return (

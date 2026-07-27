@@ -15,6 +15,7 @@ import { useTranslations } from 'next-intl';
 import { Header } from '@/components/Header';
 import { Navbar } from '@/components/Navbar';
 import { DevBar } from '@/components/DevBar';
+import { BrandedLoader } from '@/components/BrandedLoader';
 
 interface OrderData {
   coopId: string;
@@ -55,6 +56,27 @@ export default function ProductionTrackingPage() {
   const [updating, setUpdating] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [voiceLogText, setVoiceLogText] = useState('');
+  
+  const [showCameraSim, setShowCameraSim] = useState(false);
+  const [cameraFlash, setCameraFlash] = useState(false);
+  const [cameraPhotoCaptured, setCameraPhotoCaptured] = useState(false);
+  const [toastMsg, setToastMsg] = useState('');
+
+  const triggerToast = (msg: string) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(''), 3000);
+  };
+
+  const handleCapturePhoto = () => {
+    setCameraFlash(true);
+    setTimeout(() => setCameraFlash(false), 200);
+    setCameraPhotoCaptured(true);
+    setTimeout(() => {
+      setShowCameraSim(false);
+      setCameraPhotoCaptured(false);
+      triggerToast("Loom status photo uploaded and synced successfully!");
+    }, 1500);
+  };
 
   useEffect(() => {
     if (!orderId || !user) return;
@@ -209,9 +231,9 @@ export default function ProductionTrackingPage() {
     if (matchVal) {
       const units = parseInt(matchVal[0]);
       handleUpdateProgress(units);
-      alert(`Progress updated to ${units} units completed via voice input.`);
+      triggerToast(`Progress updated to ${units} units completed via voice input.`);
     } else {
-      alert(`Voice logged: "${command}". Try saying "I completed 2 units".`);
+      triggerToast(`Voice logged: "${command}". Try saying "I completed 2 units".`);
     }
   };
 
@@ -228,11 +250,7 @@ export default function ProductionTrackingPage() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <span className="material-symbols-outlined text-primary text-5xl animate-spin">progress_activity</span>
-      </div>
-    );
+    return <BrandedLoader message="Synchronizing production looms..." fullScreen />;
   }
 
   // Fallback profile if Firestore is offline/empty
@@ -305,7 +323,7 @@ export default function ProductionTrackingPage() {
                   {isListening ? 'Listening...' : t('addVoiceLog')}
                 </button>
                 <button 
-                  onClick={() => alert("Mock Camera Upload: Taking photo of loom status")}
+                  onClick={() => setShowCameraSim(true)}
                   className="w-touch-target h-touch-target border-2 border-outline-variant text-primary rounded-lg flex items-center justify-center active:scale-95 duration-150 cursor-pointer bg-white"
                 >
                   <span className="material-symbols-outlined">camera_enhance</span>
@@ -419,6 +437,77 @@ export default function ProductionTrackingPage() {
         )}
 
       </main>
+
+      {/* Camera Simulation Overlay */}
+      {showCameraSim && (
+        <div className="fixed inset-0 bg-black/95 z-[100] flex flex-col justify-between p-6 animate-in fade-in duration-300 font-sans">
+          {/* Flash visual overlay */}
+          {cameraFlash && <div className="absolute inset-0 bg-white z-[110] pointer-events-none transition-opacity duration-75"></div>}
+
+          {/* Camera Header */}
+          <div className="flex justify-between items-center text-white z-10">
+            <button 
+              onClick={() => setShowCameraSim(false)}
+              className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center cursor-pointer active:scale-90"
+            >
+              <span className="material-symbols-outlined">close</span>
+            </button>
+            <div className="flex items-center gap-4 text-xs font-bold tracking-wider text-slate-300">
+              <span>HDR AUTO</span>
+              <span className="material-symbols-outlined text-[18px]">flash_on</span>
+            </div>
+            <div className="w-10 h-10"></div>
+          </div>
+
+          {/* Viewfinder Target */}
+          <div className="relative flex-grow flex items-center justify-center">
+            {cameraPhotoCaptured ? (
+              <div className="text-center space-y-4 animate-in zoom-in-50 duration-200">
+                <span className="material-symbols-outlined text-[64px] text-emerald-400">check_circle</span>
+                <p className="text-white font-label-lg">Captured Loom Details!</p>
+              </div>
+            ) : (
+              <div className="w-64 h-64 border-2 border-dashed border-white/50 rounded-2xl flex items-center justify-center">
+                <div className="text-white/30 text-xs uppercase font-bold tracking-widest text-center">
+                  Align loom fabric<br />within frame
+                </div>
+              </div>
+            )}
+            <div className="absolute bottom-4 left-4 text-white/50 text-[10px] font-mono space-y-0.5">
+              <div>ISO 400</div>
+              <div>F/2.4</div>
+              <div>1/60s</div>
+            </div>
+          </div>
+
+          {/* Camera Footer Controls */}
+          <div className="flex justify-around items-center pb-8 z-10">
+            <div className="w-12 h-12 rounded-lg border-2 border-white/30 overflow-hidden bg-cover bg-center" style={{ backgroundImage: `url('https://lh3.googleusercontent.com/aida-public/AB6AXuBG_YlJTCRvUd7y3r-HlmMgAritfMApf0uM14D4QZVVZc6lPlek8zDTMKehFCTTs8DmcWcR3j-WAGoSttHGGWC2jfF_JKhbX1GAsxunXzSfsdeFJH_0NlJAE3Qyia_hv6jrhne1FlWGTbZzNBMgR7LA4qd7y9dHhTLTlRE7ZN0p93HX2QsGO8AfKoL3JaCu4uxipURt5Pi5mggBNuL3zWwa1NtoVwnE_S0Z-kw0xnB6xRP-ol43sjdJ-2FsunLHf5tLfRC9COvNsAKe')` }}></div>
+            
+            <button 
+              onClick={handleCapturePhoto}
+              disabled={cameraPhotoCaptured}
+              className="w-20 h-20 rounded-full border-4 border-white flex items-center justify-center active:scale-95 duration-100 bg-transparent cursor-pointer"
+            >
+              <div className="w-16 h-16 rounded-full bg-white hover:bg-slate-200 transition-colors"></div>
+            </button>
+
+            <button 
+              className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-white"
+            >
+              <span className="material-symbols-outlined">sync</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Styled toast feedback */}
+      {toastMsg && (
+        <div className="fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl z-50 font-sans text-sm font-semibold flex items-center gap-2 border border-slate-700 animate-in fade-in slide-in-from-bottom-5 duration-300">
+          <span className="material-symbols-outlined text-emerald-400 text-[18px]">verified</span>
+          {toastMsg}
+        </div>
+      )}
 
       <Navbar />
       <DevBar />

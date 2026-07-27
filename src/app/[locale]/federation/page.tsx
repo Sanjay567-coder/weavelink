@@ -31,11 +31,17 @@ export default function FederationInsightsPage() {
   const [activeTab, setActiveTab] = useState<'map' | 'list'>('map');
   const [invited, setInvited] = useState<string[]>([]);
   const [showTooltip, setShowTooltip] = useState(false);
+  const [toastMsg, setToastMsg] = useState('');
+
+  const triggerToast = (msg: string) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(''), 3000);
+  };
 
   const handleInviteToPool = (coopName: string) => {
     if (invited.includes(coopName)) return;
     setInvited((prev) => [...prev, coopName]);
-    alert(`Invitation sent to ${coopName} to pool orders!`);
+    triggerToast(`Invitation sent to ${coopName} to pool orders!`);
   };
 
   return (
@@ -284,7 +290,7 @@ export default function FederationInsightsPage() {
                   <p className="text-headline-md font-bold text-on-surface text-xl">₹8,200</p>
                 </div>
                 <button 
-                  onClick={() => alert("Arani details summary shown.")}
+                  onClick={() => triggerToast("Loading Arani details summary...")}
                   className="px-6 py-3 bg-surface-container-high text-on-surface-variant font-bold rounded-lg hover:bg-surface-container-highest transition-all flex items-center gap-2 cursor-pointer"
                 >
                   {t('viewDetails')}
@@ -295,6 +301,14 @@ export default function FederationInsightsPage() {
         </section>
 
       </main>
+
+      {/* Styled toast feedback */}
+      {toastMsg && (
+        <div className="fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl z-50 font-sans text-sm font-semibold flex items-center gap-2 border border-slate-700 animate-in fade-in slide-in-from-bottom-5 duration-300">
+          <span className="material-symbols-outlined text-emerald-400 text-[18px]">verified</span>
+          {toastMsg}
+        </div>
+      )}
 
       <Navbar />
       <DevBar />
