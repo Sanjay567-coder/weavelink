@@ -53,6 +53,18 @@ The seeding script registers specific test accounts in Auth using deterministic 
 * **Weaver Account**: `+918888888888` (Verification Code: `123456`)
 * **Treasurer Account**: `+917777777777` (Verification Code: `123456`)
 
+### 5. reCAPTCHA Configuration Warning
+> [!IMPORTANT]
+> **reCAPTCHA Enterprise enforcement must stay OFF** in your Firebase project configurations. Enabling reCAPTCHA Enterprise on Firebase without linked Enterprise site keys causes the client SDK to trigger an internal fallback flow to standard v2 which leaks invisible challenge iframes and overlays.
+>
+> To ensure this remains disabled, verify that **reCAPTCHA Enterprise** is disabled under **Firebase Console > Authentication > Settings > User actions > reCAPTCHA protection**, or programmatically set the following options using the Admin SDK:
+> ```typescript
+> recaptchaConfig: {
+>   phoneEnforcementState: 'OFF',
+>   emailPasswordEnforcementState: 'OFF'
+> }
+> ```
+
 ---
 
 ## Commands
