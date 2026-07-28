@@ -66,6 +66,7 @@ export default function GroupChatPage() {
   const [responsesCount, setResponsesCount] = useState({ agreed: 0, total: 18 });
   const [userResponse, setUserResponse] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState('');
   
   const [inputText, setInputText] = useState('');
   const [isListening, setIsListening] = useState(false);
@@ -88,11 +89,26 @@ export default function GroupChatPage() {
   useEffect(() => {
     if (!user || !orderId) return;
 
+    // Timeout safety guard
+    const timeoutId = setTimeout(() => {
+      if (loading) {
+        setLoading(false);
+        setErrorMsg("Failed to connect to cooperative chat logs. Please ensure you are logged in as a cooperative member.");
+      }
+    }, 5000);
+
     // 1. Fetch active order dynamically
     const unsubOrder = onSnapshot(doc(db, 'orders', orderId), (docSnap) => {
       if (docSnap.exists()) {
         setActiveOrder({ id: docSnap.id, ...docSnap.data() } as OrderData);
+      } else {
+        console.warn(`Order ${orderId} not found in Firestore.`);
       }
+    }, (err) => {
+      console.error("Order read error on Screen 3:", err);
+      clearTimeout(timeoutId);
+      setLoading(false);
+      setErrorMsg(`Permission Denied or connection error while loading order details: ${err.message}`);
     });
 
     // 2. Fetch responses list for the active order
@@ -106,6 +122,11 @@ export default function GroupChatPage() {
         }
       });
       setResponsesCount({ agreed: count, total: snap.size });
+    }, (err) => {
+      console.error("Responses read error on Screen 3:", err);
+      clearTimeout(timeoutId);
+      setLoading(false);
+      setErrorMsg(`Permission Denied or connection error while loading consensus responses: ${err.message}`);
     });
 
     // 3. Listen to chat messages ordered by timestamp
@@ -121,15 +142,22 @@ export default function GroupChatPage() {
         msgList.push({ id: docSnap.id, ...docSnap.data() } as ChatMessage);
       });
       setMessages(msgList);
+      clearTimeout(timeoutId);
       setLoading(false);
       
       // Scroll to bottom
       setTimeout(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
       }, 200);
+    }, (err) => {
+      console.error("Messages read error on Screen 3:", err);
+      clearTimeout(timeoutId);
+      setLoading(false);
+      setErrorMsg(`Permission Denied or connection error while loading group messages: ${err.message}`);
     });
 
     return () => {
+      clearTimeout(timeoutId);
       unsubOrder();
       unsubResponses();
       unsubMessages();
@@ -251,6 +279,22 @@ export default function GroupChatPage() {
       }, 4000);
     }
   };
+
+  if (errorMsg) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background items-center justify-center p-8 text-center font-sans">
+        <span className="material-symbols-outlined text-red-500 text-5xl mb-4">error</span>
+        <h2 className="text-xl font-bold text-on-surface mb-2">Connection Timeout</h2>
+        <p className="text-sm text-on-surface-variant max-w-sm mb-6">{errorMsg}</p>
+        <button 
+          onClick={() => window.location.reload()}
+          className="px-6 py-2.5 bg-primary text-on-primary rounded-xl font-bold text-xs shadow-md active:scale-95 duration-100 cursor-pointer"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   if (loading || authLoading) {
     return <BrandedLoader message="Loading cooperative chat..." fullScreen />;

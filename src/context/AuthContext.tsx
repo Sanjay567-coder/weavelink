@@ -125,14 +125,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     container.innerHTML = '';
     
     const verifier = new RecaptchaVerifier(auth, container, { size: 'invisible' });
-    const confirmationResult = await signInWithPhoneNumber(auth, phone, verifier);
-    const result = await confirmationResult.confirm('123456');
     try {
-      verifier.clear();
-    } catch (e) {
-      console.warn(e);
+      const confirmationResult = await signInWithPhoneNumber(auth, phone, verifier);
+      const result = await confirmationResult.confirm('123456');
+      return result;
+    } finally {
+      try {
+        verifier.clear();
+      } catch (e) {
+        console.warn("Failed to clear demo login verifier:", e);
+      }
+      container.innerHTML = '';
     }
-    return result;
   };
 
   return (

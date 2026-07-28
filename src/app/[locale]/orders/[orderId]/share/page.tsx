@@ -32,7 +32,7 @@ export default function ShareOrderPage() {
   const t = useTranslations('screen2');
   const router = useRouter();
   const params = useParams();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   
   const orderId = params.orderId as string;
   const locale = (params.locale as string) || 'en';
@@ -41,11 +41,27 @@ export default function ShareOrderPage() {
   const [summary, setSummary] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState('');
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
 
+  // Auth Redirection Guard
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push(`/${locale}`);
+    }
+  }, [user, authLoading, router, locale]);
+
   useEffect(() => {
     if (!orderId || !user) return;
+
+    // Timeout safety guard
+    const timeoutId = setTimeout(() => {
+      if (loading) {
+        setLoading(false);
+        setErrorMsg("Failed to generate summary within 5 seconds. Please ensure you have permission to access this order.");
+      }
+    }, 5000);
 
     // Load order data
     const unsubOrder = onSnapshot(doc(db, 'orders', orderId), (docSnap) => {
@@ -57,8 +73,18 @@ export default function ShareOrderPage() {
         const unitPrice = Math.round(data.price / data.quantity);
         const dateStr = new Date(data.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         setSummary(`New Order from ${data.buyerName}: ${data.quantity} ${data.item}s by ${dateStr}. Price ₹${unitPrice}/unit.`);
+        clearTimeout(timeoutId);
+        setLoading(false);
+      } else {
+        clearTimeout(timeoutId);
+        setLoading(false);
+        setErrorMsg(`Order with ID "${orderId}" not found in Firestore.`);
       }
+    }, (err) => {
+      console.error("Firestore read error on Screen 2:", err);
+      clearTimeout(timeoutId);
       setLoading(false);
+      setErrorMsg(`Permission Denied or connection error while loading order: ${err.message}`);
     });
 
     // Load cooperative members
@@ -77,7 +103,10 @@ export default function ShareOrderPage() {
     };
     loadMembers();
 
-    return () => unsubOrder();
+    return () => {
+      clearTimeout(timeoutId);
+      unsubOrder();
+    };
   }, [orderId, user]);
 
   const handleRegenerate = () => {
@@ -154,6 +183,22 @@ export default function ShareOrderPage() {
       setSending(false);
     }
   };
+
+  if (errorMsg) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background items-center justify-center p-8 text-center font-sans">
+        <span className="material-symbols-outlined text-red-500 text-5xl mb-4">error</span>
+        <h2 className="text-xl font-bold text-on-surface mb-2">Failed to Load Order</h2>
+        <p className="text-sm text-on-surface-variant max-w-sm mb-6">{errorMsg}</p>
+        <button 
+          onClick={() => window.location.reload()}
+          className="px-6 py-2.5 bg-primary text-on-primary rounded-xl font-bold text-xs shadow-md active:scale-95 duration-100 cursor-pointer"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   if (loading) {
     return <BrandedLoader message="Preparing contract summary..." fullScreen />;
