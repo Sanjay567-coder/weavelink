@@ -35,16 +35,11 @@ service cloud.firestore {
         request.auth != null && getRole() == 'admin' &&
         (resource.data.status != 'confirmed' || request.resource.data.price == resource.data.price)
       ) || (
-        // Public buyer confirmation path: allow anyone to confirm but restrict modification to ONLY buyerConfirmed and buyerConfirmedAt fields
+        // Public buyer confirmation path: allow anyone to confirm but restrict changes to ONLY buyerConfirmed and buyerConfirmedAt fields, and only if not already confirmed
+        resource.data.get('buyerConfirmed', false) != true &&
         request.resource.data.buyerConfirmed == true &&
         request.resource.data.buyerConfirmedAt != null &&
-        request.resource.data.price == resource.data.price &&
-        request.resource.data.item == resource.data.item &&
-        request.resource.data.quantity == resource.data.quantity &&
-        request.resource.data.deadline == resource.data.deadline &&
-        request.resource.data.status == resource.data.status &&
-        request.resource.data.coopId == resource.data.coopId &&
-        request.resource.data.buyerName == resource.data.buyerName
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['buyerConfirmed', 'buyerConfirmedAt'])
       );
       
       match /responses/{memberId} {
