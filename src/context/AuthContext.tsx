@@ -79,13 +79,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
+  // Global Suppressor and Purger for asynchronous reCAPTCHA script crashes
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleGlobalError = (event: ErrorEvent) => {
+      const isRecaptchaError = 
+        (event.message && event.message.includes('recaptcha')) ||
+        (event.filename && event.filename.includes('recaptcha')) ||
+        (event.message && event.message.includes('Cannot read properties of null') && event.message.includes('style'));
+
+      if (isRecaptchaError) {
+        console.warn("Caught and suppressed benign reCAPTCHA teardown crash:", event.message);
+        event.preventDefault(); // Suppress browser console crash
+        
+        // Clean up visual overlays
+        setTimeout(() => {
+          const wrappers = document.querySelectorAll('.g-recaptcha-bubble-wrapper');
+          wrappers.forEach((el) => {
+            try { el.remove(); } catch (e) {}
+          });
+        }, 150);
+      }
+    };
+
+    window.addEventListener('error', handleGlobalError);
+    return () => window.removeEventListener('error', handleGlobalError);
+  }, []);
+
   const logout = async () => {
     await signOut(auth);
   };
 
   const setupRecaptcha = async (containerId: string) => {
     if (recaptchaVerifier) {
-      recaptchaVerifier.clear();
+      try {
+        recaptchaVerifier.clear();
+      } catch (e) {
+        console.warn("Failed to clear old setup recaptcha verifier:", e);
+      }
     }
     
     // Configure invisible or visible reCAPTCHA
@@ -115,14 +147,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
     const phone = phoneMap[role];
     
-    // Create temporary recaptcha container
+    // Retrieve persistent recaptcha container
     let container = document.getElementById('demo-recaptcha-helper');
     if (!container) {
       container = document.createElement('div');
       container.id = 'demo-recaptcha-helper';
       document.body.appendChild(container);
     }
-    container.innerHTML = '';
     
     const verifier = new RecaptchaVerifier(auth, container, { size: 'invisible' });
     try {
@@ -135,13 +166,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } catch (e) {
         console.warn("Failed to clear demo login verifier:", e);
       }
-      container.innerHTML = '';
     }
   };
 
   return (
     <AuthContext.Provider value={{ user, memberProfile, loading, logout, setupRecaptcha, sendOtp, demoLogin }}>
       {children}
+      {/* Permanent, root-level, always-mounted reCAPTCHA containers */}
+      <div id="demo-recaptcha-helper" className="hidden" style={{ display: 'none' }}></div>
+      <div id="global-recaptcha-container" className="hidden" style={{ display: 'none' }}></div>
     </AuthContext.Provider>
   );
 };

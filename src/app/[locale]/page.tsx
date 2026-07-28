@@ -22,20 +22,6 @@ export default function LoginPage() {
   const [authLoading, setAuthLoading] = useState(false);
   
   const confirmationResultRef = useRef<ConfirmationResult | null>(null);
-  const verifierRef = useRef<RecaptchaVerifier | null>(null);
-
-  // Clean up verifier on unmount
-  useEffect(() => {
-    return () => {
-      if (verifierRef.current) {
-        try {
-          verifierRef.current.clear();
-        } catch (e) {
-          console.warn(e);
-        }
-      }
-    };
-  }, []);
 
   // If already authenticated and member profile loaded, redirect automatically
   useEffect(() => {
@@ -67,9 +53,6 @@ export default function LoginPage() {
     } catch (err: any) {
       console.error(err);
       setErrorMsg(err.message || 'Failed to send OTP. Please check the number format.');
-      // Reset recaptcha container
-      const container = document.getElementById('recaptcha-container');
-      if (container) container.innerHTML = '';
     } finally {
       setAuthLoading(false);
     }
@@ -100,28 +83,7 @@ export default function LoginPage() {
     setAuthLoading(true);
     setStatusMsg('Logging in with test account...');
     try {
-      if (verifierRef.current) {
-        try {
-          verifierRef.current.clear();
-        } catch (e) {
-          console.warn("Error clearing verifier:", e);
-        }
-        verifierRef.current = null;
-      }
-
-      let recaptchaContainer = document.getElementById('recaptcha-container');
-      if (!recaptchaContainer) {
-        recaptchaContainer = document.createElement('div');
-        recaptchaContainer.id = 'recaptcha-container';
-        document.body.appendChild(recaptchaContainer);
-      }
-      recaptchaContainer.innerHTML = '';
-
-      const verifier = new RecaptchaVerifier(auth, recaptchaContainer, {
-        size: 'invisible',
-      });
-      verifierRef.current = verifier;
-
+      const verifier = await setupRecaptcha('recaptcha-container');
       const confirmationResult = await sendOtp(phone, verifier);
       await confirmationResult.confirm('123456');
       setStatusMsg('Logged in successfully!');
