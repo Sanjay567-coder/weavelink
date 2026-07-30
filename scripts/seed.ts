@@ -182,8 +182,8 @@ const seedData = async () => {
   // Responses for Order 1
   const responsesOrder1 = [
     { memberId: 'weaver-uid-888', response: 'agree', note: 'Looks good warp is ready', timestamp: new Date() },
-    { memberId: 'weaver-uid-101', response: 'concern', note: 'Dye supply for indigo warp is delayed', timestamp: new Date() },
-    { memberId: 'weaver-uid-102', response: 'reject', note: 'Pricing does not cover the intricate zari work', timestamp: new Date() }
+    { memberId: 'weaver-uid-101', response: 'reject', note: 'Deadline too tight, Health/personal availability issue', timestamp: new Date() },
+    { memberId: 'weaver-uid-102', response: 'reject', note: 'Price too low for the work involved, Other: Pricing does not cover the intricate zari work', timestamp: new Date() }
   ];
   for (const resp of responsesOrder1) {
     await db.collection('orders').doc(order1.id)
