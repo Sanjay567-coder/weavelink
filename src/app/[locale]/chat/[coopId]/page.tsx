@@ -447,6 +447,18 @@ export default function GroupChatPage() {
                 </span>
               </div>
             </div>
+
+            {memberProfile?.role === 'admin' && (
+              <div className="pt-2 border-t border-surface-container flex justify-end">
+                <button
+                  onClick={() => router.push(`/${locale}/orders/${orderId}/consensus`)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 border border-primary text-primary rounded-xl font-bold text-[11px] shadow-sm hover:bg-primary/5 active:scale-95 duration-100 cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-sm font-bold">analytics</span>
+                  View Full Consensus Details
+                </button>
+              </div>
+            )}
           </div>
         )}
 

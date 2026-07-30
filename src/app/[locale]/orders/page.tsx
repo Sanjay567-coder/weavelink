@@ -231,7 +231,18 @@ export default function OrdersListPage() {
                     </div>
                     <div>
                       <span className="text-on-surface-variant block text-[10px] uppercase font-bold">Price</span>
-                      <span className="font-bold text-primary">₹{order.price.toLocaleString('en-IN')}</span>
+                      <span className="font-bold text-primary block">₹{order.price.toLocaleString('en-IN')}</span>
+                      {order.buyerConfirmed ? (
+                        <span className="bg-emerald-100 text-emerald-800 text-[9px] font-bold px-1.5 py-0.5 rounded-full inline-flex items-center gap-0.5 mt-1.5">
+                          <span className="material-symbols-outlined text-[11px] font-extrabold">check_circle</span>
+                          Buyer Confirmed ✓
+                        </span>
+                      ) : (
+                        <span className="bg-amber-100 text-amber-800 text-[9px] font-bold px-1.5 py-0.5 rounded-full inline-flex items-center gap-0.5 mt-1.5">
+                          <span className="material-symbols-outlined text-[11px] font-extrabold">pending</span>
+                          Awaiting Buyer Confirmation
+                        </span>
+                      )}
                     </div>
                   </div>
 
