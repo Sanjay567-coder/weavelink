@@ -181,9 +181,9 @@ const seedData = async () => {
 
   // Responses for Order 1
   const responsesOrder1 = [
-    { memberId: 'weaver-uid-888', response: 'agree', note: 'Looks good warp is ready', timestamp: new Date() },
-    { memberId: 'weaver-uid-101', response: 'reject', note: 'Deadline too tight, Health/personal availability issue', timestamp: new Date() },
-    { memberId: 'weaver-uid-102', response: 'reject', note: 'Price too low for the work involved, Other: Pricing does not cover the intricate zari work', timestamp: new Date() }
+    { memberId: 'weaver-uid-888', response: 'agree', note: 'Looks good, warp is ready', timestamp: new Date() },
+    { memberId: 'weaver-uid-101', response: 'concern', note: 'The raw silk yarn price has gone up. Can we verify raw material cost?', timestamp: new Date() },
+    { memberId: 'weaver-uid-102', response: 'reject', note: 'My loom capacity is already full with the local Kanchipuram bridal order.', timestamp: new Date() }
   ];
   for (const resp of responsesOrder1) {
     await db.collection('orders').doc(order1.id)
@@ -275,28 +275,28 @@ const seedData = async () => {
     {
       senderId: 'weaver-uid-101',
       senderName: 'Deepika Das',
-      messageText: 'I would love to take this, but my loom capacity is already full with the Kanchipuram bridal batch. I will have to pass on this one.',
+      messageText: 'The raw silk yarn price from our local vendor has gone up this week. Can we double check if our margins are safe for raw material costs?',
       isAudio: false,
       timestamp: new Date(Date.now() - 7200000) // 2 hours ago
     },
     {
       senderId: 'system',
       senderName: 'System Log',
-      messageText: "Deepika Das responded: CAN'T DO IT — Loom capacity already full",
+      messageText: 'Deepika Das raised a concern: The raw silk yarn price has gone up. Can we verify raw material cost?',
       isAudio: false,
       timestamp: new Date(Date.now() - 7150000)
     },
     {
       senderId: 'weaver-uid-102',
-      senderName: 'Sunil Kumar',
-      messageText: 'I agree too. Let me know when the raw dyed yarn is arriving at the shed.',
+      senderName: 'Rajesh M.',
+      messageText: 'I would love to participate, but my loom capacity is already full with the local Kanchipuram bridal order. I will pass on this one.',
       isAudio: false,
       timestamp: new Date(Date.now() - 3600000) // 1 hour ago
     },
     {
       senderId: 'system',
       senderName: 'System Log',
-      messageText: 'Sunil Kumar responded: I AGREE',
+      messageText: "Rajesh M. responded: CAN'T DO IT — My loom capacity is already full with the local Kanchipuram bridal order.",
       isAudio: false,
       timestamp: new Date(Date.now() - 3550000)
     }

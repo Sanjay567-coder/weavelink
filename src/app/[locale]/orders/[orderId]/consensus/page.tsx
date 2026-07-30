@@ -98,18 +98,21 @@ export default function ConsensusCheckPage() {
   // Calculations for donut chart
   const total = responses.length || 1; // prevent divide by zero
   const agreed = responses.filter(r => r.response === 'agree').length;
+  const concerned = responses.filter(r => r.response === 'concern').length;
   const reject = responses.filter(r => r.response === 'reject').length;
 
   const agreePct = Math.round((agreed / total) * 100);
+  const concernPct = Math.round((concerned / total) * 100);
   const rejectPct = Math.round((reject / total) * 100);
 
   // Circle geometry properties
   const radius = 40;
   const circumference = 2 * Math.PI * radius; // 251.32
 
-  // Segment stroke dashes
-  const agreeStrokeOffset = circumference * (1 - (agreed / total));
-  const rejectStrokeOffset = circumference * (1 - (reject / total));
+  // Segment stroke lengths
+  const agreeStrokeLength = (agreed / total) * circumference;
+  const concernStrokeLength = (concerned / total) * circumference;
+  const rejectStrokeLength = (reject / total) * circumference;
 
   const locale = (params.locale as string) || 'en';
 
@@ -191,6 +194,7 @@ export default function ConsensusCheckPage() {
   }
 
   const rejectionsList = responses.filter(r => r.response === 'reject');
+  const concernsList = responses.filter(r => r.response === 'concern');
 
   return (
     <div className="bg-background text-on-surface font-body-md min-h-screen pb-48 flex flex-col">
@@ -238,9 +242,19 @@ export default function ConsensusCheckPage() {
                   className="stroke-error fill-transparent transition-all duration-700" 
                   cx="50" cy="50" r="40" 
                   strokeWidth="12"
-                  strokeDasharray={`${circumference}`}
-                  strokeDashoffset={rejectStrokeOffset}
-                  style={{ transform: `rotate(${agreed * (360 / total)}deg)`, transformOrigin: '50% 50%' }}
+                  strokeDasharray={`${rejectStrokeLength} ${circumference}`}
+                  strokeDashoffset={-(agreeStrokeLength + concernStrokeLength)}
+                  style={{ transformOrigin: '50% 50%' }}
+                ></circle>
+
+                {/* Concern Segment - Yellow/Amber */}
+                <circle 
+                  className="stroke-amber-500 fill-transparent transition-all duration-700" 
+                  cx="50" cy="50" r="40" 
+                  strokeWidth="12"
+                  strokeDasharray={`${concernStrokeLength} ${circumference}`}
+                  strokeDashoffset={-agreeStrokeLength}
+                  style={{ transformOrigin: '50% 50%' }}
                 ></circle>
                 
                 {/* Agree Segment - Green (Secondary) */}
@@ -248,8 +262,8 @@ export default function ConsensusCheckPage() {
                   className="stroke-secondary fill-transparent transition-all duration-700" 
                   cx="50" cy="50" r="40" 
                   strokeWidth="12"
-                  strokeDasharray={`${circumference}`}
-                  strokeDashoffset={agreeStrokeOffset}
+                  strokeDasharray={`${agreeStrokeLength} ${circumference}`}
+                  strokeDashoffset={0}
                   style={{ transformOrigin: '50% 50%' }}
                 ></circle>
               </svg>
@@ -260,17 +274,22 @@ export default function ConsensusCheckPage() {
               </div>
             </div>
 
-            {/* Legend (2-state model) */}
-            <div className="grid grid-cols-2 gap-4 w-full mt-stack-lg text-center max-w-sm">
+            {/* Legend (3-state model) */}
+            <div className="grid grid-cols-3 gap-2 w-full mt-stack-lg text-center max-w-md">
               <div className="flex flex-col items-center">
                 <div className="h-1.5 w-12 bg-secondary rounded-full mb-2"></div>
-                <span className="font-label-sm text-label-sm">{t('agree')}</span>
-                <span className="font-bold text-on-surface">{agreePct}%</span>
+                <span className="font-label-sm text-[10px] text-on-surface-variant uppercase tracking-wider block">Agree</span>
+                <span className="font-bold text-on-surface text-sm mt-0.5">{agreePct}%</span>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="h-1.5 w-12 bg-amber-500 rounded-full mb-2"></div>
+                <span className="font-label-sm text-[10px] text-on-surface-variant uppercase tracking-wider block">Concern</span>
+                <span className="font-bold text-on-surface text-sm mt-0.5">{concernPct}%</span>
               </div>
               <div className="flex flex-col items-center">
                 <div className="h-1.5 w-12 bg-error rounded-full mb-2"></div>
-                <span className="font-label-sm text-label-sm">{t('reject')}</span>
-                <span className="font-bold text-on-surface">{rejectPct}%</span>
+                <span className="font-label-sm text-[10px] text-on-surface-variant uppercase tracking-wider block">Can't Do</span>
+                <span className="font-bold text-on-surface text-sm mt-0.5">{rejectPct}%</span>
               </div>
             </div>
 
@@ -278,10 +297,50 @@ export default function ConsensusCheckPage() {
         </div>
 
         {/* Breakdown Section */}
+        {/* Concerns List */}
         <div className="mb-stack-lg">
           <div className="flex justify-between items-end mb-stack-md">
-            <h2 className="font-label-lg text-label-lg text-on-surface">
-              Weaver Rejections & Reasons ({rejectionsList.length})
+            <h2 className="font-label-lg text-label-lg text-on-surface font-bold">
+              Weaver Concerns ({concernsList.length})
+            </h2>
+          </div>
+
+          <div className="space-y-stack-md">
+            {concernsList.map((c) => (
+              <div key={c.memberId} className="bg-white border border-outline-variant p-gutter rounded-xl shadow-sm flex items-center gap-4">
+                <div className="w-14 h-14 bg-surface-container rounded-full overflow-hidden flex-shrink-0">
+                  <img className="w-full h-full object-cover" src={c.avatarUrl} alt={c.name} />
+                </div>
+                <div className="flex-grow">
+                  <div className="flex justify-between items-start">
+                    <span className="font-label-lg text-label-lg text-on-surface font-bold">{c.name}</span>
+                    <span className="px-2 py-0.5 rounded-full font-label-sm text-[10px] uppercase bg-amber-50 border border-amber-200 text-amber-800 font-bold">
+                      Concern Raised
+                    </span>
+                  </div>
+                  
+                  {c.note && (
+                    <div className="bg-amber-50/50 border border-amber-100/50 p-3 rounded-lg mt-2 text-xs text-on-surface-variant font-medium">
+                      {c.note}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+            
+            {concernsList.length === 0 && (
+              <div className="text-center py-6 bg-white rounded-xl border border-outline-variant border-dashed text-on-surface-variant text-xs">
+                No active concerns reported.
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Rejections List */}
+        <div className="mb-stack-lg">
+          <div className="flex justify-between items-end mb-stack-md">
+            <h2 className="font-label-lg text-label-lg text-on-surface font-bold">
+              Weaver Rejections ({rejectionsList.length})
             </h2>
             <button className="text-primary font-label-sm flex items-center gap-1 cursor-pointer">
               <span className="material-symbols-outlined text-[18px]">play_circle</span>
@@ -289,7 +348,6 @@ export default function ConsensusCheckPage() {
             </button>
           </div>
 
-          {/* Rejection Cards */}
           <div className="space-y-stack-md">
             {rejectionsList.map((c) => (
               <div key={c.memberId} className="bg-white border border-outline-variant p-gutter rounded-xl shadow-sm flex items-center gap-4">
@@ -298,8 +356,8 @@ export default function ConsensusCheckPage() {
                 </div>
                 <div className="flex-grow">
                   <div className="flex justify-between items-start">
-                    <span className="font-label-lg text-label-lg text-on-surface">{c.name}</span>
-                    <span className="px-2 py-0.5 rounded-full font-label-sm text-[10px] uppercase bg-error-container text-on-error-container font-bold">
+                    <span className="font-label-lg text-label-lg text-on-surface font-bold">{c.name}</span>
+                    <span className="px-2 py-0.5 rounded-full font-label-sm text-[10px] uppercase bg-rose-50 border border-rose-100 text-rose-800 font-bold">
                       Can't Do It
                     </span>
                   </div>
@@ -328,14 +386,9 @@ export default function ConsensusCheckPage() {
                     <span className="font-label-sm text-on-surface-variant">0:24</span>
                   </div>
 
-                  {/* Reasons list rendered as tags */}
                   {c.note && (
-                    <div className="flex flex-wrap gap-1.5 mt-2">
-                      {c.note.split(', ').map((reason, idx) => (
-                        <span key={idx} className="bg-rose-50 border border-rose-100 text-rose-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                          {reason}
-                        </span>
-                      ))}
+                    <div className="bg-rose-50/50 border border-rose-100/50 p-3 rounded-lg mt-2 text-xs text-rose-800 font-medium">
+                      {c.note}
                     </div>
                   )}
                 </div>
@@ -343,7 +396,7 @@ export default function ConsensusCheckPage() {
             ))}
             
             {rejectionsList.length === 0 && (
-              <div className="text-center py-6 bg-white rounded-xl border border-outline-variant border-dashed text-on-surface-variant">
+              <div className="text-center py-6 bg-white rounded-xl border border-outline-variant border-dashed text-on-surface-variant text-xs">
                 No rejections. Cooperative has complete consensus!
               </div>
             )}

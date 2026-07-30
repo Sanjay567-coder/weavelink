@@ -64,7 +64,7 @@ export default function GroupChatPage() {
   
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [activeOrder, setActiveOrder] = useState<OrderData | null>(null);
-  const [responsesCount, setResponsesCount] = useState({ agreed: 0, rejected: 0, total: 18 });
+  const [responsesCount, setResponsesCount] = useState({ agreed: 0, rejected: 0, concerned: 0, total: 18 });
   const [userResponse, setUserResponse] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
@@ -74,8 +74,8 @@ export default function GroupChatPage() {
   const [activeVoicePlaying, setActiveVoicePlaying] = useState<string | null>(null);
   
   const [showReasonModal, setShowReasonModal] = useState(false);
-  const [selectedReasons, setSelectedReasons] = useState<string[]>([]);
-  const [otherReasonText, setOtherReasonText] = useState('');
+  const [modalMode, setModalMode] = useState<'reject' | 'concern' | null>(null);
+  const [freeTextReason, setFreeTextReason] = useState('');
   
   const [toastMsg, setToastMsg] = useState('');
   const recognitionRef = useRef<any>(null);
@@ -135,10 +135,12 @@ export default function GroupChatPage() {
     const unsubResponses = onSnapshot(collection(db, 'orders', orderId, 'responses'), (snap) => {
       let agreeCount = 0;
       let rejectCount = 0;
+      let concernCount = 0;
       snap.forEach((docSnap) => {
         const data = docSnap.data() as MemberResponse;
         if (data.response === 'agree') agreeCount++;
         if (data.response === 'reject') rejectCount++;
+        if (data.response === 'concern') concernCount++;
         if (user && docSnap.id === user.uid) {
           setUserResponse(data.response);
         }
@@ -146,6 +148,7 @@ export default function GroupChatPage() {
       setResponsesCount({
         agreed: agreeCount,
         rejected: rejectCount,
+        concerned: concernCount,
         total: totalMembers
       });
     }, (err) => {
@@ -281,23 +284,30 @@ export default function GroupChatPage() {
   };
 
   // Submit Quick Response
-  const submitResponse = async (responseType: 'agree' | 'reject', reasons?: string[]) => {
+  const submitResponse = async (responseType: 'agree' | 'reject' | 'concern', noteText?: string) => {
     if (!user) {
       triggerToast("You must be logged in to vote.");
       return;
     }
     if (!activeOrder) return;
 
-    let noteText = "Agreed to parameters.";
+    let finalNote = "Agreed to parameters.";
     let displayType = "I AGREE";
 
     if (responseType === 'reject') {
-      if (!reasons || reasons.length === 0) {
-        triggerToast("Please provide at least one reason.");
+      if (!noteText || !noteText.trim()) {
+        triggerToast("Please provide a reason.");
         return;
       }
-      noteText = reasons.join(', ');
-      displayType = `CAN'T DO IT — ${noteText}`;
+      finalNote = noteText.trim();
+      displayType = `CAN'T DO IT — ${finalNote}`;
+    } else if (responseType === 'concern') {
+      if (!noteText || !noteText.trim()) {
+        triggerToast("Please provide your concern details.");
+        return;
+      }
+      finalNote = noteText.trim();
+      displayType = `raised a concern: ${finalNote}`;
     }
 
     try {
@@ -305,20 +315,30 @@ export default function GroupChatPage() {
       await setDoc(responseRef, {
         memberId: user.uid,
         response: responseType,
-        note: noteText,
+        note: finalNote,
         timestamp: new Date()
       });
 
       // Write a system log message in the group chat
+      const logMessageText = responseType === 'concern'
+        ? `${memberProfile?.name || 'A weaver'} raised a concern: ${finalNote}`
+        : `${memberProfile?.name || 'A weaver'} responded: ${displayType}`;
+
       await addDoc(collection(db, 'cooperatives', coopId, 'messages'), {
         senderId: 'system',
         senderName: 'System Log',
-        messageText: `${memberProfile?.name || 'A weaver'} responded: ${displayType}`,
+        messageText: logMessageText,
         isAudio: false,
         timestamp: new Date()
       });
 
-      triggerToast(`Response submitted: ${responseType === 'agree' ? 'AGREE' : "CAN'T DO IT"}`);
+      triggerToast(`Response submitted: ${
+        responseType === 'agree' 
+          ? 'AGREE' 
+          : responseType === 'concern' 
+            ? 'CONCERN' 
+            : "CAN'T DO IT"
+      }`);
     } catch (err: any) {
       console.error(err);
       triggerToast("Database error: " + err.message);
@@ -413,36 +433,46 @@ export default function GroupChatPage() {
               
               {/* Derived Consensus Status Badge */}
               <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
-                (responsesCount.agreed + responsesCount.rejected) < responsesCount.total
+                (responsesCount.agreed + responsesCount.rejected + responsesCount.concerned) < responsesCount.total
                   ? 'bg-amber-50 border border-amber-200 text-amber-800 animate-pulse'
                   : responsesCount.rejected > 0
                     ? 'bg-rose-50 border border-rose-200 text-rose-800'
-                    : 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+                    : responsesCount.concerned > 0
+                      ? 'bg-amber-50 border border-amber-200 text-amber-800'
+                      : 'bg-emerald-50 border border-emerald-200 text-emerald-800'
               }`}>
-                {(responsesCount.agreed + responsesCount.rejected) < responsesCount.total
+                {(responsesCount.agreed + responsesCount.rejected + responsesCount.concerned) < responsesCount.total
                   ? 'Waiting for responses'
                   : responsesCount.rejected > 0
                     ? 'Action needed: Rejections present'
-                    : 'Consensus reached'}
+                    : responsesCount.concerned > 0
+                      ? 'Action needed: Concerns present'
+                      : 'Consensus reached'}
               </span>
             </div>
 
-            <div className="grid grid-cols-3 gap-4 text-center text-xs">
-              <div className="bg-surface-container-low p-2 rounded-lg border border-outline-variant/30">
-                <span className="text-[10px] text-on-surface-variant font-bold uppercase tracking-wider block">Responded</span>
-                <span className="font-bold text-on-surface text-sm mt-1 block">
-                  {responsesCount.agreed + responsesCount.rejected} / {responsesCount.total}
+            <div className="grid grid-cols-4 gap-2 text-center text-xs">
+              <div className="bg-surface-container-low p-2 rounded-lg border border-outline-variant/30 flex flex-col justify-between">
+                <span className="text-[9px] text-on-surface-variant font-bold uppercase tracking-wider block leading-tight">Responded</span>
+                <span className="font-bold text-on-surface text-xs mt-1 block">
+                  {responsesCount.agreed + responsesCount.rejected + responsesCount.concerned} / {responsesCount.total}
                 </span>
               </div>
-              <div className="bg-emerald-50/50 p-2 rounded-lg border border-emerald-200/30">
-                <span className="text-[10px] text-emerald-800 font-bold uppercase tracking-wider block">✅ Agree</span>
-                <span className="font-bold text-emerald-700 text-sm mt-1 block">
+              <div className="bg-emerald-50/50 p-2 rounded-lg border border-emerald-200/30 flex flex-col justify-between">
+                <span className="text-[9px] text-emerald-800 font-bold uppercase tracking-wider block leading-tight">✅ Agree</span>
+                <span className="font-bold text-emerald-700 text-xs mt-1 block">
                   {responsesCount.agreed}
                 </span>
               </div>
-              <div className="bg-rose-50/50 p-2 rounded-lg border border-rose-200/30">
-                <span className="text-[10px] text-rose-800 font-bold uppercase tracking-wider block">❌ Can't Do It</span>
-                <span className="font-bold text-rose-700 text-sm mt-1 block">
+              <div className="bg-amber-50/50 p-2 rounded-lg border border-amber-200/30 flex flex-col justify-between">
+                <span className="text-[9px] text-amber-800 font-bold uppercase tracking-wider block leading-tight">⚠️ Concern</span>
+                <span className="font-bold text-amber-700 text-xs mt-1 block">
+                  {responsesCount.concerned}
+                </span>
+              </div>
+              <div className="bg-rose-50/50 p-2 rounded-lg border border-rose-200/30 flex flex-col justify-between">
+                <span className="text-[9px] text-rose-800 font-bold uppercase tracking-wider block leading-tight">❌ Can't Do</span>
+                <span className="font-bold text-rose-700 text-xs mt-1 block">
                   {responsesCount.rejected}
                 </span>
               </div>
@@ -526,8 +556,8 @@ export default function GroupChatPage() {
         {/* Quick Response Bar */}
         <div className="fixed bottom-[72px] left-0 w-full bg-surface border-t border-outline-variant px-container-padding py-4 z-30 flex flex-col gap-4">
           <div className="max-w-2xl mx-auto w-full space-y-4">
-            {/* Agreement Quick Votes (2-state model) */}
-            <div className="grid grid-cols-2 gap-3">
+            {/* Agreement Quick Votes (3-state model) */}
+            <div className="grid grid-cols-3 gap-2">
               <button 
                 onClick={() => submitResponse('agree')}
                 className={`h-14 flex flex-col items-center justify-center border rounded-xl active:scale-95 transition-all cursor-pointer ${
@@ -536,13 +566,30 @@ export default function GroupChatPage() {
                     : 'bg-emerald-100 text-emerald-800 border-emerald-200 hover:bg-emerald-200'
                 }`}
               >
-                <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-                <span className="font-label-sm">{t('agree')}</span>
+                <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                <span className="font-label-sm text-[10px]">{t('agree')}</span>
               </button>
+              
               <button 
                 onClick={() => {
-                  setSelectedReasons([]);
-                  setOtherReasonText('');
+                  setModalMode('concern');
+                  setFreeTextReason('');
+                  setShowReasonModal(true);
+                }}
+                className={`h-14 flex flex-col items-center justify-center border rounded-xl active:scale-95 transition-all cursor-pointer ${
+                  userResponse === 'concern' 
+                    ? 'bg-amber-200 border-amber-500 text-amber-900 font-bold shadow-md' 
+                    : 'bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200'
+                }`}
+              >
+                <span className="material-symbols-outlined text-lg">warning</span>
+                <span className="font-label-sm text-[10px]">Raise Concern</span>
+              </button>
+
+              <button 
+                onClick={() => {
+                  setModalMode('reject');
+                  setFreeTextReason('');
                   setShowReasonModal(true);
                 }}
                 className={`h-14 flex flex-col items-center justify-center border rounded-xl active:scale-95 transition-all cursor-pointer ${
@@ -551,8 +598,8 @@ export default function GroupChatPage() {
                     : 'bg-rose-100 text-rose-800 border-rose-200 hover:bg-rose-200'
                 }`}
               >
-                <span className="material-symbols-outlined">close</span>
-                <span className="font-label-sm">{t('cantDo')}</span>
+                <span className="material-symbols-outlined text-lg">close</span>
+                <span className="font-label-sm text-[10px]">{t('cantDo')}</span>
               </button>
             </div>
 
@@ -587,63 +634,41 @@ export default function GroupChatPage() {
 
       </main>
 
-      {/* Reason Checklist Modal */}
-      {showReasonModal && (
+      {/* Free-text Reason/Concern Modal */}
+      {showReasonModal && modalMode && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl w-full max-w-sm border border-outline-variant shadow-2xl p-6 space-y-4 animate-in zoom-in-95 duration-200">
             <div>
-              <h3 className="font-headline-md text-on-surface font-extrabold">Can't Do It</h3>
-              <p className="text-xs text-on-surface-variant mt-1">Please select the reason(s) why you cannot take on this order.</p>
+              <h3 className="font-headline-md text-on-surface font-extrabold">
+                {modalMode === 'concern' ? 'Raise Concern' : "Can't Do It"}
+              </h3>
+              <p className="text-xs text-on-surface-variant mt-1">
+                {modalMode === 'concern' 
+                  ? "What's your concern?" 
+                  : "Why can't you take this on?"}
+              </p>
             </div>
 
-            <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
-              {[
-                "Not enough raw material/yarn available",
-                "Loom capacity already full",
-                "Deadline too tight",
-                "Price too low for the work involved",
-                "Health/personal availability issue",
-                "Other"
-              ].map((reason) => {
-                const isChecked = selectedReasons.includes(reason);
-                return (
-                  <div key={reason} className="flex flex-col gap-2">
-                    <label className="flex items-center gap-3 p-3 bg-surface-container rounded-xl cursor-pointer hover:bg-surface-container-high transition-colors border border-transparent hover:border-outline-variant/35">
-                      <input 
-                        type="checkbox"
-                        checked={isChecked}
-                        onChange={() => {
-                          if (isChecked) {
-                            setSelectedReasons(selectedReasons.filter(r => r !== reason));
-                          } else {
-                            setSelectedReasons([...selectedReasons, reason]);
-                          }
-                        }}
-                        className="rounded text-primary focus:ring-primary w-4.5 h-4.5 border-outline"
-                      />
-                      <span className="text-xs font-semibold text-on-surface">{reason}</span>
-                    </label>
-
-                    {reason === 'Other' && isChecked && (
-                      <textarea
-                        value={otherReasonText}
-                        onChange={(e) => setOtherReasonText(e.target.value)}
-                        placeholder="Please type your specific reason..."
-                        rows={2}
-                        className="w-full bg-white border border-outline-variant rounded-lg p-2 text-xs focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
-                      />
-                    )}
-                  </div>
-                );
-              })}
+            <div className="space-y-2">
+              <textarea
+                value={freeTextReason}
+                onChange={(e) => setFreeTextReason(e.target.value)}
+                placeholder={
+                  modalMode === 'concern'
+                    ? "Explain your concern in detail..."
+                    : "Explain why you cannot participate..."
+                }
+                rows={4}
+                className="w-full bg-white border border-outline-variant rounded-xl p-3 text-xs focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
+              />
             </div>
 
             <div className="flex gap-3 pt-2">
               <button 
                 onClick={() => {
                   setShowReasonModal(false);
-                  setSelectedReasons([]);
-                  setOtherReasonText('');
+                  setModalMode(null);
+                  setFreeTextReason('');
                 }}
                 className="flex-1 py-2.5 border border-outline text-outline font-bold text-xs text-center rounded-xl hover:bg-surface-container active:scale-95 duration-100 cursor-pointer"
               >
@@ -651,19 +676,12 @@ export default function GroupChatPage() {
               </button>
               <button 
                 onClick={() => {
-                  const reasonsToSubmit = selectedReasons.map(r => {
-                    if (r === 'Other') {
-                      return `Other: ${otherReasonText.trim()}`;
-                    }
-                    return r;
-                  });
-                  submitResponse('reject', reasonsToSubmit);
+                  submitResponse(modalMode, freeTextReason);
                   setShowReasonModal(false);
+                  setModalMode(null);
+                  setFreeTextReason('');
                 }}
-                disabled={
-                  selectedReasons.length === 0 || 
-                  (selectedReasons.includes('Other') && !otherReasonText.trim())
-                }
+                disabled={!freeTextReason.trim()}
                 className="flex-1 py-2.5 bg-primary text-on-primary font-bold text-xs rounded-xl shadow-md hover:bg-primary-container active:scale-95 duration-100 disabled:opacity-50 cursor-pointer"
               >
                 Submit Response
