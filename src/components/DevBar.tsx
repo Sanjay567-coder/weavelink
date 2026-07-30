@@ -37,9 +37,16 @@ export const DevBar: React.FC = () => {
     setLoading(true);
     setStatusMsg(`Signing in as ${role}...`);
     try {
+      // Sign out first to purge firebase auth session state cleanly
+      await auth.signOut();
       await demoLogin(role);
       setStatusMsg(`Success! Signed in as ${role}`);
-      setTimeout(() => setStatusMsg(''), 2000);
+      
+      // Force page refresh to /home to clear all in-memory React context caches
+      setTimeout(() => {
+        setStatusMsg('');
+        window.location.href = `/${locale}/home`;
+      }, 1000);
     } catch (err) {
       console.error("DevBar login error:", err);
       setStatusMsg(`Error: ${(err as Error).message || 'Authentication failed'}`);
@@ -49,6 +56,7 @@ export const DevBar: React.FC = () => {
   };
 
   const screens = [
+    { num: 0, name: 'Home Dashboard (All)', path: `/home` },
     { num: 1, name: 'S1: Order Received (Admin)', path: `/orders/order-8922` },
     { num: 2, name: 'S2: Share to Chat (Admin)', path: `/orders/order-8922/share` },
     { num: 3, name: 'S3: Weaver Chat (Weaver)', path: `/chat/coop-kanchipuram` },
