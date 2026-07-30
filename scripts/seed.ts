@@ -240,29 +240,65 @@ const seedData = async () => {
   }
 
   // Seed chat messages for Kanchipuram Cooperative (Screen 3)
-  console.log("Seeding chat messages...");
+  console.log("Clearing old chat messages...");
+  const msgSnap = await db.collection('cooperatives').doc('coop-kanchipuram')
+    .collection('messages').get();
+  const deleteBatch = db.batch();
+  msgSnap.forEach((docSnap) => {
+    deleteBatch.delete(docSnap.ref);
+  });
+  await deleteBatch.commit();
+
+  console.log("Seeding realistic chat messages...");
   const chatMessages = [
     {
       senderId: 'admin-uid-999',
       senderName: 'Amit Patel (Admin)',
-      messageText: 'Can everyone confirm the new yardage requirement for the Blue Silk lot? We need an extra 5 meters each.',
+      messageText: 'Namaste weavers! I have posted the details for the new Ethnic Threads order (Order #8922). Can everyone review material costs and capacity?',
       isAudio: false,
-      timestamp: new Date(Date.now() - 3600000)
+      timestamp: new Date(Date.now() - 14400000) // 4 hours ago
     },
     {
       senderId: 'weaver-uid-888',
       senderName: 'Ramesh Vankar',
-      messageText: '[Voice Note 0:14]',
-      isAudio: true,
-      audioDuration: '0:14',
-      timestamp: new Date(Date.now() - 1800000)
+      messageText: 'I checked the warp count for the Zari border. It looks good and my loom is free. I am casting my vote to agree.',
+      isAudio: false,
+      timestamp: new Date(Date.now() - 10800000) // 3 hours ago
+    },
+    {
+      senderId: 'system',
+      senderName: 'System Log',
+      messageText: 'Ramesh Vankar responded: I AGREE',
+      isAudio: false,
+      timestamp: new Date(Date.now() - 10750000)
     },
     {
       senderId: 'weaver-uid-101',
       senderName: 'Deepika Das',
-      messageText: 'I agree. The warp density allows for it. 👍',
+      messageText: 'I would love to take this, but my loom capacity is already full with the Kanchipuram bridal batch. I will have to pass on this one.',
       isAudio: false,
-      timestamp: new Date(Date.now() - 600000)
+      timestamp: new Date(Date.now() - 7200000) // 2 hours ago
+    },
+    {
+      senderId: 'system',
+      senderName: 'System Log',
+      messageText: "Deepika Das responded: CAN'T DO IT — Loom capacity already full",
+      isAudio: false,
+      timestamp: new Date(Date.now() - 7150000)
+    },
+    {
+      senderId: 'weaver-uid-102',
+      senderName: 'Sunil Kumar',
+      messageText: 'I agree too. Let me know when the raw dyed yarn is arriving at the shed.',
+      isAudio: false,
+      timestamp: new Date(Date.now() - 3600000) // 1 hour ago
+    },
+    {
+      senderId: 'system',
+      senderName: 'System Log',
+      messageText: 'Sunil Kumar responded: I AGREE',
+      isAudio: false,
+      timestamp: new Date(Date.now() - 3550000)
     }
   ];
 

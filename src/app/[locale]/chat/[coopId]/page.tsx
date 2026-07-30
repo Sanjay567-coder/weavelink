@@ -10,7 +10,8 @@ import {
   setDoc,
   query, 
   orderBy, 
-  limit 
+  limit,
+  where
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/context/AuthContext';
@@ -63,7 +64,7 @@ export default function GroupChatPage() {
   
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [activeOrder, setActiveOrder] = useState<OrderData | null>(null);
-  const [responsesCount, setResponsesCount] = useState({ agreed: 0, total: 18 });
+  const [responsesCount, setResponsesCount] = useState({ agreed: 0, rejected: 0, total: 18 });
   const [userResponse, setUserResponse] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
@@ -123,17 +124,30 @@ export default function GroupChatPage() {
       setErrorMsg(`Permission Denied or connection error while loading order details: ${err.message}`);
     });
 
+    // Fetch total members count in this cooperative to calculate real consensus percentages dynamically
+    const qMembers = query(collection(db, 'members'), where('coopId', '==', coopId));
+    let totalMembers = 3; // default fallback
+    const unsubMembers = onSnapshot(qMembers, (memSnap) => {
+      totalMembers = memSnap.size || 3;
+    });
+
     // 2. Fetch responses list for the active order
     const unsubResponses = onSnapshot(collection(db, 'orders', orderId, 'responses'), (snap) => {
-      let count = 0;
+      let agreeCount = 0;
+      let rejectCount = 0;
       snap.forEach((docSnap) => {
         const data = docSnap.data() as MemberResponse;
-        if (data.response === 'agree') count++;
+        if (data.response === 'agree') agreeCount++;
+        if (data.response === 'reject') rejectCount++;
         if (user && docSnap.id === user.uid) {
           setUserResponse(data.response);
         }
       });
-      setResponsesCount({ agreed: count, total: snap.size });
+      setResponsesCount({
+        agreed: agreeCount,
+        rejected: rejectCount,
+        total: totalMembers
+      });
     }, (err) => {
       console.error("Responses read error on Screen 3:", err);
       clearTimeout(timeoutId);
@@ -171,6 +185,7 @@ export default function GroupChatPage() {
     return () => {
       clearTimeout(timeoutId);
       unsubOrder();
+      unsubMembers();
       unsubResponses();
       unsubMessages();
     };
@@ -390,21 +405,55 @@ export default function GroupChatPage() {
             </div>
           </div>
         )}
+        {/* Pinned Live Consensus Status Header */}
+        {activeOrder && (
+          <div className="bg-white border border-outline-variant rounded-xl p-4 shadow-sm space-y-3 mb-2 animate-in fade-in duration-200 mt-3">
+            <div className="flex justify-between items-center pb-2 border-b border-surface-container">
+              <span className="font-label-lg font-bold text-xs uppercase tracking-wider text-primary">Live Consensus Status</span>
+              
+              {/* Derived Consensus Status Badge */}
+              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
+                (responsesCount.agreed + responsesCount.rejected) < responsesCount.total
+                  ? 'bg-amber-50 border border-amber-200 text-amber-800 animate-pulse'
+                  : responsesCount.rejected > 0
+                    ? 'bg-rose-50 border border-rose-200 text-rose-800'
+                    : 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+              }`}>
+                {(responsesCount.agreed + responsesCount.rejected) < responsesCount.total
+                  ? 'Waiting for responses'
+                  : responsesCount.rejected > 0
+                    ? 'Action needed: Rejections present'
+                    : 'Consensus reached'}
+              </span>
+            </div>
 
-        {/* Tally Counter */}
-        <div className="py-stack-sm text-center">
-          <div className="inline-flex items-center gap-2 bg-secondary-container/30 px-4 py-1.5 rounded-full border border-secondary-container">
-            <span className="material-symbols-outlined text-secondary text-lg">groups</span>
-            <span className="font-label-sm text-on-secondary-container">
-              {t('membersResponded', { responded: responsesCount.agreed, total: responsesCount.total })}
-            </span>
+            <div className="grid grid-cols-3 gap-4 text-center text-xs">
+              <div className="bg-surface-container-low p-2 rounded-lg border border-outline-variant/30">
+                <span className="text-[10px] text-on-surface-variant font-bold uppercase tracking-wider block">Responded</span>
+                <span className="font-bold text-on-surface text-sm mt-1 block">
+                  {responsesCount.agreed + responsesCount.rejected} / {responsesCount.total}
+                </span>
+              </div>
+              <div className="bg-emerald-50/50 p-2 rounded-lg border border-emerald-200/30">
+                <span className="text-[10px] text-emerald-800 font-bold uppercase tracking-wider block">✅ Agree</span>
+                <span className="font-bold text-emerald-700 text-sm mt-1 block">
+                  {responsesCount.agreed}
+                </span>
+              </div>
+              <div className="bg-rose-50/50 p-2 rounded-lg border border-rose-200/30">
+                <span className="text-[10px] text-rose-800 font-bold uppercase tracking-wider block">❌ Can't Do It</span>
+                <span className="font-bold text-rose-700 text-sm mt-1 block">
+                  {responsesCount.rejected}
+                </span>
+              </div>
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Chat Area */}
-        <div className="flex-1 overflow-y-auto max-h-[380px] space-y-4 py-4 pr-1 scrollbar-thin">
+        {/* Chat Area (Flexbox Alignment Enabled) */}
+        <div className="flex-1 overflow-y-auto max-h-[380px] space-y-4 py-4 pr-1 scrollbar-thin flex flex-col">
           {messages.map((msg) => {
-            const isMe = msg.senderId === user?.uid;
+            const isMe = !!user && !!msg.senderId && msg.senderId === user.uid;
             const isSystem = msg.senderId === 'system';
 
             if (isSystem) {
