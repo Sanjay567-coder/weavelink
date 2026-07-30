@@ -4,10 +4,12 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { useAuth } from '@/context/AuthContext';
 
 export const Navbar: React.FC = () => {
   const t = useTranslations('common');
   const pathname = usePathname();
+  const { memberProfile } = useAuth();
   const locale = pathname.split('/')[1] || 'en';
 
   // Get active route tab
@@ -27,10 +29,12 @@ export const Navbar: React.FC = () => {
       : "flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors px-gutter py-1 rounded-full";
   };
 
+  const isWeaver = memberProfile?.role === 'weaver';
+
   return (
     <nav className="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-4 pt-2 bg-surface border-t border-outline-variant shadow-[0_-4px_12px_rgba(30,27,75,0.08)] rounded-t-xl">
       {/* Home */}
-      <Link href={`/${locale}`} className={tabClass('home')}>
+      <Link href={`/${locale}/home`} className={tabClass('home')}>
         <span className="material-symbols-outlined" style={{ fontVariationSettings: activeTab === 'home' ? "'FILL' 1" : undefined }}>home</span>
         <span className="font-label-sm text-label-sm">{t('home')}</span>
       </Link>
@@ -44,7 +48,9 @@ export const Navbar: React.FC = () => {
       {/* Payments (Link to payments ledger by default) */}
       <Link href={`/${locale}/payments/order-4421`} className={tabClass('payments')}>
         <span className="material-symbols-outlined" style={{ fontVariationSettings: activeTab === 'payments' ? "'FILL' 1" : undefined }}>payments</span>
-        <span className="font-label-sm text-label-sm">{t('payments')}</span>
+        <span className="font-label-sm text-label-sm">
+          {isWeaver ? 'My Payments' : 'Ledger'}
+        </span>
       </Link>
 
       {/* Chat */}

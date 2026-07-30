@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useTranslations } from 'next-intl';
 import { RecaptchaVerifier, ConfirmationResult } from 'firebase/auth';
@@ -12,6 +12,7 @@ import { BrandedLoader } from '@/components/BrandedLoader';
 export default function LoginPage() {
   const t = useTranslations('common');
   const router = useRouter();
+  const params = useParams();
   const { user, memberProfile, loading, setupRecaptcha, sendOtp } = useAuth();
   
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -22,17 +23,15 @@ export default function LoginPage() {
   const [authLoading, setAuthLoading] = useState(false);
   
   const confirmationResultRef = useRef<ConfirmationResult | null>(null);
+  
+  const locale = (params?.locale as string) || 'en';
 
-  // If already authenticated and member profile loaded, redirect automatically
+  // If already authenticated and member profile loaded, redirect automatically to Home Dashboard
   useEffect(() => {
     if (!loading && user && memberProfile) {
-      if (memberProfile.role === 'admin') {
-        router.push('/en/orders/order-8922'); // Redirect to Screen 1
-      } else {
-        router.push('/en/chat/coop-kanchipuram'); // Redirect to Screen 3
-      }
+      router.push(`/${locale}/home`);
     }
-  }, [user, memberProfile, loading, router]);
+  }, [user, memberProfile, loading, router, locale]);
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
