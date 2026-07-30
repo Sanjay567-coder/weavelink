@@ -4,6 +4,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { AuthProvider } from '../../context/AuthContext';
 import { DemoSteps } from "@/components/DemoSteps";
+import { RouteGuard } from "@/components/RouteGuard";
 import "../globals.css";
 
 const ibmPlexSans = IBM_Plex_Sans({
@@ -58,8 +59,10 @@ export default async function LocaleLayout({
       <body className="min-h-full flex flex-col bg-background text-on-surface">
         <NextIntlClientProvider messages={messages} locale={locale}>
           <AuthProvider>
-            <DemoSteps />
-            {children}
+            <RouteGuard>
+              <DemoSteps />
+              {children}
+            </RouteGuard>
           </AuthProvider>
         </NextIntlClientProvider>
       </body>

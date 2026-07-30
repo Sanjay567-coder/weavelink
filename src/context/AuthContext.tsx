@@ -90,7 +90,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         (event.message && event.message.includes('Cannot read properties of null') && event.message.includes('style'));
 
       if (isRecaptchaError) {
-        console.warn("Caught and suppressed benign reCAPTCHA teardown crash:", event.message);
+        console.warn("[known-recaptcha-issue] Caught and suppressed benign reCAPTCHA teardown crash:", event.message);
         event.preventDefault(); // Suppress browser console crash
         
         // Clean up visual overlays
@@ -109,6 +109,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     await signOut(auth);
+    if (typeof window !== 'undefined') {
+      // Force page reload to login screen to clear memory state and DOM context
+      window.location.href = `/${window.location.pathname.split('/')[1] || 'en'}`;
+    }
   };
 
   const setupRecaptcha = async (containerId: string) => {

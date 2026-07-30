@@ -20,7 +20,14 @@ export const db = initializeFirestore(app, {
 });
 
 export const auth = getAuth(app);
-auth.settings.appVerificationDisabledForTesting = true;
+
+// Scope testing bypass strictly to local development and the specific hackathon deployment URL
+if (typeof window !== "undefined") {
+  const allowedHosts = ["localhost", "127.0.0.1", "weavelink-wheat.vercel.app"];
+  if (allowedHosts.includes(window.location.hostname)) {
+    auth.settings.appVerificationDisabledForTesting = true;
+  }
+}
 
 // Analytics only works in the browser, and only if supported — guard both
 export const analyticsPromise =

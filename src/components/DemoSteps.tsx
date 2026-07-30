@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db, auth } from '@/lib/firebase';
 
 export const DemoSteps: React.FC = () => {
   const pathname = usePathname();
@@ -105,6 +105,7 @@ export const DemoSteps: React.FC = () => {
         router.push(`/${locale}/chat/coop-kanchipuram?orderId=${orderId}`);
       } else if (currentStep === 3) {
         // Auto-switch to Admin and go to Screen 4
+        await auth.signOut();
         await demoLogin('admin');
         router.push(`/${locale}/orders/${orderId}/consensus`);
       } else if (currentStep === 4) {
@@ -112,18 +113,22 @@ export const DemoSteps: React.FC = () => {
         router.push(`/${locale}/orders/${orderId}/allocate`);
       } else if (currentStep === 5) {
         // Auto-switch to Weaver and go to Screen 6
+        await auth.signOut();
         await demoLogin('weaver');
         router.push(`/${locale}/production/${orderId}`);
       } else if (currentStep === 6) {
         // Auto-switch to Treasurer and go to Screen 7
+        await auth.signOut();
         await demoLogin('treasurer');
         router.push(`/${locale}/payments/${orderId}`);
       } else if (currentStep === 7) {
         // Auto-switch to Admin and go to Screen 8 (Federation)
+        await auth.signOut();
         await demoLogin('admin');
         router.push(`/${locale}/federation`);
       } else if (currentStep === 8) {
         // Restart back to Screen 1
+        await auth.signOut();
         await demoLogin('admin');
         router.push(`/${locale}/orders/order-8922`);
       }

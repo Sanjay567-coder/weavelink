@@ -58,47 +58,72 @@ export default function PaymentLedgerPage() {
   }, [memberProfile]);
 
   useEffect(() => {
-    if (!orderId || !user) return;
+    if (!orderId || !user || !memberProfile) return;
 
-    // Listen to real-time payment log updates
-    const unsub = onSnapshot(collection(db, 'orders', orderId, 'payments'), (snap) => {
-      const payList: PaymentData[] = [];
-      snap.forEach((docSnap) => {
-        const data = docSnap.data() as PaymentData;
-        
-        // Mock visuals
-        let name = 'Coop Weaver';
-        let avatarUrl = 'https://images.unsplash.com/photo-1544005313-94ddf0286df2';
-        let loomId = 'Loom ID: BHU-092';
+    const isAdminOrTreasurer = memberProfile.role === 'admin' || memberProfile.role === 'treasurer';
 
-        if (docSnap.id === 'weaver-uid-888') {
-          name = 'Ramesh Vankar';
-          avatarUrl = 'https://lh3.googleusercontent.com/aida-public/AB6AXuDF81uvfEdCzffLhKuRMJBl1iJPjEQ7FtDo_uFjO0NpS6U_vU-eKCt_mJjr7Oz7ite4G-Yge4P59rtAO1u5MTByF_a1yxUT7n6vbCpUaSGdiJe3rZ3wQI06QwWVPk2m-Zs2hjJhDlO24R4G2OKTmC10LeTVGp89Gn115M8UtLPQRUnzFuf07bL30NB4TzncvD2dbpnsvqE0rH1DSvO8Uoqd-I4q9UbKVGjwFe1xBkhs16JNzsSRZkKwCwRN01yBOKDDL0eNKtI7up0U';
-          loomId = 'Loom ID: BHU-092';
-        } else if (docSnap.id === 'weaver-uid-101') {
-          name = 'Meera Devi';
-          avatarUrl = 'https://lh3.googleusercontent.com/aida-public/AB6AXuBsCKVSHpEmQBUvlBEs80uTkDbXm7RyJVSC0887xaoTiB4FLVgePG9Enj-6sxuoIw6Z1jTs_ja3noU1Bj0F4XHBY6fm1UwMOfX4SlUTerIw1SRG_3kys0DXgFeLSEgB71ecFwWFVEWAo6l6f2Vss_LD5w1UefbZYR9qgvtutJjP_79qDy-wV1wGUe6RLi1qsl23f1MjLoGFYKPzTP2zrA4NbW7vPPBve4HoMjEG3ZuoKwMT30futKVkv-qAG1ycFMNZq2qAWzpFm-3B';
-          loomId = 'Loom ID: BHU-114';
-        } else if (docSnap.id === 'weaver-uid-102') {
-          name = 'Sunil Kumar';
-          avatarUrl = 'https://lh3.googleusercontent.com/aida-public/AB6AXuBZ8W9TLPqa_saXw2KSyxkW8KuwMXpaW4RQBKOUNSXe2xorJbePY0_FA10xoHm5Uc7sUkjAgDbfjEJBpjD2q9N5_W-9GX27ksyQ7dRywEMrY_N4yWohUIlBr2QdYKxxCiE7Rc6n1hzkaw4Tt7kLi-Y2gia16ODUMRxO0KTCzmXUeO2adyyU7Ftrds-quI23X5Yp8NjxH8oC7h6m4Z5z6EFCHw9ou3unM0pHcHxbs8ByumgtmQZ-MaThhxksBko-gLujexGQ5nnpIWJN';
-          loomId = 'Loom ID: BHU-045';
-        }
+    const parsePaymentDoc = (docId: string, data: any): PaymentData => {
+      // Mock visuals
+      let name = 'Coop Weaver';
+      let avatarUrl = 'https://images.unsplash.com/photo-1544005313-94ddf0286df2';
+      let loomId = 'Loom ID: BHU-092';
 
-        payList.push({
-          name,
-          avatarUrl,
-          loomId,
-          ...data,
-          memberId: docSnap.id
+      if (docId === 'weaver-uid-888') {
+        name = 'Ramesh Vankar';
+        avatarUrl = 'https://lh3.googleusercontent.com/aida-public/AB6AXuDF81uvfEdCzffLhKuRMJBl1iJPjEQ7FtDo_uFjO0NpS6U_vU-eKCt_mJjr7Oz7ite4G-Yge4P59rtAO1u5MTByF_a1yxUT7n6vbCpUaSGdiJe3rZ3wQI06QwWVPk2m-Zs2hjJhDlO24R4G2OKTmC10LeTVGp89Gn115M8UtLPQRUnzFuf07bL30NB4TzncvD2dbpnsvqE0rH1DSvO8Uoqd-I4q9UbKVGjwFe1xBkhs16JNzsSRZkKwCwRN01yBOKDDL0eNKtI7up0U';
+        loomId = 'Loom ID: BHU-092';
+      } else if (docId === 'weaver-uid-101') {
+        name = 'Meera Devi';
+        avatarUrl = 'https://lh3.googleusercontent.com/aida-public/AB6AXuBsCKVSHpEmQBUvlBEs80uTkDbXm7RyJVSC0887xaoTiB4FLVgePG9Enj-6sxuoIw6Z1jTs_ja3noU1Bj0F4XHBY6fm1UwMOfX4SlUTerIw1SRG_3kys0DXgFeLSEgB71ecFwWFVEWAo6l6f2Vss_LD5w1UefbZYR9qgvtutJjP_79qDy-wV1wGUe6RLi1qsl23f1MjLoGFYKPzTP2zrA4NbW7vPPBve4HoMjEG3ZuoKwMT30futKVkv-qAG1ycFMNZq2qAWzpFm-3B';
+        loomId = 'Loom ID: BHU-114';
+      } else if (docId === 'weaver-uid-102') {
+        name = 'Sunil Kumar';
+        avatarUrl = 'https://lh3.googleusercontent.com/aida-public/AB6AXuBZ8W9TLPqa_saXw2KSyxkW8KuwMXpaW4RQBKOUNSXe2xorJbePY0_FA10xoHm5Uc7sUkjAgDbfjEJBpjD2q9N5_W-9GX27ksyQ7dRywEMrY_N4yWohUIlBr2QdYKxxCiE7Rc6n1hzkaw4Tt7kLi-Y2gia16ODUMRxO0KTCzmXUeO2adyyU7Ftrds-quI23X5Yp8NjxH8oC7h6m4Z5z6EFCHw9ou3unM0pHcHxbs8ByumgtmQZ-MaThhxksBko-gLujexGQ5nnpIWJN';
+        loomId = 'Loom ID: BHU-045';
+      }
+
+      return {
+        name,
+        avatarUrl,
+        loomId,
+        ...data,
+        memberId: docId
+      };
+    };
+
+    let unsub;
+
+    if (isAdminOrTreasurer) {
+      // Listen to real-time payment log updates
+      unsub = onSnapshot(collection(db, 'orders', orderId, 'payments'), (snap) => {
+        const payList: PaymentData[] = [];
+        snap.forEach((docSnap) => {
+          payList.push(parsePaymentDoc(docSnap.id, docSnap.data()));
         });
+        setPayments(payList);
+        setLoading(false);
+      }, (err) => {
+        console.error("Error loading payment ledger collection:", err);
+        setLoading(false);
       });
-      setPayments(payList);
-      setLoading(false);
-    });
+    } else {
+      // Listen to Weaver's own document only
+      unsub = onSnapshot(doc(db, 'orders', orderId, 'payments', user.uid), (docSnap) => {
+        if (docSnap.exists()) {
+          const item = parsePaymentDoc(docSnap.id, docSnap.data());
+          setPayments([item]);
+        } else {
+          setPayments([]);
+        }
+        setLoading(false);
+      }, (err) => {
+        console.error("Error loading single weaver payment doc:", err);
+        setLoading(false);
+      });
+    }
 
     return () => unsub();
-  }, [orderId, user]);
+  }, [orderId, user, memberProfile]);
 
   // Mark all pending splits as paid (Admin action)
   const handleMarkAllPaid = async () => {
@@ -204,27 +229,29 @@ export default function PaymentLedgerPage() {
 
       <main className="max-w-xl mx-auto px-container-padding py-stack-lg space-y-stack-lg flex-grow w-full">
         
-        {/* Toggle View Switcher */}
-        <div className="flex justify-center mb-8">
-          <div className="bg-surface-container p-1 rounded-xl flex gap-1 shadow-sm border border-outline-variant/20">
-            <button 
-              onClick={() => setViewMode('admin')}
-              className={`px-6 py-2 rounded-lg font-label-lg transition-all cursor-pointer ${
-                viewMode === 'admin' ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant hover:bg-surface-container-high'
-              }`}
-            >
-              {t('adminView')}
-            </button>
-            <button 
-              onClick={() => setViewMode('weaver')}
-              className={`px-6 py-2 rounded-lg font-label-lg transition-all cursor-pointer ${
-                viewMode === 'weaver' ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant hover:bg-surface-container-high'
-              }`}
-            >
-              {t('weaverView')}
-            </button>
+        {/* Toggle View Switcher (Admin/Treasurer only) */}
+        {(memberProfile?.role === 'admin' || memberProfile?.role === 'treasurer') && (
+          <div className="flex justify-center mb-8">
+            <div className="bg-surface-container p-1 rounded-xl flex gap-1 shadow-sm border border-outline-variant/20">
+              <button 
+                onClick={() => setViewMode('admin')}
+                className={`px-6 py-2 rounded-lg font-label-lg transition-all cursor-pointer ${
+                  viewMode === 'admin' ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant hover:bg-surface-container-high'
+                }`}
+              >
+                {t('adminView')}
+              </button>
+              <button 
+                onClick={() => setViewMode('weaver')}
+                className={`px-6 py-2 rounded-lg font-label-lg transition-all cursor-pointer ${
+                  viewMode === 'weaver' ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant hover:bg-surface-container-high'
+                }`}
+              >
+                {t('weaverView')}
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* ADMIN VIEW CONTENT */}
         {viewMode === 'admin' ? (
