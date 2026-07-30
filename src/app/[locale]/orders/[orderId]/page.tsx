@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/context/AuthContext';
 import { useTranslations } from 'next-intl';
@@ -24,6 +24,7 @@ interface OrderData {
   buyerPhone?: string;
   buyerConfirmed?: boolean;
   buyerConfirmedAt?: any;
+  expiresAt?: any;
 }
 
 export default function OrderDetailsPage() {
@@ -111,6 +112,38 @@ export default function OrderDetailsPage() {
     }
   };
 
+  // Action: Delete Order
+  const handleDelete = async () => {
+    if (!order) return;
+    if (confirm("Are you sure you want to permanently delete this order? This action cannot be undone.")) {
+      try {
+        await deleteDoc(doc(db, 'orders', orderId));
+        alert("Order successfully deleted.");
+        router.push(`/${locale}/orders`);
+      } catch (err: any) {
+        alert("Error deleting order: " + err.message);
+      }
+    }
+  };
+
+  const getHoursRemaining = () => {
+    if (!order) return 48;
+    if (order.expiresAt) {
+      const expiryTime = order.expiresAt.seconds ? order.expiresAt.seconds * 1000 : new Date(order.expiresAt).getTime();
+      const diffMs = expiryTime - new Date().getTime();
+      const hours = Math.ceil(diffMs / (1000 * 60 * 60));
+      return hours > 0 ? hours : 0;
+    }
+    if (order.enteredAt) {
+      const entryTime = order.enteredAt.seconds ? order.enteredAt.seconds * 1000 : new Date(order.enteredAt).getTime();
+      const expiryTime = entryTime + (48 * 60 * 60 * 1000);
+      const diffMs = expiryTime - new Date().getTime();
+      const hours = Math.ceil(diffMs / (1000 * 60 * 60));
+      return hours > 0 ? hours : 0;
+    }
+    return 48;
+  };
+
   // Voice Assistant: Web Speech API
   const startListening = () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -184,6 +217,19 @@ export default function OrderDetailsPage() {
   return (
     <div className="bg-background text-on-surface font-body-md min-h-screen pb-32 flex flex-col">
       <Header />
+
+      {memberProfile?.role === 'admin' && (
+        <div className="bg-primary/5 border-b border-primary/20 py-2.5 px-container-padding flex justify-between items-center max-w-xl mx-auto w-full relative z-20">
+          <span className="font-label-sm text-primary font-bold">Admin Panel</span>
+          <button 
+            onClick={() => router.push(`/${locale}/orders/new`)}
+            className="flex items-center gap-1 px-3 py-1.5 bg-primary text-on-primary rounded-xl font-bold text-xs shadow-sm hover:bg-primary-container transition-all active:scale-95 cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-sm">add</span>
+            Post New Order
+          </button>
+        </div>
+      )}
       
       <main className="px-container-padding pt-stack-lg relative flex-1 max-w-xl mx-auto w-full">
         {/* Background Texture Overlay */}
@@ -203,7 +249,7 @@ export default function OrderDetailsPage() {
               <h2 className="font-headline-md text-headline-md text-primary">{t('orderNum', { num: orderId.replace('order-', '') })}</h2>
               <p className="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1 mt-1">
                 <span className="material-symbols-outlined text-sm">schedule</span>
-                {t('expires', { hours: 48 })}
+                {t('expires', { hours: getHoursRemaining() })}
               </p>
             </div>
             <div className="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full font-label-sm text-label-sm uppercase tracking-wider">
@@ -321,24 +367,38 @@ export default function OrderDetailsPage() {
           </div>
         </div>
 
-        {/* Action Area */}
-        <div className="mt-stack-lg space-y-4 relative z-10">
-          <button 
-            onClick={handleDiscuss}
-            className="w-full h-touch-target bg-primary-container text-on-primary-container rounded-lg font-label-lg text-label-lg flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-md cursor-pointer"
-          >
-            <span className="material-symbols-outlined">group</span>
-            {t('discuss')}
-          </button>
-          
-          <button 
-            onClick={handleDecline}
-            className="w-full h-touch-target border-2 border-outline text-outline rounded-lg font-label-lg text-label-lg flex items-center justify-center gap-2 transition-transform active:scale-95 cursor-pointer bg-white"
-          >
-            <span className="material-symbols-outlined">cancel</span>
-            {t('decline')}
-          </button>
-        </div>
+        {/* Action Area (Admin only) */}
+        {memberProfile?.role === 'admin' && (
+          <div className="mt-stack-lg space-y-4 relative z-10">
+            <button 
+              onClick={handleDiscuss}
+              className="w-full h-touch-target bg-primary text-on-primary rounded-lg font-label-lg text-label-lg flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-md cursor-pointer"
+            >
+              <span className="material-symbols-outlined">group</span>
+              {t('discuss')}
+            </button>
+            
+            <div className="flex gap-4">
+              <button 
+                onClick={handleDecline}
+                className="flex-1 h-touch-target border border-outline text-outline rounded-lg font-label-lg text-label-lg flex items-center justify-center gap-2 transition-transform active:scale-95 cursor-pointer bg-white"
+              >
+                <span className="material-symbols-outlined">cancel</span>
+                {t('decline')}
+              </button>
+              
+              {order.status !== 'confirmed' && (
+                <button 
+                  onClick={handleDelete}
+                  className="flex-1 h-touch-target border border-rose-200 text-rose-700 hover:bg-rose-50 rounded-lg font-label-lg text-label-lg flex items-center justify-center gap-2 transition-transform active:scale-95 cursor-pointer bg-white animate-in fade-in duration-200"
+                >
+                  <span className="material-symbols-outlined">delete</span>
+                  Delete
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Voice Assistant Floating Button */}
         <div className="fixed bottom-24 right-container-padding z-40 flex flex-col items-center">

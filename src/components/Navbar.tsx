@@ -35,8 +35,8 @@ export const Navbar: React.FC = () => {
         <span className="font-label-sm text-label-sm">{t('home')}</span>
       </Link>
 
-      {/* Orders (Link to seeded order tracking page by default) */}
-      <Link href={`/${locale}/production/order-4421`} className={tabClass('orders')}>
+      {/* Orders List Screen */}
+      <Link href={`/${locale}/orders`} className={tabClass('orders')}>
         <span className="material-symbols-outlined" style={{ fontVariationSettings: activeTab === 'orders' ? "'FILL' 1" : undefined }}>assignment</span>
         <span className="font-label-sm text-label-sm">{t('orders')}</span>
       </Link>

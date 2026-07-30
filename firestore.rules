@@ -1,9 +1,13 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper to get member role
+    // Helper to get member details
+    function getMemberData(uid) {
+      return get(/databases/$(database)/documents/members/$(uid)).data;
+    }
+    
     function getRole() {
-      return get(/databases/$(database)/documents/members/$(request.auth.uid)).data.role;
+      return getMemberData(request.auth.uid).role;
     }
     
     match /cooperatives/{coopId} {
@@ -30,9 +34,17 @@ service cloud.firestore {
     match /orders/{orderId} {
       allow get: if true;
       allow list: if request.auth != null;
-      allow create: if request.auth != null && getRole() == 'admin';
+      
+      allow create: if request.auth != null && 
+        getRole() == 'admin' &&
+        request.resource.data.coopId == getMemberData(request.auth.uid).coopId &&
+        request.resource.data.enteredBy == getMemberData(request.auth.uid).name + ' (Admin)' &&
+        request.resource.data.enteredAt == request.time &&
+        request.resource.data.buyerConfirmed == false;
+        
       allow update: if (
         request.auth != null && getRole() == 'admin' &&
+        getMemberData(request.auth.uid).coopId == resource.data.coopId &&
         (resource.data.status != 'confirmed' || request.resource.data.price == resource.data.price)
       ) || (
         // Public buyer confirmation path: allow anyone to confirm but restrict changes to ONLY buyerConfirmed and buyerConfirmedAt fields, and only if not already confirmed
@@ -41,6 +53,11 @@ service cloud.firestore {
         request.resource.data.buyerConfirmedAt != null &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['buyerConfirmed', 'buyerConfirmedAt'])
       );
+      
+      allow delete: if request.auth != null && 
+        getRole() == 'admin' &&
+        getMemberData(request.auth.uid).coopId == resource.data.coopId &&
+        resource.data.status != 'confirmed';
       
       match /responses/{memberId} {
         allow read: if request.auth != null;
