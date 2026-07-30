@@ -20,6 +20,7 @@ export const db = initializeFirestore(app, {
 });
 
 export const auth = getAuth(app);
+auth.settings.appVerificationDisabledForTesting = true;
 
 // Analytics only works in the browser, and only if supported — guard both
 export const analyticsPromise =
