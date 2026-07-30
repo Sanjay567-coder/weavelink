@@ -261,10 +261,12 @@ export default function ProductionTrackingPage() {
   };
 
   return (
-    <div className="bg-background text-on-surface font-body-md min-h-screen pb-32 flex flex-col ikat-pattern">
+    <div className="bg-background text-on-surface font-body-md min-h-screen pb-32 flex flex-col relative overflow-hidden">
+      {/* Background Ikat texture overlay */}
+      <div className="absolute inset-0 ikat-pattern pointer-events-none opacity-5" style={{ height: '300px' }}></div>
       <Header />
 
-      <main className="flex-1 px-container-padding py-stack-lg flex flex-col gap-stack-lg max-w-xl mx-auto w-full">
+      <main className="flex-1 px-container-padding py-stack-lg flex flex-col gap-stack-lg max-w-xl mx-auto w-full relative z-10">
         
         {/* WEAVER VIEW CHECK-IN PROGRESS (renders if authenticated as weaver) */}
         {isWeaver ? (

@@ -301,10 +301,12 @@ export default function GroupChatPage() {
   }
 
   return (
-    <div className="bg-background font-body-md text-on-surface min-h-screen flex flex-col ikat-pattern pb-48">
+    <div className="bg-background font-body-md text-on-surface min-h-screen flex flex-col pb-48 relative overflow-hidden">
+      {/* Background Ikat texture overlay */}
+      <div className="absolute inset-0 ikat-pattern pointer-events-none opacity-5" style={{ height: '300px' }}></div>
       <Header />
 
-      <main className="flex-grow w-full max-w-2xl mx-auto flex flex-col px-container-padding">
+      <main className="flex-grow w-full max-w-2xl mx-auto flex flex-col px-container-padding relative z-10">
         
         {/* Pinned Order Card */}
         {activeOrder && (
