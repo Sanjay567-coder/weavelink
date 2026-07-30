@@ -71,6 +71,18 @@ export default function GroupChatPage() {
   const [inputText, setInputText] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [activeVoicePlaying, setActiveVoicePlaying] = useState<string | null>(null);
+  
+  const [showReasonModal, setShowReasonModal] = useState(false);
+  const [selectedReasons, setSelectedReasons] = useState<string[]>([]);
+  const [otherReasonText, setOtherReasonText] = useState('');
+  
+  const [toastMsg, setToastMsg] = useState('');
+  const recognitionRef = useRef<any>(null);
+
+  const triggerToast = (msg: string) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(''), 4000);
+  };
 
   const chatEndRef = useRef<HTMLDivElement | null>(null);
 
@@ -194,16 +206,24 @@ export default function GroupChatPage() {
   const startVoiceDictation = () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      alert("Speech recognition not supported in this browser. Please use Chrome.");
+      triggerToast("Speech recognition not supported in this browser. Please use Chrome.");
       return;
     }
 
     if (isListening) {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch (e) {
+          console.warn("Error stopping speech recognition:", e);
+        }
+      }
       setIsListening(false);
       return;
     }
 
     const recognition = new SpeechRecognition();
+    recognitionRef.current = recognition;
     recognition.lang = params.locale === 'hi' ? 'hi-IN' : 'en-US';
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
@@ -213,42 +233,64 @@ export default function GroupChatPage() {
     };
 
     recognition.onerror = (e: any) => {
-      console.error(e);
+      console.error("SpeechRecognition error event:", e);
       setIsListening(false);
+      
+      // Enforce styled toast messages instead of window alerts
+      if (e.error === 'not-allowed') {
+        triggerToast("Microphone access denied. Please enable microphone permissions in your browser settings to use voice input.");
+      } else if (e.error === 'no-speech') {
+        triggerToast("No speech detected. Please try again.");
+      } else {
+        triggerToast(`Speech recognition error: ${e.error}`);
+      }
     };
 
     recognition.onend = () => {
       setIsListening(false);
+      recognitionRef.current = null;
     };
 
     recognition.onresult = (event: any) => {
       const speechText = event.results[0][0].transcript;
-      setInputText((prev) => prev + " " + speechText);
+      setInputText((prev) => prev.trim() + " " + speechText.trim());
     };
 
-    recognition.start();
+    try {
+      recognition.start();
+    } catch (err: any) {
+      console.error(err);
+      triggerToast("Failed to initialize microphone device.");
+      setIsListening(false);
+    }
   };
 
   // Submit Quick Response
-  const submitResponse = async (responseType: 'agree' | 'concern' | 'reject') => {
+  const submitResponse = async (responseType: 'agree' | 'reject', reasons?: string[]) => {
     if (!user) {
-      alert("You must be logged in to vote.");
+      triggerToast("You must be logged in to vote.");
       return;
     }
     if (!activeOrder) return;
 
-    const responseNotes = {
-      agree: "Agreed to parameters.",
-      concern: "Requires dye delay / pricing review.",
-      reject: "Rejected."
-    };
+    let noteText = "Agreed to parameters.";
+    let displayType = "I AGREE";
+
+    if (responseType === 'reject') {
+      if (!reasons || reasons.length === 0) {
+        triggerToast("Please provide at least one reason.");
+        return;
+      }
+      noteText = reasons.join(', ');
+      displayType = `CAN'T DO IT — ${noteText}`;
+    }
 
     try {
       const responseRef = doc(db, 'orders', activeOrder.id, 'responses', user.uid);
       await setDoc(responseRef, {
         memberId: user.uid,
         response: responseType,
-        note: responseNotes[responseType],
+        note: noteText,
         timestamp: new Date()
       });
 
@@ -256,15 +298,15 @@ export default function GroupChatPage() {
       await addDoc(collection(db, 'cooperatives', coopId, 'messages'), {
         senderId: 'system',
         senderName: 'System Log',
-        messageText: `${memberProfile?.name || 'A weaver'} responded: ${responseType.toUpperCase()}`,
+        messageText: `${memberProfile?.name || 'A weaver'} responded: ${displayType}`,
         isAudio: false,
         timestamp: new Date()
       });
 
-      alert(`Vote submitted: ${responseType.toUpperCase()}`);
+      triggerToast(`Response submitted: ${responseType === 'agree' ? 'AGREE' : "CAN'T DO IT"}`);
     } catch (err: any) {
       console.error(err);
-      alert("Database error: " + err.message);
+      triggerToast("Database error: " + err.message);
     }
   };
 
@@ -423,8 +465,8 @@ export default function GroupChatPage() {
         {/* Quick Response Bar */}
         <div className="fixed bottom-[72px] left-0 w-full bg-surface border-t border-outline-variant px-container-padding py-4 z-30 flex flex-col gap-4">
           <div className="max-w-2xl mx-auto w-full space-y-4">
-            {/* Agreement Quick Votes */}
-            <div className="grid grid-cols-3 gap-3">
+            {/* Agreement Quick Votes (2-state model) */}
+            <div className="grid grid-cols-2 gap-3">
               <button 
                 onClick={() => submitResponse('agree')}
                 className={`h-14 flex flex-col items-center justify-center border rounded-xl active:scale-95 transition-all cursor-pointer ${
@@ -437,18 +479,11 @@ export default function GroupChatPage() {
                 <span className="font-label-sm">{t('agree')}</span>
               </button>
               <button 
-                onClick={() => submitResponse('concern')}
-                className={`h-14 flex flex-col items-center justify-center border rounded-xl active:scale-95 transition-all cursor-pointer ${
-                  userResponse === 'concern' 
-                    ? 'bg-amber-200 border-amber-500 text-amber-900 font-bold shadow-md' 
-                    : 'bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200'
-                }`}
-              >
-                <span className="material-symbols-outlined">help</span>
-                <span className="font-label-sm">{t('concern')}</span>
-              </button>
-              <button 
-                onClick={() => submitResponse('reject')}
+                onClick={() => {
+                  setSelectedReasons([]);
+                  setOtherReasonText('');
+                  setShowReasonModal(true);
+                }}
                 className={`h-14 flex flex-col items-center justify-center border rounded-xl active:scale-95 transition-all cursor-pointer ${
                   userResponse === 'reject' 
                     ? 'bg-rose-200 border-rose-500 text-rose-900 font-bold shadow-md' 
@@ -490,6 +525,100 @@ export default function GroupChatPage() {
         </div>
 
       </main>
+
+      {/* Reason Checklist Modal */}
+      {showReasonModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl w-full max-w-sm border border-outline-variant shadow-2xl p-6 space-y-4 animate-in zoom-in-95 duration-200">
+            <div>
+              <h3 className="font-headline-md text-on-surface font-extrabold">Can't Do It</h3>
+              <p className="text-xs text-on-surface-variant mt-1">Please select the reason(s) why you cannot take on this order.</p>
+            </div>
+
+            <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
+              {[
+                "Not enough raw material/yarn available",
+                "Loom capacity already full",
+                "Deadline too tight",
+                "Price too low for the work involved",
+                "Health/personal availability issue",
+                "Other"
+              ].map((reason) => {
+                const isChecked = selectedReasons.includes(reason);
+                return (
+                  <div key={reason} className="flex flex-col gap-2">
+                    <label className="flex items-center gap-3 p-3 bg-surface-container rounded-xl cursor-pointer hover:bg-surface-container-high transition-colors border border-transparent hover:border-outline-variant/35">
+                      <input 
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => {
+                          if (isChecked) {
+                            setSelectedReasons(selectedReasons.filter(r => r !== reason));
+                          } else {
+                            setSelectedReasons([...selectedReasons, reason]);
+                          }
+                        }}
+                        className="rounded text-primary focus:ring-primary w-4.5 h-4.5 border-outline"
+                      />
+                      <span className="text-xs font-semibold text-on-surface">{reason}</span>
+                    </label>
+
+                    {reason === 'Other' && isChecked && (
+                      <textarea
+                        value={otherReasonText}
+                        onChange={(e) => setOtherReasonText(e.target.value)}
+                        placeholder="Please type your specific reason..."
+                        rows={2}
+                        className="w-full bg-white border border-outline-variant rounded-lg p-2 text-xs focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
+                      />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button 
+                onClick={() => {
+                  setShowReasonModal(false);
+                  setSelectedReasons([]);
+                  setOtherReasonText('');
+                }}
+                className="flex-1 py-2.5 border border-outline text-outline font-bold text-xs text-center rounded-xl hover:bg-surface-container active:scale-95 duration-100 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={() => {
+                  const reasonsToSubmit = selectedReasons.map(r => {
+                    if (r === 'Other') {
+                      return `Other: ${otherReasonText.trim()}`;
+                    }
+                    return r;
+                  });
+                  submitResponse('reject', reasonsToSubmit);
+                  setShowReasonModal(false);
+                }}
+                disabled={
+                  selectedReasons.length === 0 || 
+                  (selectedReasons.includes('Other') && !otherReasonText.trim())
+                }
+                className="flex-1 py-2.5 bg-primary text-on-primary font-bold text-xs rounded-xl shadow-md hover:bg-primary-container active:scale-95 duration-100 disabled:opacity-50 cursor-pointer"
+              >
+                Submit Response
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Styled toast feedback */}
+      {toastMsg && (
+        <div className="fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl z-50 font-sans text-xs font-semibold flex items-center gap-2 border border-slate-700 animate-in fade-in slide-in-from-bottom-5 duration-300">
+          <span className="material-symbols-outlined text-amber-400 text-[18px]">warning</span>
+          {toastMsg}
+        </div>
+      )}
 
       <Navbar />
       <DevBar />
