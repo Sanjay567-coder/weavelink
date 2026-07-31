@@ -49,6 +49,7 @@ export default function FederationInsightsPage() {
     'coop-arani': 'Arani Master Weavers'
   });
 
+  const [coopDetails, setCoopDetails] = useState<Record<string, any>>({});
   const [allCoops, setAllCoops] = useState<any[]>([]);
   const [myCoop, setMyCoop] = useState<any>(null);
   const [showNeedsForm, setShowNeedsForm] = useState(false);
@@ -73,16 +74,19 @@ export default function FederationInsightsPage() {
     // 1. Subscribe to all cooperatives to map IDs to names dynamically AND build opportunities list
     const unsubCoops = onSnapshot(collection(db, 'cooperatives'), (snap) => {
       const names: Record<string, string> = {};
+      const details: Record<string, any> = {};
       const list: any[] = [];
       snap.forEach((docSnap) => {
         const id = docSnap.id;
         const data = docSnap.data();
         names[id] = data.name || id;
+        details[id] = { id, ...data };
         if (id !== myCoopId && data.availableForPooling === true) {
           list.push({ id, ...data });
         }
       });
       setCoopNames((prev) => ({ ...prev, ...names }));
+      setCoopDetails(details);
       setAllCoops(list);
     });
 
@@ -632,31 +636,58 @@ export default function FederationInsightsPage() {
                 Invited You ({invitedList.length})
               </h4>
               <div className="space-y-2">
-                {invitedList.map((r) => (
-                  <div key={r.id} className="p-3 bg-primary-container/20 border border-primary/20 rounded-xl text-xs flex flex-col gap-2">
-                    <div className="flex flex-col">
-                      <span className="font-bold text-on-surface">{coopNames[r.fromCoopId] || r.fromCoopId}</span>
-                      <span className="text-[10px] text-on-surface-variant">Invited you to pool {r.item} ({r.targetAmount})</span>
-                    </div>
-                    <p className="text-[9px] text-on-surface-variant/80 italic">Est. Savings: {r.savings}</p>
-                    {memberProfile?.role === 'admin' && (
-                      <div className="flex gap-2 mt-1">
-                        <button
-                          onClick={() => handleAcceptInvite(r.id)}
-                          className="flex-1 py-1.5 bg-primary text-on-primary rounded font-bold text-[10px] active:scale-95 transition-transform cursor-pointer"
-                        >
-                          Accept
-                        </button>
-                        <button
-                          onClick={() => handleDeclineInvite(r.id)}
-                          className="flex-1 py-1.5 border border-outline text-on-surface hover:bg-surface-container rounded font-bold text-[10px] active:scale-95 transition-transform cursor-pointer"
-                        >
-                          Decline
-                        </button>
+                {invitedList.map((r) => {
+                  const senderCoop = coopDetails[r.fromCoopId];
+                  return (
+                    <div key={r.id} className="p-4 bg-primary-container/10 border border-primary/20 rounded-xl text-xs flex flex-col gap-3">
+                      <div className="flex flex-col">
+                        <span className="font-bold text-on-surface text-sm">{coopNames[r.fromCoopId] || r.fromCoopId}</span>
+                        <span className="text-[10px] text-on-surface-variant font-medium mt-0.5">Invited you to pool {r.item} ({r.targetAmount})</span>
                       </div>
-                    )}
-                  </div>
-                ))}
+
+                      {/* Requester's Material Breakdown */}
+                      {senderCoop && senderCoop.materials && senderCoop.materials.length > 0 && (
+                        <div className="bg-white/80 p-2.5 rounded-lg border border-outline-variant/40 space-y-1.5 shadow-sm">
+                          <p className="text-[9px] uppercase font-bold text-primary tracking-wider">
+                            Requester Material Needs:
+                          </p>
+                          <div className="space-y-1">
+                            {senderCoop.materials.map((m: any, idx: number) => (
+                              <div key={idx} className="flex justify-between text-[10px] text-on-surface border-b border-surface-container last:border-b-0 pb-1 last:pb-0 font-medium">
+                                <span>{m.item}</span>
+                                <span className="text-primary font-bold">{m.targetAmount}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="flex justify-between items-center text-[10px] text-on-surface-variant/80 font-bold border-t border-surface-container pt-2">
+                        <span>EST. SAVINGS:</span>
+                        <span className="text-primary font-extrabold">{r.savings}</span>
+                      </div>
+
+                      {memberProfile?.role === 'admin' && (
+                        <div className="flex gap-2 pt-1">
+                          <button
+                            onClick={() => handleAcceptInvite(r.id)}
+                            className="flex-1 py-2 bg-primary text-on-primary rounded-lg font-bold text-[10px] hover:bg-surface-tint active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-0.5 shadow-sm"
+                          >
+                            <span className="material-symbols-outlined text-[12px]" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                            Confirm
+                          </button>
+                          <button
+                            onClick={() => handleDeclineInvite(r.id)}
+                            className="flex-1 py-2 border border-outline text-on-surface hover:bg-surface-container rounded-lg font-bold text-[10px] active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-0.5"
+                          >
+                            <span className="material-symbols-outlined text-[12px]">cancel</span>
+                            Not Required
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
                 {invitedList.length === 0 && (
                   <p className="text-xs text-on-surface-variant italic py-2 text-center bg-surface-container-low rounded-xl border border-dashed border-outline-variant/30">No active invitations.</p>
                 )}

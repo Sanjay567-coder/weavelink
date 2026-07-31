@@ -57,6 +57,8 @@ export default function CooperativeDetailPage() {
       setLoading(false);
     });
 
+    const myCoopId = memberProfile.coopId || 'coop-kanchipuram';
+
     // Subscribe to pooling requests involving this coop using rule-compliant queries
     const q1 = query(collection(db, 'poolingRequests'), where('fromCoopId', '==', myCoopId));
     const q2 = query(collection(db, 'poolingRequests'), where('toCoopId', '==', myCoopId));
