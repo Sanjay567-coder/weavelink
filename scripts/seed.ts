@@ -62,6 +62,11 @@ const seedData = async () => {
       uid: 'treasurer-uid-777',
       phoneNumber: '+917777777777',
       displayName: 'Meera Devi (Treasurer)',
+    },
+    {
+      uid: 'admin-uid-silk-b',
+      phoneNumber: '+919999999998',
+      displayName: 'Balaji S. (Admin B)',
     }
   ];
 
@@ -95,12 +100,28 @@ const seedData = async () => {
       name: 'Kanchipuram Silk Cooperative',
       district: 'Kanchipuram',
       language: 'en',
+      availableForPooling: true
     },
     {
       id: 'coop-varanasi',
       name: 'Varanasi Weavers Cooperative',
       district: 'Varanasi',
       language: 'hi',
+      availableForPooling: false
+    },
+    {
+      id: 'coop-silk-b',
+      name: 'Silk Weaver Coop B',
+      district: 'Kanchipuram B',
+      language: 'en',
+      availableForPooling: true
+    },
+    {
+      id: 'coop-arani',
+      name: 'Arani Master Weavers',
+      district: 'Arani',
+      language: 'en',
+      availableForPooling: false
     }
   ];
 
@@ -151,6 +172,14 @@ const seedData = async () => {
       role: 'weaver',
       phone: '+918888888002',
       capacity: 5,
+    },
+    {
+      id: 'admin-uid-silk-b',
+      coopId: 'coop-silk-b',
+      name: 'Balaji S.',
+      role: 'admin',
+      phone: '+919999999998',
+      capacity: 0,
     }
   ];
 
@@ -305,6 +334,50 @@ const seedData = async () => {
   for (const msg of chatMessages) {
     await db.collection('cooperatives').doc('coop-kanchipuram')
       .collection('messages').add(msg);
+  }
+
+  console.log("Clearing old pooling requests...");
+  const poolSnap = await db.collection('poolingRequests').get();
+  for (const doc of poolSnap.docs) {
+    await doc.ref.delete();
+  }
+
+  console.log("Seeding pooling requests...");
+  const initialPoolRequests = [
+    {
+      id: 'pool-req-1',
+      fromCoopId: 'coop-kanchipuram',
+      toCoopId: 'coop-varanasi',
+      status: 'pending',
+      createdAt: new Date(),
+      item: 'Fine Zari Thread',
+      targetAmount: '40kg',
+      savings: '₹8,200'
+    },
+    {
+      id: 'pool-req-2',
+      fromCoopId: 'coop-silk-b',
+      toCoopId: 'coop-kanchipuram',
+      status: 'pending',
+      createdAt: new Date(),
+      item: 'Mulberry Silk Yarn',
+      targetAmount: '250kg',
+      savings: '₹12,500'
+    },
+    {
+      id: 'pool-req-3',
+      fromCoopId: 'coop-arani',
+      toCoopId: 'coop-kanchipuram',
+      status: 'accepted',
+      createdAt: new Date(),
+      item: 'Raw Dye Vat Chemicals',
+      targetAmount: '500L',
+      savings: '₹15,000'
+    }
+  ];
+  for (const req of initialPoolRequests) {
+    const { id, ...data } = req;
+    await db.collection('poolingRequests').doc(id).set(data);
   }
 
   console.log("Firebase Auth and Firestore Seeding completed successfully!");

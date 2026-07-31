@@ -87,5 +87,25 @@ service cloud.firestore {
           getMemberData(request.auth.uid).coopId == get(/databases/$(database)/documents/orders/$(orderId)).data.coopId;
       }
     }
+
+    match /poolingRequests/{requestId} {
+      allow read: if request.auth != null && (
+        getMemberData(request.auth.uid).coopId == resource.data.fromCoopId ||
+        getMemberData(request.auth.uid).coopId == resource.data.toCoopId
+      );
+      
+      allow create: if request.auth != null &&
+        getRole() == 'admin' &&
+        request.resource.data.fromCoopId == getMemberData(request.auth.uid).coopId &&
+        request.resource.data.status == 'pending';
+        
+      allow update: if request.auth != null &&
+        getRole() == 'admin' &&
+        getMemberData(request.auth.uid).coopId == resource.data.toCoopId &&
+        (request.resource.data.status == 'accepted' || request.resource.data.status == 'declined') &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
+        
+      allow delete: if false;
+    }
   }
 }

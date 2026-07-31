@@ -46,6 +46,25 @@ export default function HomeDashboardPage() {
     pendingWeaversCount: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [poolingPartnersCount, setPoolingPartnersCount] = useState(0);
+
+  useEffect(() => {
+    if (authLoading || !user || !memberProfile) return;
+    const coopId = memberProfile.coopId || 'coop-kanchipuram';
+    
+    const qPoolingCoops = query(collection(db, 'cooperatives'), where('availableForPooling', '==', true));
+    const unsub = onSnapshot(qPoolingCoops, (coopSnap) => {
+      let count = 0;
+      coopSnap.forEach((doc) => {
+        if (doc.id !== coopId) {
+          count++;
+        }
+      });
+      setPoolingPartnersCount(count);
+    });
+
+    return () => unsub();
+  }, [user, memberProfile, authLoading]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -200,6 +219,18 @@ export default function HomeDashboardPage() {
                 >
                   <span className="material-symbols-outlined text-sm">assignment</span>
                   Manage All Active Orders
+                </button>
+                <button 
+                  onClick={() => router.push(`/${locale}/federation`)}
+                  className="w-full h-11 border border-outline text-on-surface hover:bg-surface-container rounded-xl font-bold text-xs flex items-center justify-center gap-2 active:scale-95 transition-transform duration-100 cursor-pointer relative"
+                >
+                  <span className="material-symbols-outlined text-sm">hub</span>
+                  Find Pooling Partners
+                  {poolingPartnersCount > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 bg-tertiary text-on-tertiary text-[9px] font-bold px-1.5 py-0.5 rounded-full flex items-center justify-center animate-bounce shadow-sm">
+                      {poolingPartnersCount}
+                    </span>
+                  )}
                 </button>
               </div>
             </div>
