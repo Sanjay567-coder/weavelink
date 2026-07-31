@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../lib/firebase';
-import { doc, onSnapshot, writeBatch, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, onSnapshot, writeBatch, collection, query, where, getDocs, addDoc, updateDoc } from 'firebase/firestore';
 
 interface HeaderProps {
   showBack?: boolean;
@@ -25,13 +25,25 @@ export const Header: React.FC<HeaderProps> = ({ showBack = false, backPath, titl
     name: string;
     phone: string;
     role: string;
+    age?: number;
+    experience?: number;
+    specialization?: string;
+    area?: string;
   }
 
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [loadingCandidates, setLoadingCandidates] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [toastMsg, setToastMsg] = useState('');
+
+  const [toggleMode, setToggleMode] = useState<'new' | 'existing'>('new');
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [age, setAge] = useState('');
+  const [experience, setExperience] = useState('');
+  const [specialization, setSpecialization] = useState('Silk');
+  const [area, setArea] = useState('');
+  const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
 
   const [isOnline, setIsOnline] = useState(typeof window !== 'undefined' ? navigator.onLine : true);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -85,7 +97,14 @@ export const Header: React.FC<HeaderProps> = ({ showBack = false, backPath, titl
 
   const handleOpenAddMember = async () => {
     setLoadingCandidates(true);
-    setSelectedIds(new Set());
+    setToggleMode('new');
+    setName('');
+    setPhone('');
+    setAge('');
+    setExperience('');
+    setSpecialization('Silk');
+    setArea('');
+    setSelectedCandidate(null);
     setShowAddMemberModal(true);
     try {
       const q = query(collection(db, 'members'), where('coopId', '==', ''));
@@ -97,7 +116,11 @@ export const Header: React.FC<HeaderProps> = ({ showBack = false, backPath, titl
           id: doc.id,
           name: data.name || 'Anonymous',
           phone: data.phone || '',
-          role: data.role || 'weaver'
+          role: data.role || 'weaver',
+          age: data.age,
+          experience: data.experience,
+          specialization: data.specialization,
+          area: data.area
         });
       });
       setCandidates(list);
@@ -108,59 +131,95 @@ export const Header: React.FC<HeaderProps> = ({ showBack = false, backPath, titl
     }
   };
 
-  const toggleSelect = (id: string) => {
-    setSelectedIds(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
+  const handleSelectCandidate = (candidateId: string) => {
+    const candidate = candidates.find(c => c.id === candidateId);
+    if (candidate) {
+      setSelectedCandidate(candidate);
+      setName(candidate.name);
+      setPhone(candidate.phone);
+      setAge(candidate.age?.toString() || '');
+      setExperience(candidate.experience?.toString() || '');
+      setSpecialization(candidate.specialization || 'Silk');
+      setArea(candidate.area || '');
+    } else {
+      setSelectedCandidate(null);
+      setName('');
+      setPhone('');
+      setAge('');
+      setExperience('');
+      setSpecialization('Silk');
+      setArea('');
+    }
   };
 
-  const handleConfirmAddMembers = async () => {
-    if (selectedIds.size === 0 || !memberProfile) return;
-    const myCoopId = memberProfile.coopId || 'coop-kanchipuram';
-    try {
-      const batch = writeBatch(db);
-      
-      selectedIds.forEach((id) => {
-        const candidate = candidates.find(c => c.id === id);
-        if (!candidate) return;
+  const handleConfirmAddMember = async (e: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!name.trim() || !phone.trim() || !memberProfile) return;
 
-        const memberRef = doc(db, 'members', id);
-        batch.update(memberRef, {
+    const myCoopId = memberProfile.coopId || 'coop-kanchipuram';
+    
+    // Normalization of phone number client-side
+    let normalizedPhone = phone.trim().replace(/[\s-()]/g, '');
+    if (!normalizedPhone.startsWith('+')) {
+      normalizedPhone = '+91' + normalizedPhone; // Default to India country code
+    }
+
+    try {
+      if (toggleMode === 'existing' && selectedCandidate) {
+        // Mode 1: Claim existing candidate
+        const memberRef = doc(db, 'members', selectedCandidate.id);
+        await updateDoc(memberRef, {
           coopId: myCoopId,
           role: 'weaver'
         });
 
-        const msgRef = doc(collection(db, 'cooperatives', myCoopId, 'messages'));
-        batch.set(msgRef, {
+        // Add structured system message
+        await addDoc(collection(db, 'cooperatives', myCoopId, 'messages'), {
           senderId: 'system',
           senderName: 'System Log',
-          messageText: `${candidate.name} added to the group`,
+          messageText: `${selectedCandidate.name} added to the group`,
           isAudio: false,
           timestamp: new Date(),
           systemMessageType: 'member_added',
           systemMessageMetadata: {
-            name: candidate.name
+            name: selectedCandidate.name
           }
         });
-      });
+      } else {
+        // Mode 2: Create a brand new member document with auto-generated ID
+        await addDoc(collection(db, 'members'), {
+          name: name.trim(),
+          phone: normalizedPhone,
+          age: parseInt(age) || 0,
+          experience: parseInt(experience) || 0,
+          specialization: specialization.trim(),
+          area: area.trim(),
+          coopId: myCoopId,
+          role: 'weaver',
+          capacity: 5,
+          loomId: `LOM-${Math.floor(100 + Math.random() * 900)}`
+        });
 
-      await batch.commit();
+        // Add structured system message
+        await addDoc(collection(db, 'cooperatives', myCoopId, 'messages'), {
+          senderId: 'system',
+          senderName: 'System Log',
+          messageText: `${name.trim()} added to the group`,
+          isAudio: false,
+          timestamp: new Date(),
+          systemMessageType: 'member_added',
+          systemMessageMetadata: {
+            name: name.trim()
+          }
+        });
+      }
 
-      setCandidates(prev => prev.filter(c => !selectedIds.has(c.id)));
-      setSelectedIds(new Set());
-      
       setToastMsg(t('successAddMember'));
       setTimeout(() => setToastMsg(''), 4000);
       
       setTimeout(() => setShowAddMemberModal(false), 800);
     } catch (err: any) {
-      console.error("Error adding members in Header:", err);
+      console.error("Error adding member in Header:", err);
       setToastMsg("Error: " + err.message);
       setTimeout(() => setToastMsg(''), 4000);
     }
@@ -274,16 +333,17 @@ export const Header: React.FC<HeaderProps> = ({ showBack = false, backPath, titl
 
       {/* Add Member Modal */}
       {showAddMemberModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-gutter">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-gutter font-sans">
           <div className="bg-white border border-outline-variant rounded-2xl w-full max-w-md overflow-hidden shadow-2xl p-6 flex flex-col max-h-[85vh] animate-in fade-in zoom-in duration-200 font-sans text-left">
             
             {/* Modal Header */}
-            <div className="flex justify-between items-center pb-4 border-b border-surface-container mb-4">
+            <div className="flex justify-between items-center pb-3 border-b border-surface-container mb-3 flex-shrink-0">
               <h3 className="font-bold text-base text-on-surface flex items-center gap-2">
                 <span className="material-symbols-outlined text-primary">group_add</span>
                 {t('addMembers')}
               </h3>
               <button 
+                type="button"
                 onClick={() => setShowAddMemberModal(false)}
                 className="w-8 h-8 rounded-full flex items-center justify-center text-outline hover:bg-surface-container active:scale-95 duration-100 cursor-pointer"
               >
@@ -291,77 +351,199 @@ export const Header: React.FC<HeaderProps> = ({ showBack = false, backPath, titl
               </button>
             </div>
 
-            {/* Candidate List */}
-            <div className="flex-1 overflow-y-auto space-y-3 pr-1 scrollbar-thin">
-              {loadingCandidates ? (
-                <div className="py-8 flex flex-col items-center justify-center text-xs text-on-surface-variant gap-2">
-                  <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-                  <span>Loading candidates...</span>
-                </div>
-              ) : candidates.length === 0 ? (
-                <div className="py-12 text-center text-xs text-on-surface-variant flex flex-col items-center gap-2">
-                  <span className="material-symbols-outlined text-outline text-3xl">people_mute</span>
-                  <p>{t('noCandidates')}</p>
-                </div>
-              ) : (
-                candidates.map((c) => {
-                  const isSelected = selectedIds.has(c.id);
-                  return (
-                    <div 
-                      key={c.id}
-                      onClick={() => toggleSelect(c.id)}
-                      className={`p-3 rounded-xl border flex items-center justify-between gap-3 cursor-pointer transition-all duration-150 active:scale-[0.99] ${
-                        isSelected 
-                          ? 'border-primary bg-primary-container/10 shadow-sm ring-1 ring-primary' 
-                          : 'border-outline-variant/60 bg-surface-container-lowest hover:border-outline-variant'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs ${
-                          isSelected ? 'bg-primary text-on-primary' : 'bg-primary-fixed text-on-primary-fixed'
-                        }`}>
-                          {c.name.charAt(0)}
-                        </div>
-                        <div className="flex flex-col text-left">
-                          <span className="font-label-md text-label-md font-bold text-on-surface">{c.name}</span>
-                          <span className="text-[10px] text-on-surface-variant font-mono">{c.phone}</span>
-                        </div>
-                      </div>
-                      
-                      <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${
-                        isSelected ? 'border-primary text-primary' : 'border-outline text-transparent'
-                      }`}>
-                        {isSelected && <span className="material-symbols-outlined text-xs font-extrabold animate-scale-up text-primary">check</span>}
-                      </div>
-                    </div>
-                  );
-                })
-              )}
+            {/* New / Existing segment toggle */}
+            <div className="flex bg-surface-container rounded-xl p-1 mb-3 border border-outline-variant/60 flex-shrink-0 select-none">
+              <button 
+                type="button"
+                onClick={() => {
+                  setToggleMode('new');
+                  setSelectedCandidate(null);
+                  setName('');
+                  setPhone('');
+                  setAge('');
+                  setExperience('');
+                  setSpecialization('Silk');
+                  setArea('');
+                }}
+                className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                  toggleMode === 'new' 
+                    ? 'bg-white text-primary shadow-sm font-bold' 
+                    : 'text-on-surface-variant hover:text-on-surface font-semibold'
+                }`}
+              >
+                New Member
+              </button>
+              <button 
+                type="button"
+                onClick={() => {
+                  setToggleMode('existing');
+                  setSelectedCandidate(null);
+                  setName('');
+                  setPhone('');
+                  setAge('');
+                  setExperience('');
+                  setSpecialization('Silk');
+                  setArea('');
+                }}
+                className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                  toggleMode === 'existing' 
+                    ? 'bg-white text-primary shadow-sm font-bold' 
+                    : 'text-on-surface-variant hover:text-on-surface font-semibold'
+                }`}
+              >
+                Existing Candidate
+              </button>
             </div>
 
-            {/* Selection Details & Confirm */}
-            {selectedIds.size > 0 && (
-              <div className="mt-4 pt-4 border-t border-surface-container bg-surface-container-lowest/50 rounded-xl space-y-4 animate-in slide-in-from-bottom-2 duration-200">
-                <p className="text-xs text-on-surface-variant leading-relaxed px-1">
-                  {selectedIds.size === 1 
-                    ? t('confirmAddMember', { name: candidates.find(c => selectedIds.has(c.id))?.name || '' })
-                    : t('confirmAddMembers', { count: selectedIds.size })}
-                </p>
-                <div className="flex gap-3">
-                  <button 
-                    onClick={() => setSelectedIds(new Set())}
-                    className="flex-grow py-2.5 border border-outline text-outline font-bold text-xs text-center rounded-xl hover:bg-surface-container active:scale-95 duration-100 cursor-pointer bg-white"
+            {/* Candidate Search Dropdown (Existing mode only) */}
+            {toggleMode === 'existing' && (
+              <div className="space-y-1 mb-3 text-left flex-shrink-0">
+                <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-wider select-none">Select Existing Candidate</label>
+                {loadingCandidates ? (
+                  <div className="text-xs text-on-surface-variant py-2 flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                    <span>Loading candidates...</span>
+                  </div>
+                ) : candidates.length === 0 ? (
+                  <div className="text-xs text-rose-600 font-semibold py-1">
+                    {t('noCandidates')}
+                  </div>
+                ) : (
+                  <select
+                    value={selectedCandidate?.id || ''}
+                    onChange={(e) => handleSelectCandidate(e.target.value)}
+                    className="w-full bg-white border border-outline-variant rounded-xl p-2 text-xs focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none text-on-surface cursor-pointer"
                   >
-                    {t('cancel')}
-                  </button>
-                  <button 
-                    onClick={handleConfirmAddMembers}
-                    className="flex-grow py-2.5 bg-primary text-on-primary font-bold text-xs rounded-xl shadow-md hover:bg-primary-container active:scale-95 duration-100 cursor-pointer flex items-center justify-center gap-1.5"
-                  >
-                    <span className="material-symbols-outlined text-sm font-bold">check</span>
-                    {t('confirmBtn')}
-                  </button>
+                    <option value="">-- Choose Candidate --</option>
+                    {candidates.map(c => (
+                      <option key={c.id} value={c.id}>{c.name} ({c.phone})</option>
+                    ))}
+                  </select>
+                )}
+              </div>
+            )}
+
+            {/* Input Form Fields */}
+            {(toggleMode === 'new' || selectedCandidate) ? (
+              <form onSubmit={handleConfirmAddMember} className="flex-1 overflow-y-auto space-y-3 pr-1 scrollbar-thin flex flex-col justify-between">
+                <div className="space-y-3">
+                  {/* Name */}
+                  <div className="space-y-1 text-left">
+                    <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-wider select-none">Full Name</label>
+                    <input 
+                      type="text" 
+                      value={name} 
+                      onChange={(e) => setName(e.target.value)} 
+                      disabled={toggleMode === 'existing'}
+                      placeholder="e.g. Gita Devi"
+                      required
+                      className="w-full bg-white border border-outline-variant rounded-xl p-2.5 text-xs focus:border-primary focus:outline-none disabled:bg-surface-container/50 disabled:text-on-surface-variant text-on-surface"
+                    />
+                  </div>
+
+                  {/* Phone Number */}
+                  <div className="space-y-1 text-left">
+                    <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-wider select-none">Mobile Number</label>
+                    <input 
+                      type="tel" 
+                      value={phone} 
+                      onChange={(e) => setPhone(e.target.value)} 
+                      disabled={toggleMode === 'existing'}
+                      placeholder="e.g. 9876543210"
+                      required
+                      className="w-full bg-white border border-outline-variant rounded-xl p-2.5 text-xs focus:border-primary focus:outline-none disabled:bg-surface-container/50 disabled:text-on-surface-variant text-on-surface"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    {/* Age */}
+                    <div className="space-y-1 text-left">
+                      <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-wider select-none">Age</label>
+                      <input 
+                        type="number" 
+                        value={age} 
+                        onChange={(e) => setAge(e.target.value)} 
+                        disabled={toggleMode === 'existing'}
+                        placeholder="e.g. 34"
+                        className="w-full bg-white border border-outline-variant rounded-xl p-2.5 text-xs focus:border-primary focus:outline-none disabled:bg-surface-container/50 disabled:text-on-surface-variant text-on-surface font-mono"
+                      />
+                    </div>
+
+                    {/* Experience */}
+                    <div className="space-y-1 text-left">
+                      <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-wider select-none">Experience (Years)</label>
+                      <input 
+                        type="number" 
+                        value={experience} 
+                        onChange={(e) => setExperience(e.target.value)} 
+                        disabled={toggleMode === 'existing'}
+                        placeholder="e.g. 8"
+                        className="w-full bg-white border border-outline-variant rounded-xl p-2.5 text-xs focus:border-primary focus:outline-none disabled:bg-surface-container/50 disabled:text-on-surface-variant text-on-surface font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Weaving Specialization dropdown */}
+                  <div className="space-y-1 text-left">
+                    <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-wider select-none">Weaving Specialization</label>
+                    <select
+                      value={specialization}
+                      onChange={(e) => setSpecialization(e.target.value)}
+                      disabled={toggleMode === 'existing'}
+                      className="w-full bg-white border border-outline-variant rounded-xl p-2.5 text-xs focus:border-primary focus:outline-none disabled:bg-surface-container/50 disabled:text-on-surface-variant text-on-surface cursor-pointer"
+                    >
+                      <option value="Silk">Silk</option>
+                      <option value="Cotton">Cotton</option>
+                      <option value="Zari">Zari</option>
+                      <option value="Polyester">Polyester</option>
+                      <option value="Linen">Linen</option>
+                    </select>
+                  </div>
+
+                  {/* Village/Area */}
+                  <div className="space-y-1 text-left">
+                    <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-wider select-none">Village / Area</label>
+                    <input 
+                      type="text" 
+                      value={area} 
+                      onChange={(e) => setArea(e.target.value)} 
+                      disabled={toggleMode === 'existing'}
+                      placeholder="e.g. Kanchipuram Outer"
+                      className="w-full bg-white border border-outline-variant rounded-xl p-2.5 text-xs focus:border-primary focus:outline-none disabled:bg-surface-container/50 disabled:text-on-surface-variant text-on-surface"
+                    />
+                  </div>
                 </div>
+
+                {/* Confirm Section Prompt & Action buttons */}
+                <div className="pt-3 border-t border-surface-container bg-surface-container-lowest/50 rounded-xl space-y-3 flex-shrink-0">
+                  <p className="text-[11px] text-on-surface-variant leading-relaxed px-1">
+                    {toggleMode === 'existing' 
+                      ? t('confirmAddMember', { name: selectedCandidate?.name || '' })
+                      : t('confirmAddMember', { name: name.trim() || 'this member' })}
+                  </p>
+                  <div className="flex gap-3">
+                    <button 
+                      type="button"
+                      onClick={() => setShowAddMemberModal(false)}
+                      className="flex-grow py-2 border border-outline text-outline font-bold text-xs text-center rounded-xl hover:bg-surface-container active:scale-95 duration-100 cursor-pointer bg-white"
+                    >
+                      {t('cancel')}
+                    </button>
+                    <button 
+                      type="submit"
+                      disabled={!name.trim() || !phone.trim()}
+                      className="flex-grow py-2 bg-primary text-on-primary font-bold text-xs rounded-xl shadow-md hover:bg-primary-container active:scale-95 duration-100 cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
+                    >
+                      <span className="material-symbols-outlined text-sm font-bold">check</span>
+                      {t('confirmBtn')}
+                    </button>
+                  </div>
+                </div>
+              </form>
+            ) : (
+              <div className="flex-1 flex flex-col items-center justify-center py-12 text-center text-xs text-on-surface-variant gap-2 select-none">
+                <span className="material-symbols-outlined text-outline text-4xl">contact_page</span>
+                <p>Choose an unassigned weaver candidate above to review and add them to your cooperative.</p>
               </div>
             )}
           </div>

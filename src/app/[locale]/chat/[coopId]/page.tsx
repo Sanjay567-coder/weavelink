@@ -82,6 +82,10 @@ export default function GroupChatPage() {
     role: 'admin' | 'weaver' | 'treasurer';
     phone: string;
     capacity?: number;
+    age?: number;
+    experience?: number;
+    specialization?: string;
+    area?: string;
   }
   const [membersList, setMembersList] = useState<MemberData[]>([]);
   const [showMembersModal, setShowMembersModal] = useState(false);
@@ -855,6 +859,22 @@ export default function GroupChatPage() {
                           </span>
                         </div>
                         <span className="text-[10px] text-on-surface-variant font-mono">{m.phone}</span>
+                        {!isUserAdmin && (m.age || m.experience || m.specialization || m.area) && (
+                          <div className="flex flex-wrap items-center gap-1.5 mt-1 select-none font-sans">
+                            {m.specialization && (
+                              <span className="text-[9px] px-1.5 py-0.5 rounded bg-primary-container/20 text-primary font-bold">{m.specialization}</span>
+                            )}
+                            {m.area && (
+                              <span className="text-[9px] px-1.5 py-0.5 rounded bg-secondary-container/20 text-secondary font-bold">{m.area}</span>
+                            )}
+                            {m.age ? (
+                              <span className="text-[9px] px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant font-mono">{m.age}y</span>
+                            ) : null}
+                            {m.experience ? (
+                              <span className="text-[9px] px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant font-mono">{m.experience}y exp</span>
+                            ) : null}
+                          </div>
+                        )}
                       </div>
                     </div>
 

@@ -40,6 +40,7 @@ interface WeaverData {
   grade: string;
   loomId: string;
   avatarUrl: string;
+  specialization?: string;
 }
 
 export default function WorkAllocationPage() {
@@ -388,7 +389,7 @@ export default function WorkAllocationPage() {
                   ></div>
                   <div>
                     <p className="font-label-lg text-label-lg">{weaver.name}</p>
-                    <p className="text-label-sm text-on-surface-variant text-[11px]">{weaver.loomId} • {weaver.grade}</p>
+                    <p className="text-label-sm text-on-surface-variant text-[11px]">{weaver.loomId} • {weaver.grade}{weaver.specialization && ` • ${weaver.specialization}`}</p>
                   </div>
                 </div>
                 

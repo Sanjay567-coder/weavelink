@@ -10,7 +10,7 @@ import {
   ConfirmationResult,
   UserCredential
 } from 'firebase/auth';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, query, collection, where, getDocs, writeBatch } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 
 interface MemberProfile {
@@ -58,9 +58,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setMemberProfile(docSnap.data() as MemberProfile);
           } else {
             console.warn(`No member profile found in Firestore for UID: ${currentUser.uid}`);
-            setMemberProfile(null);
+            
+            const phone = currentUser.phoneNumber;
+            if (phone) {
+              const q = query(collection(db, 'members'), where('phone', '==', phone));
+              getDocs(q).then((querySnapshot) => {
+                if (!querySnapshot.empty) {
+                  const tempDoc = querySnapshot.docs[0];
+                  const tempData = tempDoc.data();
+                  
+                  const batch = writeBatch(db);
+                  const newMemberRef = doc(db, 'members', currentUser.uid);
+                  batch.set(newMemberRef, {
+                    ...tempData,
+                    role: 'weaver'
+                  });
+                  batch.delete(doc(db, 'members', tempDoc.id));
+                  
+                  batch.commit().then(() => {
+                    console.log("Weaver profile self-migrated successfully during Auth registration!");
+                  }).catch((err) => {
+                    console.error("Failed to commit profile self-migration:", err);
+                    setMemberProfile(null);
+                    setLoading(false);
+                  });
+                } else {
+                  setMemberProfile(null);
+                  setLoading(false);
+                }
+              }).catch((err) => {
+                console.error("Failed to query temp doc for migration:", err);
+                setMemberProfile(null);
+                setLoading(false);
+              });
+            } else {
+              setMemberProfile(null);
+              setLoading(false);
+            }
           }
-          setLoading(false);
         }, (error) => {
           console.error("Error fetching member profile:", error);
           setLoading(false);

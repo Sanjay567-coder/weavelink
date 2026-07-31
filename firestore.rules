@@ -35,21 +35,33 @@ service cloud.firestore {
         resource.data.coopId == getMemberData(request.auth.uid).coopId || 
         resource.data.coopId == ''
       );
-      // Allow write if Admin (only if target coopId matches Admin's own coopId and resource was unassigned), 
-      // OR if the user is updating their own pre-existing profile without changing their role
-      allow write: if request.auth != null && (
+      
+      // Allow creation only if:
+      // 1. Creator is Admin and coopId matches Admin's own coopId (admin create)
+      // 2. User is creating their own profile during self-linking migration (must be weaver role matching their phone)
+      allow create: if request.auth != null && (
         (getRole() == 'admin' && 
-         (
-           (resource == null && request.resource.data.coopId == getMemberData(request.auth.uid).coopId) ||
-           (resource != null && 
-            resource.data.coopId == '' &&
-            request.resource.data.coopId == getMemberData(request.auth.uid).coopId &&
-            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['coopId', 'role']))
-         )
-        ) || 
+         request.resource.data.coopId == getMemberData(request.auth.uid).coopId &&
+         request.resource.data.role == 'weaver') ||
+        (request.auth.uid == memberId && 
+         request.resource.data.phone == request.auth.token.phone_number &&
+         request.resource.data.role == 'weaver')
+      );
+
+      allow update: if request.auth != null && (
+        (getRole() == 'admin' && 
+         resource.data.coopId == '' &&
+         request.resource.data.coopId == getMemberData(request.auth.uid).coopId &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['coopId', 'role'])) || 
         (request.auth.uid == memberId && 
          resource != null && 
          request.resource.data.role == resource.data.role)
+      );
+
+      // Allow deletion only if Admin of the same coop, or if the user is migrating their own phone-linked profile
+      allow delete: if request.auth != null && (
+        (getRole() == 'admin' && resource.data.coopId == getMemberData(request.auth.uid).coopId) ||
+        (request.auth.token.phone_number == resource.data.phone)
       );
     }
     
