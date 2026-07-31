@@ -30,11 +30,13 @@ interface PaymentData {
 
 export default function PaymentLedgerPage() {
   const t = useTranslations('screen7');
+  const tCommon = useTranslations('common');
   const params = useParams();
   const router = useRouter();
   const { user, memberProfile } = useAuth();
   
   const orderId = params.orderId as string;
+  const locale = (params.locale as string) || 'en';
   
   // Toggled view (Admin vs Weaver)
   const [viewMode, setViewMode] = useState<'admin' | 'weaver'>('admin');
@@ -47,6 +49,22 @@ export default function PaymentLedgerPage() {
   const triggerToast = (msg: string) => {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(''), 3000);
+  };
+
+  const translateExpectedDate = (dateStr: string) => {
+    if (!dateStr) return '';
+    const parts = dateStr.trim().split(' ');
+    if (parts.length === 2) {
+      const month = parts[0];
+      const day = parts[1];
+      const monthNames: Record<string, Record<string, string>> = {
+        'hi': { 'Oct': 'अक्टूबर', 'Sep': 'सितंबर' },
+        'ta': { 'Oct': 'அக்டோபர்', 'Sep': 'செப்டம்பர்' }
+      };
+      const translatedMonth = monthNames[locale]?.[month] || month;
+      return locale === 'hi' || locale === 'ta' ? `${day} ${translatedMonth}` : `${translatedMonth} ${day}`;
+    }
+    return dateStr;
   };
 
   // Set default view mode based on role
@@ -129,7 +147,7 @@ export default function PaymentLedgerPage() {
   const handleMarkAllPaid = async () => {
     // Only allow admin or treasurer role writes
     if (memberProfile?.role !== 'admin' && memberProfile?.role !== 'treasurer') {
-      alert("Permission Denied: Only Admins or Treasurers can log payment dispersals.");
+      alert(t('alertPermissionDenied'));
       return;
     }
 
@@ -142,10 +160,10 @@ export default function PaymentLedgerPage() {
         }
       });
       await batch.commit();
-      alert("All payments marked as Paid!");
+      alert(t('alertAllPaid'));
     } catch (err: any) {
       console.error(err);
-      alert("Firestore transaction failed: " + err.message);
+      alert(t('alertDbFailed', { error: err.message }));
     }
   };
 
@@ -153,7 +171,7 @@ export default function PaymentLedgerPage() {
   const startVoiceQuery = () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      alert("Speech recognition not supported in this browser. Please use Google Chrome.");
+      alert(t('alertSpeechUnsupported'));
       return;
     }
 
@@ -195,15 +213,15 @@ export default function PaymentLedgerPage() {
       const myPay = payments.find(p => p.memberId === user?.uid);
       if (myPay) {
         if (myPay.status === 'paid') {
-          triggerToast(`Your payout of ₹${myPay.amountOwed} is marked as PAID. Check your linked bank account.`);
+          triggerToast(t('voicePayoutPaid', { amount: myPay.amountOwed }));
         } else {
-          triggerToast(`Your expected payout of ₹${myPay.amountOwed} is PENDING. Funds will arrive within 48 hours of bank batch release.`);
+          triggerToast(t('voicePayoutPending', { amount: myPay.amountOwed }));
         }
       } else {
-        triggerToast("Could not locate your weaver profile allocations. Default process estimate: 48 hour processing window.");
+        triggerToast(t('voiceNoProfile'));
       }
     } else {
-      triggerToast(`Voice Query: "${command}". Try saying "When is my payment due?"`);
+      triggerToast(t('voiceDefaultHelp', { command }));
     }
   };
 
@@ -290,7 +308,7 @@ export default function PaymentLedgerPage() {
               <div className="p-container-padding border-b border-outline-variant bg-surface-container-high flex justify-between items-center">
                 <h3 className="font-label-lg text-on-surface">{t('disbursement')}</h3>
                 <button 
-                  onClick={() => triggerToast("PDF ledger report exported successfully!")}
+                  onClick={() => triggerToast(t('toastPdfExport'))}
                   className="text-primary font-label-sm flex items-center gap-1 cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-[18px]">download</span> 
@@ -313,7 +331,7 @@ export default function PaymentLedgerPage() {
                     <div className="text-right">
                       <p className="font-label-lg text-primary">₹{p.amountOwed.toLocaleString('en-IN')}.00</p>
                       <p className={`font-label-sm text-xs font-bold ${p.status === 'paid' ? 'text-emerald-600' : 'text-tertiary'}`}>
-                        {p.status === 'paid' ? 'Paid' : `Due: ${p.expectedDate}`}
+                        {p.status === 'paid' ? t('paidStatus') : t('dueStatus', { date: translateExpectedDate(p.expectedDate) })}
                       </p>
                     </div>
                   </div>
@@ -342,7 +360,7 @@ export default function PaymentLedgerPage() {
                     {myPayment.status === 'paid' ? 'check_circle' : 'pending_actions'}
                   </span>
                   <span className="font-label-sm">
-                    {myPayment.status === 'paid' ? 'Paid' : t('pendingTransfer')}
+                    {myPayment.status === 'paid' ? t('paidStatus') : t('pendingTransfer')}
                   </span>
                 </div>
               </div>
@@ -352,14 +370,14 @@ export default function PaymentLedgerPage() {
                   <span className="material-symbols-outlined text-secondary">info</span>
                   <p className="font-body-md text-on-surface-variant text-sm">
                     {myPayment.status === 'paid' 
-                      ? 'Funds have been disbursed and settled directly into your linked bank account.' 
+                      ? t('disbursedInfo')
                       : t('fundsVerified')}
                   </p>
                 </div>
                 
                 <div className="pt-4 border-t border-outline-variant flex justify-between items-center">
                   <button 
-                    onClick={() => triggerToast("Loading past ledger history...")}
+                    onClick={() => triggerToast(t('toastLoadHistory'))}
                     className="text-primary font-label-lg flex items-center gap-1 hover:underline cursor-pointer"
                   >
                     <span className="material-symbols-outlined text-[20px]">history</span> 
@@ -399,7 +417,7 @@ export default function PaymentLedgerPage() {
         <div className="fixed bottom-24 right-container-padding z-40 flex flex-col items-center">
           <div className="bg-white/80 backdrop-blur-md px-4 py-2 rounded-full shadow-sm mb-2 border border-outline-variant text-center max-w-[180px] truncate">
             <span className="font-label-sm text-label-sm text-primary">
-              {isListening ? 'Listening...' : voiceQueryText ? `Cmd: "${voiceQueryText}"` : 'Tap to Speak'}
+              {isListening ? t('voiceListening') : voiceQueryText ? t('voiceCommandLabel', { command: voiceQueryText }) : t('voiceTapToSpeak')}
             </span>
           </div>
           <button 

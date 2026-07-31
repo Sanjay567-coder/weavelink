@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { BrandedLoader } from '@/components/BrandedLoader';
+import { useTranslations } from 'next-intl';
 
 interface OrderData {
   coopId: string;
@@ -19,6 +20,7 @@ interface OrderData {
 }
 
 export default function PublicBuyerConfirmPage() {
+  const t = useTranslations('confirm');
   const params = useParams();
   const router = useRouter();
   const orderId = params.orderId as string;
@@ -32,6 +34,14 @@ export default function PublicBuyerConfirmPage() {
   const triggerToast = (msg: string) => {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(''), 3000);
+  };
+
+  const getFormattedConfirmDate = () => {
+    if (!order?.buyerConfirmedAt) return new Date().toLocaleDateString(locale === 'hi' ? 'hi-IN' : locale === 'ta' ? 'ta-IN' : 'en-IN');
+    const dateObj = order.buyerConfirmedAt.seconds 
+      ? new Date(order.buyerConfirmedAt.seconds * 1000) 
+      : new Date(order.buyerConfirmedAt);
+    return dateObj.toLocaleDateString(locale === 'hi' ? 'hi-IN' : locale === 'ta' ? 'ta-IN' : 'en-IN');
   };
 
   useEffect(() => {
@@ -111,9 +121,9 @@ export default function PublicBuyerConfirmPage() {
               </span>
             </div>
             <div>
-              <h1 className="font-bold text-sm text-on-surface-variant uppercase tracking-wider">Independent Quote Verification</h1>
+              <h1 className="font-bold text-sm text-on-surface-variant uppercase tracking-wider">{t('title')}</h1>
               <p className="font-bold text-xs text-on-surface mt-0.5">
-                {order.buyerConfirmed ? 'Price Verified ✓' : 'Awaiting Buyer Confirmation'}
+                {order.buyerConfirmed ? t('priceVerified') : t('awaitingConfirmation')}
               </p>
             </div>
           </div>
@@ -122,37 +132,37 @@ export default function PublicBuyerConfirmPage() {
             
             {/* Context message */}
             <p className="text-xs text-on-surface-variant leading-relaxed">
-              WeaveLink requires transparent, immutable pricing confirmation to protect artisan wages. Please verify that the details below match the quote you provided:
+              {t('contextText')}
             </p>
 
             <div className="space-y-3.5 pt-2">
               <div className="flex justify-between items-center py-2 border-b border-slate-100">
-                <span className="text-xs text-on-surface-variant">Buyer Name</span>
+                <span className="text-xs text-on-surface-variant">{t('buyerName')}</span>
                 <span className="text-xs font-semibold">{order.buyerName}</span>
               </div>
               <div className="flex justify-between items-center py-2 border-b border-slate-100">
-                <span className="text-xs text-on-surface-variant">Weft Design / Item</span>
+                <span className="text-xs text-on-surface-variant">{t('itemLabel')}</span>
                 <span className="text-xs font-semibold">{order.item}</span>
               </div>
               <div className="flex justify-between items-center py-2 border-b border-slate-100">
-                <span className="text-xs text-on-surface-variant">Quantity Ordered</span>
-                <span className="text-xs font-semibold">{order.quantity} sarees</span>
+                <span className="text-xs text-on-surface-variant">{t('quantityLabel')}</span>
+                <span className="text-xs font-semibold">{t('sareesUnit', { quantity: order.quantity })}</span>
               </div>
               <div className="flex justify-between items-center py-2 border-b border-slate-100">
-                <span className="text-xs text-on-surface-variant">Delivery Deadline</span>
-                <span className="text-xs font-semibold">{new Date(order.deadline).toLocaleDateString(locale === 'hi' ? 'hi-IN' : 'en-IN', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+                <span className="text-xs text-on-surface-variant">{t('deadlineLabel')}</span>
+                <span className="text-xs font-semibold">{new Date(order.deadline).toLocaleDateString(locale === 'hi' ? 'hi-IN' : locale === 'ta' ? 'ta-IN' : 'en-IN', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
               </div>
               
               {/* Highlighted Price Card */}
               <div className="bg-primary/5 border border-primary/20 p-4 rounded-xl flex items-center justify-between mt-4">
                 <div>
-                  <span className="text-[10px] text-primary uppercase font-bold tracking-wider block">Contract Price</span>
+                  <span className="text-[10px] text-primary uppercase font-bold tracking-wider block">{t('contractPrice')}</span>
                   <span className="text-2xl font-bold text-primary mt-0.5">₹{order.price.toLocaleString('en-IN')}</span>
                 </div>
                 {order.buyerConfirmed && (
                   <span className="text-xs font-bold text-emerald-700 flex items-center gap-0.5">
                     <span className="material-symbols-outlined text-[16px]">verified</span>
-                    Confirmed
+                    {t('confirmed')}
                   </span>
                 )}
               </div>
@@ -163,7 +173,7 @@ export default function PublicBuyerConfirmPage() {
               {order.buyerConfirmed ? (
                 <div className="text-center py-3 bg-emerald-50 text-emerald-800 rounded-xl border border-emerald-200 text-xs font-bold flex items-center justify-center gap-1.5">
                   <span className="material-symbols-outlined text-[16px]">check_circle</span>
-                  Verified by you on {order.buyerConfirmedAt ? (order.buyerConfirmedAt.seconds ? new Date(order.buyerConfirmedAt.seconds * 1000).toLocaleDateString('en-IN') : new Date(order.buyerConfirmedAt).toLocaleDateString('en-IN')) : new Date().toLocaleDateString('en-IN')}
+                  {t('verifiedByYou', { date: getFormattedConfirmDate() })}
                 </div>
               ) : (
                 <button
@@ -176,7 +186,7 @@ export default function PublicBuyerConfirmPage() {
                   ) : (
                     <>
                       <span className="material-symbols-outlined text-[18px]">verified</span>
-                      Yes, this is what I quoted
+                      {t('confirmButton')}
                     </>
                   )}
                 </button>

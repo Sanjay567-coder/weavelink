@@ -27,6 +27,10 @@ interface DashboardStats {
 
 export default function HomeDashboardPage() {
   const t = useTranslations('screen1');
+  const tCommon = useTranslations('common');
+  const tScreen6 = useTranslations('screen6');
+  const tScreen7 = useTranslations('screen7');
+  const tScreen8 = useTranslations('screen8');
   const router = useRouter();
   const params = useParams();
   const locale = (params.locale as string) || 'en';
@@ -176,56 +180,63 @@ export default function HomeDashboardPage() {
         
         {/* Welcome Section */}
         <section className="flex flex-col">
-          <p className="text-xs text-primary font-bold uppercase tracking-widest">Cooperative Hub</p>
+          <p className="text-xs text-primary font-bold uppercase tracking-widest">{t('coopHub')}</p>
           <h2 className="font-headline-lg text-headline-lg text-on-surface font-extrabold mt-0.5">
-            Namaste, {memberProfile.name.split(' ')[0]} 👋
+            {t('namaste', { name: memberProfile.name.split(' ')[0] })}
           </h2>
           <p className="text-xs text-on-surface-variant mt-1">
-            Logged in as <span className="font-bold text-indigo-800 uppercase">{role}</span>
+            {t('loggedInAs', { 
+              role: role === 'admin' 
+                ? tCommon('roleAdmin') 
+                : role === 'treasurer' 
+                ? tCommon('roleTreasurer') 
+                : role === 'weaver' 
+                ? tCommon('roleWeaver') 
+                : role 
+            })}
           </p>
         </section>
 
         {/* 1. ADMIN DASHBOARD */}
         {role === 'admin' && (
           <section className="space-y-6 animate-in fade-in duration-200">
-            {/* Stats Card Grid */}
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-white border border-outline-variant rounded-xl p-4 shadow-sm flex flex-col justify-between h-28 hover:shadow-md transition-shadow">
-                <span className="text-[10px] text-on-surface-variant font-bold uppercase tracking-wider block">New Quotes</span>
+                <span className="text-[10px] text-on-surface-variant font-bold uppercase tracking-wider block">{t('newQuotes')}</span>
                 <span className="text-3xl font-extrabold text-primary block mt-1">{stats.activeOrdersCount}</span>
-                <span className="text-[10px] text-on-surface-variant block mt-1">Awaiting Review</span>
+                <span className="text-[10px] text-on-surface-variant block mt-1">{t('awaitingReview')}</span>
               </div>
               <div className="bg-white border border-outline-variant rounded-xl p-4 shadow-sm flex flex-col justify-between h-28 hover:shadow-md transition-shadow">
-                <span className="text-[10px] text-on-surface-variant font-bold uppercase tracking-wider block">In Discussion</span>
+                <span className="text-[10px] text-on-surface-variant font-bold uppercase tracking-wider block">{t('inDiscussion')}</span>
                 <span className="text-3xl font-extrabold text-tertiary block mt-1">{stats.discussingOrdersCount}</span>
-                <span className="text-[10px] text-on-surface-variant block mt-1">Weaver Votes Pinned</span>
+                <span className="text-[10px] text-on-surface-variant block mt-1">{t('votesPinned')}</span>
               </div>
             </div>
 
             {/* Quick Actions Card */}
             <div className="bg-white border border-outline-variant rounded-xl p-5 shadow-sm space-y-4">
-              <h3 className="font-label-lg text-on-surface font-bold">Quick Actions</h3>
+              <h3 className="font-label-lg text-on-surface font-bold">{t('quickActions')}</h3>
               <div className="flex flex-col gap-3">
                 <button 
                   onClick={() => router.push(`/${locale}/orders/new`)}
                   className="w-full h-11 bg-primary text-on-primary rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-transform duration-100 cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-sm font-bold">add</span>
-                  Post New Order (Phone Quote)
+                  {t('postNewOrder')}
                 </button>
                 <button 
                   onClick={() => router.push(`/${locale}/orders`)}
                   className="w-full h-11 border border-outline text-on-surface hover:bg-surface-container rounded-xl font-bold text-xs flex items-center justify-center gap-2 active:scale-95 transition-transform duration-100 cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-sm">assignment</span>
-                  Manage All Active Orders
+                  {t('manageActiveOrders')}
                 </button>
                 <button 
                   onClick={() => router.push(`/${locale}/federation`)}
                   className="w-full h-11 border border-outline text-on-surface hover:bg-surface-container rounded-xl font-bold text-xs flex items-center justify-center gap-2 active:scale-95 transition-transform duration-100 cursor-pointer relative"
                 >
                   <span className="material-symbols-outlined text-sm">hub</span>
-                  Find Pooling Partners
+                  {t('findPoolingPartners')}
                   {poolingPartnersCount > 0 && (
                     <span className="absolute -top-1.5 -right-1.5 bg-tertiary text-on-tertiary text-[9px] font-bold px-1.5 py-0.5 rounded-full flex items-center justify-center animate-bounce shadow-sm">
                       {poolingPartnersCount}
@@ -237,20 +248,20 @@ export default function HomeDashboardPage() {
 
             {/* Recent Activity Ticker */}
             <div className="bg-white border border-outline-variant rounded-xl p-5 shadow-sm space-y-3">
-              <h3 className="font-label-lg text-on-surface font-bold">Cooperative Activity</h3>
+              <h3 className="font-label-lg text-on-surface font-bold">{t('coopActivity')}</h3>
               <div className="space-y-3 divide-y divide-surface-container">
                 <div className="flex gap-3 pt-2 text-xs">
                   <span className="material-symbols-outlined text-primary text-[18px]">campaign</span>
                   <div>
-                    <p className="font-semibold">New Order posted by Amit Patel</p>
+                    <p className="font-semibold">{t('newOrderPostedBy', { name: 'Amit Patel' })}</p>
                     <p className="text-[10px] text-on-surface-variant mt-0.5">100% Mulberry Silk Saree • 50 units</p>
                   </div>
                 </div>
                 <div className="flex gap-3 pt-3 text-xs">
                   <span className="material-symbols-outlined text-emerald-600 text-[18px]">verified_user</span>
                   <div>
-                    <p className="font-semibold">Order #8922 consensus started</p>
-                    <p className="text-[10px] text-on-surface-variant mt-0.5">Weavers reviewing raw material supply</p>
+                    <p className="font-semibold">{t('consensusStarted', { num: '8922' })}</p>
+                    <p className="text-[10px] text-on-surface-variant mt-0.5">{t('reviewingSupply')}</p>
                   </div>
                 </div>
               </div>
@@ -269,8 +280,8 @@ export default function HomeDashboardPage() {
               >
                 <span className="material-symbols-outlined text-amber-600 text-2xl">how_to_vote</span>
                 <div className="flex-1 text-xs">
-                  <p className="font-extrabold">Consensus Vote Pending!</p>
-                  <p className="text-amber-800 mt-0.5">Review and vote on Order #8922 (Ethnic Threads) in the Chat tab.</p>
+                  <p className="font-extrabold">{t('consensusVotePending')}</p>
+                  <p className="text-amber-800 mt-0.5">{t('reviewAndVote', { num: '8922', name: 'Ethnic Threads' })}</p>
                 </div>
                 <span className="material-symbols-outlined text-sm font-bold text-amber-600">chevron_right</span>
               </div>
@@ -291,7 +302,7 @@ export default function HomeDashboardPage() {
               <div className="space-y-2">
                 <div className="flex justify-between text-xs font-semibold">
                   <span className="text-on-surface-variant">Jamdani Silk Saree</span>
-                  <span className="text-primary">{stats.myProgressFinished} of {stats.myProgressTotal} Finished</span>
+                  <span className="text-primary">{tScreen6('finishedOf', { finished: stats.myProgressFinished, total: stats.myProgressTotal })}</span>
                 </div>
                 {/* Visual Progress Bar */}
                 <div className="w-full bg-surface-container rounded-full h-3.5 overflow-hidden border border-outline-variant/35 relative">
@@ -307,7 +318,7 @@ export default function HomeDashboardPage() {
                 className="w-full h-10 border border-outline text-primary hover:bg-surface-container rounded-xl font-bold text-xs flex items-center justify-center gap-2 active:scale-95 transition-transform duration-100 cursor-pointer"
               >
                 <span className="material-symbols-outlined text-sm">edit_note</span>
-                Update Loom Progress Logs
+                {t('updateLoomLogs')}
               </button>
             </div>
 
@@ -316,19 +327,19 @@ export default function HomeDashboardPage() {
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
                   <span className="material-symbols-outlined text-primary text-xl">payments</span>
-                  <h3 className="font-label-lg text-on-surface font-bold">My Payout Status</h3>
+                  <h3 className="font-label-lg text-on-surface font-bold">{t('myPayoutStatus')}</h3>
                 </div>
                 <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase border ${
                   stats.myPayoutStatus === 'paid' 
                     ? 'bg-emerald-50 border-emerald-200 text-emerald-800' 
                     : 'bg-amber-50 border-amber-200 text-amber-800'
                 }`}>
-                  {stats.myPayoutStatus === 'paid' ? 'Paid' : 'Pending Transfer'}
+                  {stats.myPayoutStatus === 'paid' ? tScreen7('paidStatus') : tScreen7('pendingTransfer')}
                 </span>
               </div>
 
               <div className="flex justify-between items-center py-2 border-b border-surface-container">
-                <span className="text-xs text-on-surface-variant">Expected Settlement:</span>
+                <span className="text-xs text-on-surface-variant">{t('expectedSettlement')}</span>
                 <span className="text-lg font-bold text-primary">₹{stats.myPayoutAmount.toLocaleString('en-IN')}.00</span>
               </div>
 
@@ -337,7 +348,7 @@ export default function HomeDashboardPage() {
                 className="w-full h-10 border border-outline text-on-surface hover:bg-surface-container rounded-xl font-bold text-xs flex items-center justify-center gap-2 active:scale-95 transition-transform duration-100 cursor-pointer"
               >
                 <span className="material-symbols-outlined text-sm">receipt_long</span>
-                View My Payment Details
+                {t('viewPaymentDetails')}
               </button>
             </div>
           </section>
@@ -350,17 +361,17 @@ export default function HomeDashboardPage() {
             <div className="bg-white border border-outline-variant rounded-xl p-5 shadow-sm space-y-4">
               <div className="flex items-center gap-2">
                 <span className="material-symbols-outlined text-primary text-xl">account_balance_wallet</span>
-                <h3 className="font-label-lg text-on-surface font-bold">Disbursement Pool</h3>
+                <h3 className="font-label-lg text-on-surface font-bold">{t('disbursementPool')}</h3>
               </div>
 
               <div className="flex justify-between items-baseline py-2 my-1 border-t border-b border-surface-container">
                 <div>
-                  <span className="text-[10px] text-on-surface-variant font-bold uppercase tracking-wider block">Pending Batch Amount</span>
+                  <span className="text-[10px] text-on-surface-variant font-bold uppercase tracking-wider block">{t('pendingBatchAmount')}</span>
                   <span className="text-2xl font-extrabold text-primary block mt-1">₹{stats.totalPendingDisbursement.toLocaleString('en-IN')}.00</span>
                 </div>
                 <div className="text-right">
-                  <span className="text-[10px] text-on-surface-variant font-bold uppercase tracking-wider block">Artisans Due</span>
-                  <span className="text-xl font-bold text-on-surface block mt-1">{stats.pendingWeaversCount} Weavers</span>
+                  <span className="text-[10px] text-on-surface-variant font-bold uppercase tracking-wider block">{t('artisansDue')}</span>
+                  <span className="text-xl font-bold text-on-surface block mt-1">{tScreen8('weaversCountLabel', { count: stats.pendingWeaversCount })}</span>
                 </div>
               </div>
 
@@ -370,13 +381,13 @@ export default function HomeDashboardPage() {
                 className="w-full h-11 bg-primary text-on-primary rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-transform duration-100 disabled:opacity-50 cursor-pointer"
               >
                 <span className="material-symbols-outlined text-sm font-bold">send_to_mobile</span>
-                Disburse Pending Splits Batch
+                {t('disbursePendingBatch')}
               </button>
             </div>
 
             {/* Recent Completed payouts */}
             <div className="bg-white border border-outline-variant rounded-xl p-5 shadow-sm space-y-3">
-              <h3 className="font-label-lg text-on-surface font-bold font-sans">Recent Ledger Disbursements</h3>
+              <h3 className="font-label-lg text-on-surface font-bold font-sans">{t('recentDisbursements')}</h3>
               <div className="space-y-3 divide-y divide-surface-container text-xs">
                 <div className="flex justify-between items-center pt-2">
                   <div className="flex items-center gap-2">
@@ -386,7 +397,7 @@ export default function HomeDashboardPage() {
                       <p className="text-[10px] text-on-surface-variant">Loom ID: BHU-092</p>
                     </div>
                   </div>
-                  <span className="font-bold text-primary">₹4,166 Paid</span>
+                  <span className="font-bold text-primary">{t('amountPaidLabel', { amount: '₹4,166' })}</span>
                 </div>
                 <div className="flex justify-between items-center pt-3">
                   <div className="flex items-center gap-2">
@@ -396,7 +407,7 @@ export default function HomeDashboardPage() {
                       <p className="text-[10px] text-on-surface-variant">Loom ID: BHU-045</p>
                     </div>
                   </div>
-                  <span className="font-bold text-primary">₹4,166 Paid</span>
+                  <span className="font-bold text-primary">{t('amountPaidLabel', { amount: '₹4,166' })}</span>
                 </div>
               </div>
             </div>

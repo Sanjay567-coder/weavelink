@@ -49,7 +49,7 @@ export const Navbar: React.FC = () => {
       <Link href={`/${locale}/payments/order-4421`} className={tabClass('payments')}>
         <span className="material-symbols-outlined" style={{ fontVariationSettings: activeTab === 'payments' ? "'FILL' 1" : undefined }}>payments</span>
         <span className="font-label-sm text-label-sm">
-          {isWeaver ? 'My Payments' : 'Ledger'}
+          {isWeaver ? t('myPayments') : t('ledger')}
         </span>
       </Link>
 

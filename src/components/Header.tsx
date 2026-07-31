@@ -20,6 +20,15 @@ export const Header: React.FC<HeaderProps> = ({ showBack = false, backPath, titl
   const { user, logout } = useAuth();
   const [isOnline, setIsOnline] = useState(typeof window !== 'undefined' ? navigator.onLine : true);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  const currentLocale = pathname.split('/')[1] || 'en';
+
+  const localeNames: Record<string, string> = {
+    'en': 'English',
+    'hi': 'हिन्दी',
+    'ta': 'தமிழ்'
+  };
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -45,24 +54,10 @@ export const Header: React.FC<HeaderProps> = ({ showBack = false, backPath, titl
   }, [user]);
 
   const switchLocale = (newLocale: string) => {
-    // Current path is e.g. /en/orders/123 or /hi/orders/123
-    // We want to replace the first segment /en or /hi with newLocale
     const segments = pathname.split('/');
     segments[1] = newLocale;
     const newPath = segments.join('/');
     router.push(newPath);
-  };
-
-  const getLanguageLabel = () => {
-    // Check path to see current locale
-    const currentLocale = pathname.split('/')[1];
-    return currentLocale === 'hi' ? 'English' : 'हिन्दी';
-  };
-
-  const toggleLanguage = () => {
-    const currentLocale = pathname.split('/')[1];
-    const newLocale = currentLocale === 'hi' ? 'en' : 'hi';
-    switchLocale(newLocale);
   };
 
   const handleBack = () => {
@@ -76,20 +71,12 @@ export const Header: React.FC<HeaderProps> = ({ showBack = false, backPath, titl
   return (
     <header className="sticky top-0 z-50 bg-surface dark:bg-surface shadow-sm shadow-secondary/10 flex justify-between items-center w-full px-container-padding py-stack-sm h-touch-target">
       <div className="flex items-center gap-2">
-        {showBack ? (
+        {showBack && (
           <button 
             onClick={handleBack} 
             className="material-symbols-outlined text-primary hover:bg-surface-container-high p-2 rounded-full transition-colors active:scale-95 duration-150 mr-2"
           >
             arrow_back
-          </button>
-        ) : (
-          <button 
-            onClick={toggleLanguage} 
-            className="flex items-center gap-1 hover:bg-surface-container-high px-2 py-1 rounded-lg transition-colors cursor-pointer"
-          >
-            <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>language</span>
-            <span className="font-label-lg text-label-lg text-on-surface">{getLanguageLabel()}</span>
           </button>
         )}
       </div>
@@ -102,6 +89,48 @@ export const Header: React.FC<HeaderProps> = ({ showBack = false, backPath, titl
       </div>
 
       <div className="flex items-center gap-2">
+        {/* Language Switcher Dropdown */}
+        <div className="relative">
+          <button 
+            onClick={() => setDropdownOpen(!dropdownOpen)} 
+            className="flex items-center gap-1.5 hover:bg-surface-container px-3 py-1.5 rounded-xl border border-outline-variant bg-surface-container-low transition-all duration-200 active:scale-95 cursor-pointer text-xs font-bold text-on-surface-variant hover:text-on-surface"
+          >
+            <span className="material-symbols-outlined text-primary text-sm font-bold" style={{ fontVariationSettings: "'FILL' 1" }}>language</span>
+            <span>{localeNames[currentLocale] || currentLocale}</span>
+            <span className={`material-symbols-outlined text-xs transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`}>expand_more</span>
+          </button>
+
+          {dropdownOpen && (
+            <>
+              <div 
+                className="fixed inset-0 z-40 cursor-default" 
+                onClick={() => setDropdownOpen(false)}
+              />
+              <div className="absolute right-0 mt-2 w-32 bg-white rounded-xl shadow-xl border border-outline-variant p-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                {Object.entries(localeNames).map(([code, name]) => (
+                  <button
+                    key={code}
+                    onClick={() => {
+                      switchLocale(code);
+                      setDropdownOpen(false);
+                    }}
+                    className={`w-full text-left px-3 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer flex items-center justify-between ${
+                      currentLocale === code 
+                        ? 'bg-primary/10 text-primary font-bold' 
+                        : 'text-on-surface hover:bg-surface-container-low'
+                    }`}
+                  >
+                    {name}
+                    {currentLocale === code && (
+                      <span className="material-symbols-outlined text-xs text-primary font-extrabold">check</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+
         {/* Sync / Online Indicator */}
         {isSyncing ? (
           <div className="flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-700 rounded-full border border-amber-200">

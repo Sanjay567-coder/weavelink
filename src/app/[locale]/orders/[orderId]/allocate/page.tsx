@@ -296,7 +296,7 @@ export default function WorkAllocationPage() {
       await batch.commit();
 
       alert("Allocation saved successfully! Status updated to production.");
-      router.push(`/en/production/${orderId}`);
+      router.push(`/${params.locale || 'en'}/production/${orderId}`);
     } catch (err: any) {
       console.error(err);
       alert("Error saving allocations: " + err.message);
@@ -310,7 +310,7 @@ export default function WorkAllocationPage() {
   return (
     <div className="bg-background text-on-surface min-h-screen pb-32 flex flex-col">
       {/* Transactional task subpage: Suppress bottom navigation, custom Back Header */}
-      <Header showBack backPath={`/en/orders/${orderId}`} />
+      <Header showBack backPath={`/${params.locale || 'en'}/orders/${orderId}`} />
 
       <main className="flex-grow pt-6 px-container-padding max-w-2xl mx-auto w-full relative">
         
@@ -360,7 +360,7 @@ export default function WorkAllocationPage() {
             <h3 className="font-label-lg text-label-lg">{t('workforce')}</h3>
             <div className="flex gap-2">
               <span className="text-label-sm font-label-sm text-on-surface-variant">
-                Allocated: <span className={`${totalAllocated === order?.quantity ? 'text-emerald-600 font-bold' : 'text-primary font-bold'}`}>
+                {t('allocatedLabel')}: <span className={`${totalAllocated === order?.quantity ? 'text-emerald-600 font-bold' : 'text-primary font-bold'}`}>
                   {totalAllocated} / {order?.quantity}
                 </span>
               </span>

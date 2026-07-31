@@ -53,6 +53,8 @@ interface MemberResponse {
 
 export default function GroupChatPage() {
   const t = useTranslations('screen3');
+  const tScreen1 = useTranslations('screen1');
+  const tCommon = useTranslations('common');
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -83,6 +85,43 @@ export default function GroupChatPage() {
   const triggerToast = (msg: string) => {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(''), 4000);
+  };
+
+  const translateSystemMessage = (text: string) => {
+    if (text.includes("responded: I AGREE")) {
+      const name = text.replace("responded: I AGREE", "").trim();
+      const displayName = name === "A weaver" ? t("defaultWeaverName") : name;
+      return t("systemLogAgree", { name: displayName });
+    }
+    if (text.includes("responded: CAN'T DO IT —")) {
+      const parts = text.split("responded: CAN'T DO IT —");
+      const name = parts[0].trim();
+      const note = parts[1].trim();
+      const displayName = name === "A weaver" ? t("defaultWeaverName") : name;
+      return t("systemLogCantDo", { name: displayName, note });
+    }
+    if (text.includes("raised a concern:")) {
+      const parts = text.split("raised a concern:");
+      const name = parts[0].trim();
+      const note = parts[1].trim();
+      const displayName = name === "A weaver" ? t("defaultWeaverName") : name;
+      return t("systemLogConcern", { name: displayName, note });
+    }
+    if (text.includes("posted by") && text.includes("New order")) {
+      const matchSimple = text.match(/New order #([^\s]+)\s+posted by\s+(.+?)\s+—\s+(.*)/);
+      if (matchSimple) {
+        const id = matchSimple[1];
+        const name = matchSimple[2];
+        let details = matchSimple[3];
+        if (locale === 'hi') {
+          details = details.replace("units", "इकाइयाँ");
+        } else if (locale === 'ta') {
+          details = details.replace("units", "அலகுகள்");
+        }
+        return tScreen1("systemLogNewOrder", { id, name, details });
+      }
+    }
+    return text;
   };
 
   const chatEndRef = useRef<HTMLDivElement | null>(null);
@@ -224,7 +263,7 @@ export default function GroupChatPage() {
   const startVoiceDictation = () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      triggerToast("Speech recognition not supported in this browser. Please use Chrome.");
+      triggerToast(t('toastSpeechUnsupported'));
       return;
     }
 
@@ -256,11 +295,11 @@ export default function GroupChatPage() {
       
       // Enforce styled toast messages instead of window alerts
       if (e.error === 'not-allowed') {
-        triggerToast("Microphone access denied. Please enable microphone permissions in your browser settings to use voice input.");
+        triggerToast(t('toastMicAccessDenied'));
       } else if (e.error === 'no-speech') {
-        triggerToast("No speech detected. Please try again.");
+        triggerToast(t('toastNoSpeech'));
       } else {
-        triggerToast(`Speech recognition error: ${e.error}`);
+        triggerToast(t('toastSpeechError', { error: e.error }));
       }
     };
 
@@ -278,7 +317,7 @@ export default function GroupChatPage() {
       recognition.start();
     } catch (err: any) {
       console.error(err);
-      triggerToast("Failed to initialize microphone device.");
+      triggerToast(t('toastMicError'));
       setIsListening(false);
     }
   };
@@ -286,7 +325,7 @@ export default function GroupChatPage() {
   // Submit Quick Response
   const submitResponse = async (responseType: 'agree' | 'reject' | 'concern', noteText?: string) => {
     if (!user) {
-      triggerToast("You must be logged in to vote.");
+      triggerToast(t('toastMustLogin'));
       return;
     }
     if (!activeOrder) return;
@@ -296,14 +335,14 @@ export default function GroupChatPage() {
 
     if (responseType === 'reject') {
       if (!noteText || !noteText.trim()) {
-        triggerToast("Please provide a reason.");
+        triggerToast(t('toastProvideReason'));
         return;
       }
       finalNote = noteText.trim();
       displayType = `CAN'T DO IT — ${finalNote}`;
     } else if (responseType === 'concern') {
       if (!noteText || !noteText.trim()) {
-        triggerToast("Please provide your concern details.");
+        triggerToast(t('toastProvideConcern'));
         return;
       }
       finalNote = noteText.trim();
@@ -332,16 +371,16 @@ export default function GroupChatPage() {
         timestamp: new Date()
       });
 
-      triggerToast(`Response submitted: ${
-        responseType === 'agree' 
-          ? 'AGREE' 
+      triggerToast(t('toastResponseSubmitted', {
+        type: responseType === 'agree' 
+          ? t('agreeLabel') 
           : responseType === 'concern' 
-            ? 'CONCERN' 
-            : "CAN'T DO IT"
-      }`);
+            ? t('concernLabel') 
+            : t('cantDoLabel')
+      }));
     } catch (err: any) {
       console.error(err);
-      triggerToast("Database error: " + err.message);
+      triggerToast(t('dbError', { message: err.message }));
     }
   };
 
@@ -429,7 +468,7 @@ export default function GroupChatPage() {
         {activeOrder && (
           <div className="bg-white border border-outline-variant rounded-xl p-4 shadow-sm space-y-3 mb-2 animate-in fade-in duration-200 mt-3">
             <div className="flex justify-between items-center pb-2 border-b border-surface-container">
-              <span className="font-label-lg font-bold text-xs uppercase tracking-wider text-primary">Live Consensus Status</span>
+              <span className="font-label-lg font-bold text-xs uppercase tracking-wider text-primary">{t('liveConsensusStatus')}</span>
               
               {/* Derived Consensus Status Badge */}
               <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
@@ -442,36 +481,36 @@ export default function GroupChatPage() {
                       : 'bg-emerald-50 border border-emerald-200 text-emerald-800'
               }`}>
                 {(responsesCount.agreed + responsesCount.rejected + responsesCount.concerned) < responsesCount.total
-                  ? 'Waiting for responses'
+                  ? t('waitingForResponses')
                   : responsesCount.rejected > 0
-                    ? 'Action needed: Rejections present'
+                    ? t('actionRejections')
                     : responsesCount.concerned > 0
-                      ? 'Action needed: Concerns present'
-                      : 'Consensus reached'}
+                      ? t('actionConcerns')
+                      : t('consensusReached')}
               </span>
             </div>
 
             <div className="grid grid-cols-4 gap-2 text-center text-xs">
               <div className="bg-surface-container-low p-2 rounded-lg border border-outline-variant/30 flex flex-col justify-between">
-                <span className="text-[9px] text-on-surface-variant font-bold uppercase tracking-wider block leading-tight">Responded</span>
+                <span className="text-[9px] text-on-surface-variant font-bold uppercase tracking-wider block leading-tight">{t('respondedLabel')}</span>
                 <span className="font-bold text-on-surface text-xs mt-1 block">
                   {responsesCount.agreed + responsesCount.rejected + responsesCount.concerned} / {responsesCount.total}
                 </span>
               </div>
               <div className="bg-emerald-50/50 p-2 rounded-lg border border-emerald-200/30 flex flex-col justify-between">
-                <span className="text-[9px] text-emerald-800 font-bold uppercase tracking-wider block leading-tight">✅ Agree</span>
+                <span className="text-[9px] text-emerald-800 font-bold uppercase tracking-wider block leading-tight">✅ {t('agreeLabel')}</span>
                 <span className="font-bold text-emerald-700 text-xs mt-1 block">
                   {responsesCount.agreed}
                 </span>
               </div>
               <div className="bg-amber-50/50 p-2 rounded-lg border border-amber-200/30 flex flex-col justify-between">
-                <span className="text-[9px] text-amber-800 font-bold uppercase tracking-wider block leading-tight">⚠️ Concern</span>
+                <span className="text-[9px] text-amber-800 font-bold uppercase tracking-wider block leading-tight">⚠️ {t('concernLabel')}</span>
                 <span className="font-bold text-amber-700 text-xs mt-1 block">
                   {responsesCount.concerned}
                 </span>
               </div>
               <div className="bg-rose-50/50 p-2 rounded-lg border border-rose-200/30 flex flex-col justify-between">
-                <span className="text-[9px] text-rose-800 font-bold uppercase tracking-wider block leading-tight">❌ Can't Do</span>
+                <span className="text-[9px] text-rose-800 font-bold uppercase tracking-wider block leading-tight">❌ {t('cantDoLabel')}</span>
                 <span className="font-bold text-rose-700 text-xs mt-1 block">
                   {responsesCount.rejected}
                 </span>
@@ -485,7 +524,7 @@ export default function GroupChatPage() {
                   className="flex items-center gap-1.5 px-3 py-1.5 border border-primary text-primary rounded-xl font-bold text-[11px] shadow-sm hover:bg-primary/5 active:scale-95 duration-100 cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-sm font-bold">analytics</span>
-                  View Full Consensus Details
+                  {t('viewConsensusDetails')}
                 </button>
               </div>
             )}
@@ -501,7 +540,7 @@ export default function GroupChatPage() {
             if (isSystem) {
               return (
                 <div key={msg.id} className="self-center bg-surface-variant/40 px-4 py-1 rounded-full border border-outline-variant/30 text-center mx-auto my-2">
-                  <p className="text-[12px] font-medium text-on-surface-variant uppercase tracking-wider">{msg.messageText}</p>
+                  <p className="text-[12px] font-medium text-on-surface-variant uppercase tracking-wider">{translateSystemMessage(msg.messageText)}</p>
                 </div>
               );
             }
@@ -516,7 +555,7 @@ export default function GroupChatPage() {
                   <span className="text-[9px] text-on-surface-variant">
                     {formatMessageTime(msg.timestamp)}
                   </span>
-                  {isMe && <span className="font-label-sm text-primary text-xs">You</span>}
+                  {isMe && <span className="font-label-sm text-primary text-xs">{tCommon('youLabel')}</span>}
                 </div>
 
                 {msg.isAudio ? (
@@ -583,7 +622,7 @@ export default function GroupChatPage() {
                 }`}
               >
                 <span className="material-symbols-outlined text-lg">warning</span>
-                <span className="font-label-sm text-[10px]">Raise Concern</span>
+                <span className="font-label-sm text-[10px]">{t('concern')}</span>
               </button>
 
               <button 
@@ -640,12 +679,12 @@ export default function GroupChatPage() {
           <div className="bg-white rounded-2xl w-full max-w-sm border border-outline-variant shadow-2xl p-6 space-y-4 animate-in zoom-in-95 duration-200">
             <div>
               <h3 className="font-headline-md text-on-surface font-extrabold">
-                {modalMode === 'concern' ? 'Raise Concern' : "Can't Do It"}
+                {modalMode === 'concern' ? t('concern') : t('cantDo')}
               </h3>
               <p className="text-xs text-on-surface-variant mt-1">
                 {modalMode === 'concern' 
-                  ? "What's your concern?" 
-                  : "Why can't you take this on?"}
+                  ? t('modalModeConcernSub') 
+                  : t('modalModeCantDoSub')}
               </p>
             </div>
 
@@ -655,11 +694,11 @@ export default function GroupChatPage() {
                 onChange={(e) => setFreeTextReason(e.target.value)}
                 placeholder={
                   modalMode === 'concern'
-                    ? "Explain your concern in detail..."
-                    : "Explain why you cannot participate..."
+                    ? t('explainConcern')
+                    : t('explainCantDo')
                 }
                 rows={4}
-                className="w-full bg-white border border-outline-variant rounded-xl p-3 text-xs focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
+                className="w-full bg-white border border-outline-variant rounded-xl p-3 text-xs focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none bg-white text-on-surface"
               />
             </div>
 
@@ -670,9 +709,9 @@ export default function GroupChatPage() {
                   setModalMode(null);
                   setFreeTextReason('');
                 }}
-                className="flex-1 py-2.5 border border-outline text-outline font-bold text-xs text-center rounded-xl hover:bg-surface-container active:scale-95 duration-100 cursor-pointer"
+                className="flex-1 py-2.5 border border-outline text-outline font-bold text-xs text-center rounded-xl hover:bg-surface-container active:scale-95 duration-100 cursor-pointer bg-white"
               >
-                Cancel
+                {t('cancel')}
               </button>
               <button 
                 onClick={() => {
@@ -684,7 +723,7 @@ export default function GroupChatPage() {
                 disabled={!freeTextReason.trim()}
                 className="flex-1 py-2.5 bg-primary text-on-primary font-bold text-xs rounded-xl shadow-md hover:bg-primary-container active:scale-95 duration-100 disabled:opacity-50 cursor-pointer"
               >
-                Submit Response
+                {t('submitResponse')}
               </button>
             </div>
           </div>

@@ -30,6 +30,7 @@ interface MemberData {
 
 export default function ShareOrderPage() {
   const t = useTranslations('screen2');
+  const tCommon = useTranslations('common');
   const router = useRouter();
   const params = useParams();
   const { user, loading: authLoading } = useAuth();
@@ -207,7 +208,7 @@ export default function ShareOrderPage() {
   return (
     <div className="bg-background text-on-surface font-body-md min-h-screen pb-24 flex flex-col">
       {/* Suppress Bottom Navigation, show custom Back path Header */}
-      <Header showBack backPath={`/en/orders/${orderId}`} />
+      <Header showBack backPath={`/${locale}/orders/${orderId}`} />
 
       <main className="flex-1 texture-overlay pt-6">
         <div className="max-w-md mx-auto px-container-padding space-y-stack-lg">
@@ -273,7 +274,7 @@ export default function ShareOrderPage() {
             <div className="bg-white rounded-xl p-gutter flex flex-col border border-outline-variant shadow-sm">
               <div className="flex items-center justify-between mb-gutter">
                 <h3 className="font-label-lg text-label-lg text-on-surface">{t('recipients')}</h3>
-                <span className="bg-secondary text-on-secondary px-2 py-0.5 rounded-full font-label-sm text-[12px]">All {members.length}</span>
+                <span className="bg-secondary text-on-secondary px-2 py-0.5 rounded-full font-label-sm text-[12px]">{t('allCount', { count: members.length })}</span>
               </div>
               
               <div className="space-y-3 overflow-y-auto max-h-[160px] pr-2 scrollbar-thin">
@@ -289,7 +290,9 @@ export default function ShareOrderPage() {
                       </div>
                       <div className="flex flex-col">
                         <span className="font-label-sm text-label-sm">{member.name}</span>
-                        <span className="text-[10px] text-on-surface-variant italic uppercase">{member.role}</span>
+                        <span className="text-[10px] text-on-surface-variant italic uppercase">
+                          {member.role === 'admin' ? tCommon('roleAdmin') : member.role === 'treasurer' ? tCommon('roleTreasurer') : member.role === 'weaver' ? tCommon('roleWeaver') : member.role}
+                        </span>
                       </div>
                     </div>
                     {/* Read vs Sent Status Mock */}

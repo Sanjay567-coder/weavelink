@@ -24,6 +24,7 @@ const STOCK_IMAGES = [
 
 export default function NewOrderPage() {
   const t = useTranslations('screen1');
+  const tCommon = useTranslations('common');
   const router = useRouter();
   const params = useParams();
   const locale = (params.locale as string) || 'en';
@@ -155,14 +156,14 @@ export default function NewOrderPage() {
           {/* Buyer */}
           <div className="space-y-1.5">
             <label htmlFor="buyerName" className="block text-xs font-bold text-on-surface-variant uppercase tracking-wider">
-              Buyer Name / Company *
+              {t('buyerNameLabel')}
             </label>
             <input 
               type="text"
               id="buyerName"
               value={buyerName}
               onChange={(e) => setBuyerName(e.target.value)}
-              placeholder="e.g. Ethnic Threads"
+              placeholder={t('buyerNamePlaceholder')}
               required
               className="w-full bg-white border border-outline-variant rounded-lg px-3 py-2.5 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
             />
@@ -171,14 +172,14 @@ export default function NewOrderPage() {
           {/* Item Description */}
           <div className="space-y-1.5">
             <label htmlFor="item" className="block text-xs font-bold text-on-surface-variant uppercase tracking-wider">
-              Item Description *
+              {t('itemDescLabel')}
             </label>
             <input 
               type="text"
               id="item"
               value={item}
               onChange={(e) => setItem(e.target.value)}
-              placeholder="e.g. 100% Mulberry Silk Saree"
+              placeholder={t('itemDescPlaceholder')}
               required
               className="w-full bg-white border border-outline-variant rounded-lg px-3 py-2.5 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
             />
@@ -188,7 +189,7 @@ export default function NewOrderPage() {
             {/* Quantity */}
             <div className="space-y-1.5">
               <label htmlFor="quantity" className="block text-xs font-bold text-on-surface-variant uppercase tracking-wider">
-                Quantity *
+                {t('qtyLabel')}
               </label>
               <div className="relative">
                 <input 
@@ -201,14 +202,14 @@ export default function NewOrderPage() {
                   min="1"
                   className="w-full bg-white border border-outline-variant rounded-lg pl-3 pr-12 py-2.5 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
                 />
-                <span className="absolute right-3 top-2.5 text-xs text-on-surface-variant">units</span>
+                <span className="absolute right-3 top-2.5 text-xs text-on-surface-variant">{t('quantityUnit')}</span>
               </div>
             </div>
 
             {/* Price */}
             <div className="space-y-1.5">
               <label htmlFor="price" className="block text-xs font-bold text-on-surface-variant uppercase tracking-wider">
-                Price (₹) *
+                {t('priceLabel')}
               </label>
               <div className="relative">
                 <span className="absolute left-3 top-2.5 text-xs text-on-surface-variant">₹</span>
@@ -230,7 +231,7 @@ export default function NewOrderPage() {
             {/* Deadline */}
             <div className="space-y-1.5">
               <label htmlFor="deadline" className="block text-xs font-bold text-on-surface-variant uppercase tracking-wider">
-                Deadline *
+                {t('deadlineLabel')}
               </label>
               <input 
                 type="date"
@@ -245,7 +246,7 @@ export default function NewOrderPage() {
             {/* Expiry Window */}
             <div className="space-y-1.5">
               <label htmlFor="expiry" className="block text-xs font-bold text-on-surface-variant uppercase tracking-wider">
-                Expiry Timer *
+                {t('expiryTimerLabel')}
               </label>
               <select 
                 id="expiry"
@@ -253,10 +254,10 @@ export default function NewOrderPage() {
                 onChange={(e) => setExpiryHours(Number(e.target.value))}
                 className="w-full bg-white border border-outline-variant rounded-lg px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
               >
-                <option value={24}>24 Hours</option>
-                <option value={48}>48 Hours (Default)</option>
-                <option value={72}>72 Hours</option>
-                <option value={120}>5 Days</option>
+                <option value={24}>{t('opt24h')}</option>
+                <option value={48}>{t('opt48h')}</option>
+                <option value={72}>{t('opt72h')}</option>
+                <option value={120}>{t('opt5d')}</option>
               </select>
             </div>
           </div>
@@ -264,7 +265,7 @@ export default function NewOrderPage() {
           {/* Product Image Carousel */}
           <div className="space-y-2">
             <label className="block text-xs font-bold text-on-surface-variant uppercase tracking-wider">
-              Select Product Image
+              {t('selectImageLabel')}
             </label>
             <div className="grid grid-cols-2 gap-3">
               {STOCK_IMAGES.map((img) => (
@@ -290,15 +291,15 @@ export default function NewOrderPage() {
             <button 
               type="button"
               onClick={() => router.push(`/${locale}/orders`)}
-              className="flex-1 py-2.5 border border-outline text-outline font-bold text-xs rounded-xl hover:bg-surface-container active:scale-95 duration-100 cursor-pointer"
+              className="flex-1 py-2.5 border border-outline text-outline font-bold text-xs rounded-xl hover:bg-surface-container active:scale-95 transition-transform duration-100 cursor-pointer"
             >
-              Cancel
+              {tCommon('cancel')}
             </button>
             <button 
               type="submit"
-              className="flex-1 py-2.5 bg-primary text-on-primary font-bold text-xs rounded-xl shadow-md hover:bg-primary-container active:scale-95 duration-100 cursor-pointer"
+              className="flex-1 py-2.5 bg-primary text-on-primary font-bold text-xs rounded-xl shadow-md hover:bg-primary-container active:scale-95 transition-transform duration-100 cursor-pointer"
             >
-              Submit Order
+              {t('submitOrderBtn')}
             </button>
           </div>
 

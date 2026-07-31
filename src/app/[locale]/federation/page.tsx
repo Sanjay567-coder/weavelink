@@ -32,6 +32,7 @@ const priceData = [
 
 export default function FederationInsightsPage() {
   const t = useTranslations('screen8');
+  const tCommon = useTranslations('common');
   const router = useRouter();
   const params = useParams();
   const locale = (params.locale as string) || 'en';
@@ -383,8 +384,8 @@ export default function FederationInsightsPage() {
                 {/* Map Tooltip */}
                 {showTooltip && (
                   <div className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 w-48 bg-white border border-outline-variant rounded-lg p-3 shadow-lg z-20">
-                    <p className="font-label-sm text-primary font-bold">Silk Weaver Coop B</p>
-                    <p className="text-[10px] text-on-surface-variant">5km away • <span className="text-emerald-700 font-bold">High Capacity</span></p>
+                    <p className="font-label-sm text-primary font-bold">{coopNames['coop-silk-b']}</p>
+                    <p className="text-[10px] text-on-surface-variant">{t('distanceAway', { distance: 5 })} • <span className="text-emerald-700 font-bold">{t('highCapacity')}</span></p>
                     <button 
                       onClick={(e) => {
                         e.stopPropagation();
@@ -392,7 +393,7 @@ export default function FederationInsightsPage() {
                       }}
                       className="mt-2 w-full py-1.5 bg-primary text-white text-[10px] font-bold rounded-md active:scale-95 cursor-pointer"
                     >
-                      View Details
+                      {t('viewDetailsBtn')}
                     </button>
                   </div>
                 )}
@@ -402,7 +403,7 @@ export default function FederationInsightsPage() {
               <div className="absolute top-1/2 right-1/4">
                 <div className="w-3 h-3 bg-secondary rounded-full border-2 border-white shadow-md"></div>
                 <div className="absolute top-4 -right-16 bg-white/90 px-2 py-1 rounded border border-outline-variant text-[10px] whitespace-nowrap">
-                  Arani Cluster (12km)
+                  {locale === 'hi' ? 'अरणी क्लस्टर' : locale === 'ta' ? 'ஆரணி கிளஸ்டர்' : 'Arani Cluster'} ({t('distanceAway', { distance: 12 })})
                 </div>
               </div>
 
@@ -422,22 +423,28 @@ export default function FederationInsightsPage() {
             <div className="flex-1 overflow-y-auto p-4 space-y-2">
               <div className="p-3 bg-surface-container-low rounded-lg flex justify-between items-center border border-outline-variant/20">
                 <div>
-                  <p className="font-label-lg text-primary font-bold">Silk Weaver Coop B</p>
-                  <p className="text-xs text-on-surface-variant">5km away • Mulberry Silk Yarn Specialist</p>
+                  <p className="font-label-lg text-primary font-bold">{coopNames['coop-silk-b']}</p>
+                  <p className="text-xs text-on-surface-variant">
+                    {t('distanceAwaySpecialist', { distance: 5, specialist: locale === 'hi' ? 'शहतूत सिल्क यार्न विशेषज्ञ' : locale === 'ta' ? 'மல்பெரி பட்டு நூல் நிபுணர்' : 'Mulberry Silk Yarn Specialist' })}
+                  </p>
                 </div>
                 <button 
                   onClick={() => router.push(`/${locale}/federation/coop-silk-b`)}
                   className="bg-primary text-on-primary px-3 py-1.5 rounded text-xs cursor-pointer"
                 >
-                  View Details
+                  {t('viewDetailsBtn')}
                 </button>
               </div>
               <div className="p-3 bg-surface-container-low rounded-lg flex justify-between items-center border border-outline-variant/20">
                 <div>
-                  <p className="font-label-lg text-on-surface font-bold text-on-surface-variant">Arani Cluster</p>
-                  <p className="text-xs text-on-surface-variant">12km away • Zari Thread Specialist</p>
+                  <p className="font-label-lg text-on-surface font-bold text-on-surface-variant">
+                    {locale === 'hi' ? 'अरणी क्लस्टर' : locale === 'ta' ? 'ஆரணி கிளஸ்டர்' : 'Arani Cluster'}
+                  </p>
+                  <p className="text-xs text-on-surface-variant">
+                    {t('distanceAwaySpecialist', { distance: 12, specialist: locale === 'hi' ? 'जरी धागा विशेषज्ञ' : locale === 'ta' ? 'ஜரி நூல் நிபுணர்' : 'Zari Thread Specialist' })}
+                  </p>
                 </div>
-                <span className="text-xs bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded">At Capacity</span>
+                <span className="text-xs bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded">{t('atCapacity')}</span>
               </div>
             </div>
           )}
@@ -450,7 +457,7 @@ export default function FederationInsightsPage() {
               <div className="flex items-center gap-2">
                 <span className="material-symbols-outlined text-primary">inventory</span>
                 <h3 className="font-label-lg text-on-surface font-extrabold text-xs uppercase tracking-wider">
-                  Manage Your Cooperative's Material Needs
+                  {t('manageMaterialNeeds')}
                 </h3>
               </div>
               
@@ -458,21 +465,20 @@ export default function FederationInsightsPage() {
                 {myCoop.availableForPooling ? (
                   <span className="bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
-                    Published to Common Pool
+                    {t('publishedStatus')}
                   </span>
                 ) : (
                   <span className="bg-amber-50 border border-amber-200 text-amber-800 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-amber-600"></span>
-                    Draft / Private
+                    {t('draftStatus')}
                   </span>
                 )}
               </div>
             </div>
 
-            {/* Editing Form (Modal-like Inline Drawer) */}
             {showNeedsForm ? (
               <div className="bg-surface-container-low p-4 rounded-xl border border-outline-variant/60 space-y-4">
-                <h4 className="font-bold text-xs text-on-surface">Edit Material Requirements</h4>
+                <h4 className="font-bold text-xs text-on-surface">{t('editRequirements')}</h4>
                 
                 {/* Requirements List */}
                 <div className="space-y-2">
@@ -480,26 +486,26 @@ export default function FederationInsightsPage() {
                     <div key={idx} className="flex justify-between items-center bg-white p-3 rounded-lg border border-outline-variant/40 text-xs">
                       <div>
                         <p className="font-bold text-on-surface">{m.item}</p>
-                        <p className="text-on-surface-variant">Target: {m.targetAmount} • Savings: {m.savings}</p>
+                        <p className="text-on-surface-variant">{t('targetLabel', { amount: m.targetAmount })} • {t('savingsLabel', { amount: m.savings })}</p>
                       </div>
                       <button 
                         onClick={() => handleDeleteMaterial(idx)}
                         className="text-error font-bold text-xs hover:underline cursor-pointer flex items-center gap-0.5"
                       >
                         <span className="material-symbols-outlined text-sm">delete</span>
-                        Remove
+                        {t('removeBtn')}
                       </button>
                     </div>
                   ))}
                   {editingMaterials.length === 0 && (
-                    <p className="text-xs text-on-surface-variant italic py-2 text-center">No requirements added yet.</p>
+                    <p className="text-xs text-on-surface-variant italic py-2 text-center">{t('noRequirements')}</p>
                   )}
                 </div>
 
                 {/* Add Requirement Fields */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
                   <div>
-                    <label className="block text-[10px] uppercase font-bold text-on-surface-variant mb-1">Material Name *</label>
+                    <label className="block text-[10px] uppercase font-bold text-on-surface-variant mb-1">{t('materialNameLabel')}</label>
                     <input 
                       type="text"
                       value={newMaterialName}
@@ -509,7 +515,7 @@ export default function FederationInsightsPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] uppercase font-bold text-on-surface-variant mb-1">Target Quantity *</label>
+                    <label className="block text-[10px] uppercase font-bold text-on-surface-variant mb-1">{t('materialQtyLabel')}</label>
                     <input 
                       type="text"
                       value={newTargetQuantity}
@@ -519,7 +525,7 @@ export default function FederationInsightsPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] uppercase font-bold text-on-surface-variant mb-1">Est. Savings (Optional)</label>
+                    <label className="block text-[10px] uppercase font-bold text-on-surface-variant mb-1">{t('materialSavingsLabel')}</label>
                     <input 
                       type="text"
                       value={newSavingsPotential}
@@ -536,7 +542,7 @@ export default function FederationInsightsPage() {
                     className="h-9 px-4 border border-primary text-primary hover:bg-primary/5 rounded-lg font-bold text-xs flex items-center justify-center gap-1 active:scale-95 transition-all cursor-pointer"
                   >
                     <span className="material-symbols-outlined text-sm">add</span>
-                    Add Material
+                    {t('addMaterialBtn')}
                   </button>
 
                   <div className="flex gap-2">
@@ -544,14 +550,14 @@ export default function FederationInsightsPage() {
                       onClick={() => setShowNeedsForm(false)}
                       className="h-9 px-4 border border-outline text-on-surface hover:bg-surface-container rounded-lg font-bold text-xs active:scale-95 transition-all cursor-pointer"
                     >
-                      Cancel
+                      {tCommon('cancel')}
                     </button>
                     <button 
                       onClick={handleSaveMaterials}
                       className="h-9 px-4 bg-primary text-on-primary hover:bg-surface-tint rounded-lg font-bold text-xs active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-0.5 shadow-sm"
                     >
                       <span className="material-symbols-outlined text-[14px]">save</span>
-                      Save Requirements
+                      {t('saveRequirementsBtn')}
                     </button>
                   </div>
                 </div>
@@ -565,17 +571,17 @@ export default function FederationInsightsPage() {
                       <div key={idx} className="bg-surface-container-low p-3.5 rounded-xl border border-outline-variant/50 text-xs flex justify-between items-center">
                         <div>
                           <p className="font-bold text-on-surface">{m.item}</p>
-                          <p className="text-on-surface-variant font-semibold mt-0.5">Target: {m.targetAmount}</p>
+                          <p className="text-on-surface-variant font-semibold mt-0.5">{t('targetLabel', { amount: m.targetAmount })}</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-[9px] text-on-surface-variant uppercase font-bold">Est. Savings</p>
+                          <p className="text-[9px] text-on-surface-variant uppercase font-bold">{t('estSavingsUpperLabel')}</p>
                           <p className="font-extrabold text-primary">{m.savings}</p>
                         </div>
                       </div>
                     ))
                   ) : (
                     <div className="col-span-2 text-center py-4 bg-surface-container-low rounded-xl border border-dashed border-outline-variant/30 text-xs text-on-surface-variant italic">
-                      No material needs registered yet. List your requirements so other cooperatives can find you!
+                      {t('noRequirementsPlaceholder')}
                     </div>
                   )}
                 </div>
@@ -586,7 +592,7 @@ export default function FederationInsightsPage() {
                     className="h-9 px-4 border border-outline text-on-surface hover:bg-surface-container rounded-lg font-bold text-xs flex items-center justify-center gap-1 active:scale-95 transition-all cursor-pointer"
                   >
                     <span className="material-symbols-outlined text-sm">edit</span>
-                    Edit Requirements
+                    {t('editRequirements')}
                   </button>
 
                   {myCoop.materials && myCoop.materials.length > 0 && (
@@ -601,7 +607,7 @@ export default function FederationInsightsPage() {
                       <span className="material-symbols-outlined text-sm">
                         {myCoop.availableForPooling ? 'unpublished' : 'publish'}
                       </span>
-                      {myCoop.availableForPooling ? 'Unpublish / Draft' : 'Publish to Common Pool'}
+                      {myCoop.availableForPooling ? t('unpublishDraftBtn') : t('publishCommonBtn')}
                     </button>
                   )}
                 </div>
@@ -614,7 +620,7 @@ export default function FederationInsightsPage() {
         <section className="bg-white rounded-xl shadow-sm border border-outline-variant p-6 space-y-6 w-full">
           <div className="flex items-center gap-2 border-b border-surface-container pb-3">
             <span className="material-symbols-outlined text-primary">groups</span>
-            <h3 className="font-label-lg text-on-surface font-extrabold text-xs uppercase tracking-wider">Your Pooling Requests</h3>
+            <h3 className="font-label-lg text-on-surface font-extrabold text-xs uppercase tracking-wider">{t('yourPoolingRequests')}</h3>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -623,21 +629,21 @@ export default function FederationInsightsPage() {
             <div className="space-y-3">
               <h4 className="font-bold text-xs uppercase tracking-wider text-amber-700 flex items-center gap-1">
                 <span className="material-symbols-outlined text-sm">schedule</span>
-                Waiting for Response ({waitingList.length})
+                {t('waitingResponse', { count: waitingList.length })}
               </h4>
               <div className="space-y-2">
                 {waitingList.map((r) => (
                   <div key={r.id} className="p-3 bg-amber-50/50 border border-amber-200/50 rounded-xl text-xs flex flex-col gap-1">
                     <div className="flex justify-between font-bold text-on-surface">
                       <span>{coopNames[r.toCoopId] || r.toCoopId}</span>
-                      <span className="text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">Pending</span>
+                      <span className="text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">{t('statusPending')}</span>
                     </div>
-                    <p className="text-[10px] text-on-surface-variant mt-0.5">Pooled: {r.item} ({r.targetAmount})</p>
-                    <p className="text-[9px] text-on-surface-variant/80 italic mt-1">Est. Savings: {r.savings}</p>
+                    <p className="text-[10px] text-on-surface-variant mt-0.5">{t('pooledLabel', { item: r.item, amount: r.targetAmount })}</p>
+                    <p className="text-[9px] text-on-surface-variant/80 italic mt-1">{t('estSavingsLabel', { amount: r.savings })}</p>
                   </div>
                 ))}
                 {waitingList.length === 0 && (
-                  <p className="text-xs text-on-surface-variant italic py-2 text-center bg-surface-container-low rounded-xl border border-dashed border-outline-variant/30">No sent requests pending.</p>
+                  <p className="text-xs text-on-surface-variant italic py-2 text-center bg-surface-container-low rounded-xl border border-dashed border-outline-variant/30">{t('noSentRequests')}</p>
                 )}
               </div>
             </div>
@@ -646,7 +652,7 @@ export default function FederationInsightsPage() {
             <div className="space-y-3">
               <h4 className="font-bold text-xs uppercase tracking-wider text-primary flex items-center gap-1">
                 <span className="material-symbols-outlined text-sm">mail</span>
-                Invited You ({invitedList.length})
+                {t('invitedYou', { count: invitedList.length })}
               </h4>
               <div className="space-y-2">
                 {invitedList.map((r) => {
@@ -655,14 +661,14 @@ export default function FederationInsightsPage() {
                     <div key={r.id} className="p-4 bg-primary-container/10 border border-primary/20 rounded-xl text-xs flex flex-col gap-3">
                       <div className="flex flex-col">
                         <span className="font-bold text-on-surface text-sm">{coopNames[r.fromCoopId] || r.fromCoopId}</span>
-                        <span className="text-[10px] text-on-surface-variant font-medium mt-0.5">Invited you to pool {r.item} ({r.targetAmount})</span>
+                        <span className="text-[10px] text-on-surface-variant font-medium mt-0.5">{t('invitedYouToPoolLabel', { item: r.item, amount: r.targetAmount })}</span>
                       </div>
 
                       {/* Requester's Material Breakdown */}
                       {senderCoop && senderCoop.materials && senderCoop.materials.length > 0 && (
                         <div className="bg-white/80 p-2.5 rounded-lg border border-outline-variant/40 space-y-1.5 shadow-sm">
                           <p className="text-[9px] uppercase font-bold text-primary tracking-wider">
-                            Requester Material Needs:
+                            {t('requesterNeedsLabel')}
                           </p>
                           <div className="space-y-1">
                             {senderCoop.materials.map((m: any, idx: number) => (
@@ -676,7 +682,7 @@ export default function FederationInsightsPage() {
                       )}
 
                       <div className="flex justify-between items-center text-[10px] text-on-surface-variant/80 font-bold border-t border-surface-container pt-2">
-                        <span>EST. SAVINGS:</span>
+                        <span>{t('estSavingsUpperLabel')}</span>
                         <span className="text-primary font-extrabold">{r.savings}</span>
                       </div>
 
@@ -687,14 +693,14 @@ export default function FederationInsightsPage() {
                             className="flex-1 py-2 bg-primary text-on-primary rounded-lg font-bold text-[10px] hover:bg-surface-tint active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-0.5 shadow-sm"
                           >
                             <span className="material-symbols-outlined text-[12px]" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-                            Confirm
+                            {t('confirmBtn')}
                           </button>
                           <button
                             onClick={() => handleDeclineInvite(r.id)}
                             className="flex-1 py-2 border border-outline text-on-surface hover:bg-surface-container rounded-lg font-bold text-[10px] active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-0.5"
                           >
                             <span className="material-symbols-outlined text-[12px]">cancel</span>
-                            Not Required
+                            {t('notRequiredBtn')}
                           </button>
                         </div>
                       )}
@@ -702,7 +708,7 @@ export default function FederationInsightsPage() {
                   );
                 })}
                 {invitedList.length === 0 && (
-                  <p className="text-xs text-on-surface-variant italic py-2 text-center bg-surface-container-low rounded-xl border border-dashed border-outline-variant/30">No active invitations.</p>
+                  <p className="text-xs text-on-surface-variant italic py-2 text-center bg-surface-container-low rounded-xl border border-dashed border-outline-variant/30">{t('noActiveInvites')}</p>
                 )}
               </div>
             </div>
@@ -711,7 +717,7 @@ export default function FederationInsightsPage() {
             <div className="space-y-3">
               <h4 className="font-bold text-xs uppercase tracking-wider text-emerald-700 flex items-center gap-1">
                 <span className="material-symbols-outlined text-sm">check_circle</span>
-                Confirmed Pools ({confirmedList.length})
+                {t('confirmedPools', { count: confirmedList.length })}
               </h4>
               <div className="space-y-2">
                 {confirmedList.map((r) => {
@@ -722,16 +728,16 @@ export default function FederationInsightsPage() {
                         <span>{coopNames[partnerId] || partnerId}</span>
                         <span className="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-extrabold flex items-center gap-0.5 border border-emerald-200">
                           <span className="material-symbols-outlined text-[10px]" style={{ fontVariationSettings: "'FILL' 1" }}>verified_user</span>
-                          Active
+                          {t('statusActive')}
                         </span>
                       </div>
-                      <p className="text-[10px] text-on-surface-variant mt-0.5">Item: {r.item} ({r.targetAmount})</p>
-                      <p className="text-[9px] text-emerald-800 font-extrabold mt-1">Total Savings: {r.savings}</p>
+                      <p className="text-[10px] text-on-surface-variant mt-0.5">{t('itemLabel', { item: r.item, amount: r.targetAmount })}</p>
+                      <p className="text-[9px] text-emerald-800 font-extrabold mt-1">{t('totalSavingsLabel', { amount: r.savings })}</p>
                     </div>
                   );
                 })}
                 {confirmedList.length === 0 && (
-                  <p className="text-xs text-on-surface-variant italic py-2 text-center bg-surface-container-low rounded-xl border border-dashed border-outline-variant/30">No active pools confirmed.</p>
+                  <p className="text-xs text-on-surface-variant italic py-2 text-center bg-surface-container-low rounded-xl border border-dashed border-outline-variant/30">{t('noActivePools')}</p>
                 )}
               </div>
             </div>
@@ -788,7 +794,7 @@ export default function FederationInsightsPage() {
 
           <div className="mt-6 pt-4 border-t border-outline-variant">
             <p className="font-body-md text-xs text-on-surface-variant italic">
-              "Lower your raw material costs by pooling orders with nearby coops."
+              {t('poolingQuote')}
             </p>
           </div>
         </div>
@@ -805,7 +811,7 @@ export default function FederationInsightsPage() {
 
               const materialSummary = coop.materials
                 ? coop.materials.map((m: any) => `${m.item} (${m.targetAmount})`).join(' • ')
-                : 'Bulk Materials Requirement';
+                : (locale === 'hi' ? 'थोक सामग्री आवश्यकता' : locale === 'ta' ? 'மொத்த பொருள் தேவை' : 'Bulk Materials Requirement');
 
               const totalSavings = coop.materials
                 ? coop.materials.reduce((sum: number, m: any) => sum + (parseInt(m.savings.replace(/[^\d]/g, '')) || 0), 0)
@@ -843,7 +849,7 @@ export default function FederationInsightsPage() {
                       }}
                       className="px-6 py-3 bg-primary text-white font-bold rounded-lg hover:bg-surface-tint transition-all flex items-center gap-2 cursor-pointer shadow-sm"
                     >
-                      View Details
+                      {t('viewDetailsBtn')}
                       <span className="material-symbols-outlined text-sm">chevron_right</span>
                     </button>
                   </div>
@@ -852,7 +858,7 @@ export default function FederationInsightsPage() {
             })}
             {allCoops.length === 0 && (
               <div className="text-center py-6 bg-white rounded-xl border border-outline-variant shadow-sm text-xs text-on-surface-variant italic">
-                No nearby collaborative pooling opportunities currently available.
+                {t('noOpportunities')}
               </div>
             )}
           </div>

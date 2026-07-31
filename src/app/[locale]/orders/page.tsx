@@ -94,26 +94,26 @@ export default function OrdersListPage() {
       case 'pending_review':
         return (
           <span className="bg-amber-50 border border-amber-200 text-amber-800 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
-            New Quote
+            {t('statusNewQuote')}
           </span>
         );
       case 'discussing':
         return (
           <span className="bg-blue-50 border border-blue-200 text-blue-800 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
-            Discussing
+            {t('statusDiscussing')}
           </span>
         );
       case 'confirmed':
         return (
           <span className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-0.5">
             <span className="material-symbols-outlined text-[12px] font-extrabold">verified</span>
-            Confirmed
+            {t('statusConfirmed')}
           </span>
         );
       case 'declined':
         return (
           <span className="bg-rose-50 border border-rose-200 text-rose-800 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
-            Declined
+            {t('statusDeclined')}
           </span>
         );
       default:
@@ -164,8 +164,8 @@ export default function OrdersListPage() {
         {/* Page Title & Post Button */}
         <section className="flex justify-between items-center gap-4">
           <div>
-            <h2 className="font-headline-lg text-headline-lg text-on-surface font-extrabold">Cooperative Orders</h2>
-            <p className="text-xs text-on-surface-variant mt-0.5">Manage and track weaver contracts</p>
+            <h2 className="font-headline-lg text-headline-lg text-on-surface font-extrabold">{t('coopOrders')}</h2>
+            <p className="text-xs text-on-surface-variant mt-0.5">{t('trackContracts')}</p>
           </div>
           
           {isAdmin && (
@@ -174,7 +174,7 @@ export default function OrdersListPage() {
               className="flex items-center gap-1 px-3 py-2 bg-primary text-on-primary rounded-xl font-bold text-xs shadow-md active:scale-95 duration-100 hover:bg-primary-container cursor-pointer shrink-0"
             >
               <span className="material-symbols-outlined text-sm font-bold">add</span>
-              Post Order
+              {t('postOrderBtn')}
             </button>
           )}
         </section>
@@ -187,7 +187,7 @@ export default function OrdersListPage() {
               filter === 'active' ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant hover:bg-surface-container-high'
             }`}
           >
-            Active Orders
+            {t('activeOrdersTab')}
           </button>
           <button 
             onClick={() => setFilter('all')}
@@ -195,7 +195,7 @@ export default function OrdersListPage() {
               filter === 'all' ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant hover:bg-surface-container-high'
             }`}
           >
-            All History
+            {t('allHistoryTab')}
           </button>
         </div>
 
@@ -204,8 +204,8 @@ export default function OrdersListPage() {
           {filteredOrders.length === 0 ? (
             <div className="bg-white border border-outline-variant rounded-xl p-8 text-center space-y-2">
               <span className="material-symbols-outlined text-4xl text-outline">assignment_late</span>
-              <p className="font-bold text-sm text-on-surface">No Orders Found</p>
-              <p className="text-xs text-on-surface-variant">There are currently no orders in this list.</p>
+              <p className="font-bold text-sm text-on-surface">{t('noOrders')}</p>
+              <p className="text-xs text-on-surface-variant">{t('noOrdersSub')}</p>
             </div>
           ) : (
             filteredOrders.map((order) => {
@@ -226,21 +226,21 @@ export default function OrdersListPage() {
 
                   <div className="grid grid-cols-2 gap-2 text-xs border-t border-b border-surface-container py-2 my-1">
                     <div>
-                      <span className="text-on-surface-variant block text-[10px] uppercase font-bold">Buyer</span>
+                      <span className="text-on-surface-variant block text-[10px] uppercase font-bold">{t('buyer')}</span>
                       <span className="font-semibold text-on-surface truncate block">{order.buyerName}</span>
                     </div>
                     <div>
-                      <span className="text-on-surface-variant block text-[10px] uppercase font-bold">Price</span>
+                      <span className="text-on-surface-variant block text-[10px] uppercase font-bold">{t('price')}</span>
                       <span className="font-bold text-primary block">₹{order.price.toLocaleString('en-IN')}</span>
                       {order.buyerConfirmed ? (
                         <span className="bg-emerald-100 text-emerald-800 text-[9px] font-bold px-1.5 py-0.5 rounded-full inline-flex items-center gap-0.5 mt-1.5">
                           <span className="material-symbols-outlined text-[11px] font-extrabold">check_circle</span>
-                          Buyer Confirmed ✓
+                          {t('buyerConfirmedLabel')}
                         </span>
                       ) : (
                         <span className="bg-amber-100 text-amber-800 text-[9px] font-bold px-1.5 py-0.5 rounded-full inline-flex items-center gap-0.5 mt-1.5">
                           <span className="material-symbols-outlined text-[11px] font-extrabold">pending</span>
-                          Awaiting Buyer Confirmation
+                          {t('awaitingBuyerConfirmLabel')}
                         </span>
                       )}
                     </div>
@@ -249,13 +249,13 @@ export default function OrdersListPage() {
                   <div className="flex justify-between items-center text-xs">
                     <span className="text-on-surface-variant flex items-center gap-1">
                       <span className="material-symbols-outlined text-sm text-outline">event</span>
-                      Del: {new Date(order.deadline).toLocaleDateString(locale === 'hi' ? 'hi-IN' : 'en-IN', { day: 'numeric', month: 'short' })}
+                      {t('deliveryLabel', { date: new Date(order.deadline).toLocaleDateString(locale === 'hi' ? 'hi-IN' : locale === 'ta' ? 'ta-IN' : 'en-IN', { day: 'numeric', month: 'short' }) })}
                     </span>
                     
                     {(order.status === 'discussing' || order.status === 'pending_review') && hoursLeft !== null && (
                       <span className={`flex items-center gap-1 font-bold ${hoursLeft < 12 ? 'text-error' : 'text-amber-800'}`}>
                         <span className="material-symbols-outlined text-sm">schedule</span>
-                        {hoursLeft > 0 ? `${hoursLeft}h left` : 'Expired'}
+                        {hoursLeft > 0 ? t('hoursLeftLabel', { hours: hoursLeft }) : t('expiredLabel')}
                       </span>
                     )}
                   </div>

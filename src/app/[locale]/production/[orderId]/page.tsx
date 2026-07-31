@@ -47,6 +47,23 @@ export default function ProductionTrackingPage() {
   
   const orderId = params.orderId as string;
   const isWeaver = memberProfile?.role === 'weaver';
+  const locale = (params.locale as string) || 'en';
+  
+  const translateDate = (dateStr: string) => {
+    if (!dateStr) return '';
+    const parts = dateStr.trim().split(' ');
+    if (parts.length === 2) {
+      const month = parts[0];
+      const day = parts[1];
+      const monthNames: Record<string, Record<string, string>> = {
+        'hi': { 'Oct': 'अक्टूबर', 'Sep': 'सितंबर' },
+        'ta': { 'Oct': 'அக்டோபர்', 'Sep': 'செப்டம்பர்' }
+      };
+      const translatedMonth = monthNames[locale]?.[month] || month;
+      return locale === 'hi' || locale === 'ta' ? `${day} ${translatedMonth}` : `${translatedMonth} ${day}`;
+    }
+    return dateStr;
+  };
 
   const [order, setOrder] = useState<OrderData | null>(null);
   const [weaverProgressList, setWeaverProgressList] = useState<WeaverProgress[]>([]);
@@ -351,8 +368,8 @@ export default function ProductionTrackingPage() {
               <div className="bg-white border border-outline-variant rounded-xl p-gutter shadow-sm flex flex-col gap-stack-md">
                 <div className="flex justify-between items-start">
                   <div>
-                    <p className="font-label-sm text-label-sm text-on-surface-variant">Cooperative Batch #{orderId.replace('order-', '')}</p>
-                    <p className="font-headline-lg text-headline-lg text-secondary">{overallPct}% Complete</p>
+                    <p className="font-label-sm text-label-sm text-on-surface-variant">{t('coopBatch', { id: orderId.replace('order-', '') })}</p>
+                    <p className="font-headline-lg text-headline-lg text-secondary">{t('pctComplete', { pct: overallPct })}</p>
                   </div>
                   <div className="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full font-label-sm text-label-sm flex items-center gap-1">
                     <span className="material-symbols-outlined text-sm">schedule</span>
@@ -368,8 +385,8 @@ export default function ProductionTrackingPage() {
                 </div>
                 
                 <div className="flex justify-between text-on-surface-variant font-label-sm">
-                  <span>{t('started', { date: 'Oct 12' })}</span>
-                  <span>{t('deadline', { date: order ? new Date(order.deadline).toLocaleDateString('en-US', { day: 'numeric', month: 'short' }) : 'Oct 28' })}</span>
+                  <span>{t('started', { date: translateDate('Oct 12') })}</span>
+                  <span>{t('deadline', { date: order ? new Date(order.deadline).toLocaleDateString(locale === 'hi' ? 'hi-IN' : locale === 'ta' ? 'ta-IN' : 'en-US', { day: 'numeric', month: 'short' }) : translateDate('Oct 28') })}</span>
                 </div>
               </div>
 
@@ -383,7 +400,7 @@ export default function ProductionTrackingPage() {
                     <div>
                       <h4 className="font-label-lg text-label-lg text-error">{t('alertTitle')}</h4>
                       <p className="font-body-md text-body-md text-on-surface mt-1">
-                        {weaverProgressList.find(wp => wp.status === 'late')?.name || 'Lakshmi S.'} is behind schedule
+                        {t('behindSchedule', { name: weaverProgressList.find(wp => wp.status === 'late')?.name || 'Lakshmi S.' })}
                       </p>
                     </div>
                   </div>
@@ -455,7 +472,7 @@ export default function ProductionTrackingPage() {
               <span className="material-symbols-outlined">close</span>
             </button>
             <div className="flex items-center gap-4 text-xs font-bold tracking-wider text-slate-300">
-              <span>HDR AUTO</span>
+              <span>{t('cameraHdr')}</span>
               <span className="material-symbols-outlined text-[18px]">flash_on</span>
             </div>
             <div className="w-10 h-10"></div>
@@ -466,12 +483,12 @@ export default function ProductionTrackingPage() {
             {cameraPhotoCaptured ? (
               <div className="text-center space-y-4 animate-in zoom-in-50 duration-200">
                 <span className="material-symbols-outlined text-[64px] text-emerald-400">check_circle</span>
-                <p className="text-white font-label-lg">Captured Loom Details!</p>
+                <p className="text-white font-label-lg">{t('cameraCaptured')}</p>
               </div>
             ) : (
               <div className="w-64 h-64 border-2 border-dashed border-white/50 rounded-2xl flex items-center justify-center">
                 <div className="text-white/30 text-xs uppercase font-bold tracking-widest text-center">
-                  Align loom fabric<br />within frame
+                  {t('cameraAlign').split(' ').slice(0, 3).join(' ')}<br />{t('cameraAlign').split(' ').slice(3).join(' ')}
                 </div>
               </div>
             )}

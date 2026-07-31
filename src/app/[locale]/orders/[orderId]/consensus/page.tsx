@@ -36,6 +36,7 @@ interface MemberResponse {
 
 export default function ConsensusCheckPage() {
   const t = useTranslations('screen4');
+  const tCommon = useTranslations('common');
   const router = useRouter();
   const params = useParams();
   const { isInstallable, triggerInstall } = usePWA();
@@ -125,7 +126,7 @@ export default function ConsensusCheckPage() {
       // Redirect to Screen 5
       router.push(`/${locale}/orders/${orderId}/allocate`);
     } catch (err: any) {
-      alert("Error confirming order: " + err.message);
+      alert(tCommon('errorPrefix') + err.message);
     }
   };
 
@@ -137,7 +138,7 @@ export default function ConsensusCheckPage() {
   const handleRenegotiateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPrice || isNaN(Number(newPrice))) {
-      alert("Please enter a valid price.");
+      alert(t('enterValidPrice'));
       return;
     }
     setIsRenegotiating(true);
@@ -168,11 +169,11 @@ export default function ConsensusCheckPage() {
       await batch.commit();
 
       setShowRenegotiateModal(false);
-      alert("Order reset to pending review. Price updated successfully.");
+      alert(t('priceUpdatedSuccess'));
       router.push(`/${locale}/orders/${orderId}`);
     } catch (err: any) {
       console.error(err);
-      alert("Error renegotiating order: " + err.message);
+      alert(tCommon('errorPrefix') + err.message);
     } finally {
       setIsRenegotiating(false);
     }
@@ -190,7 +191,7 @@ export default function ConsensusCheckPage() {
   };
 
   if (loading) {
-    return <BrandedLoader message="Loading consensus report..." fullScreen />;
+    return <BrandedLoader message={t('loadingReport')} fullScreen />;
   }
 
   const rejectionsList = responses.filter(r => r.response === 'reject');
@@ -278,17 +279,17 @@ export default function ConsensusCheckPage() {
             <div className="grid grid-cols-3 gap-2 w-full mt-stack-lg text-center max-w-md">
               <div className="flex flex-col items-center">
                 <div className="h-1.5 w-12 bg-secondary rounded-full mb-2"></div>
-                <span className="font-label-sm text-[10px] text-on-surface-variant uppercase tracking-wider block">Agree</span>
+                <span className="font-label-sm text-[10px] text-on-surface-variant uppercase tracking-wider block">{t('agree')}</span>
                 <span className="font-bold text-on-surface text-sm mt-0.5">{agreePct}%</span>
               </div>
               <div className="flex flex-col items-center">
                 <div className="h-1.5 w-12 bg-amber-500 rounded-full mb-2"></div>
-                <span className="font-label-sm text-[10px] text-on-surface-variant uppercase tracking-wider block">Concern</span>
+                <span className="font-label-sm text-[10px] text-on-surface-variant uppercase tracking-wider block">{t('concern')}</span>
                 <span className="font-bold text-on-surface text-sm mt-0.5">{concernPct}%</span>
               </div>
               <div className="flex flex-col items-center">
                 <div className="h-1.5 w-12 bg-error rounded-full mb-2"></div>
-                <span className="font-label-sm text-[10px] text-on-surface-variant uppercase tracking-wider block">Can't Do</span>
+                <span className="font-label-sm text-[10px] text-on-surface-variant uppercase tracking-wider block">{t('cantDo')}</span>
                 <span className="font-bold text-on-surface text-sm mt-0.5">{rejectPct}%</span>
               </div>
             </div>
@@ -301,7 +302,7 @@ export default function ConsensusCheckPage() {
         <div className="mb-stack-lg">
           <div className="flex justify-between items-end mb-stack-md">
             <h2 className="font-label-lg text-label-lg text-on-surface font-bold">
-              Weaver Concerns ({concernsList.length})
+              {t('concernsTitle', { count: concernsList.length })}
             </h2>
           </div>
 
@@ -315,7 +316,7 @@ export default function ConsensusCheckPage() {
                   <div className="flex justify-between items-start">
                     <span className="font-label-lg text-label-lg text-on-surface font-bold">{c.name}</span>
                     <span className="px-2 py-0.5 rounded-full font-label-sm text-[10px] uppercase bg-amber-50 border border-amber-200 text-amber-800 font-bold">
-                      Concern Raised
+                      {t('concernRaised')}
                     </span>
                   </div>
                   
@@ -330,7 +331,7 @@ export default function ConsensusCheckPage() {
             
             {concernsList.length === 0 && (
               <div className="text-center py-6 bg-white rounded-xl border border-outline-variant border-dashed text-on-surface-variant text-xs">
-                No active concerns reported.
+                {t('noConcerns')}
               </div>
             )}
           </div>
@@ -340,7 +341,7 @@ export default function ConsensusCheckPage() {
         <div className="mb-stack-lg">
           <div className="flex justify-between items-end mb-stack-md">
             <h2 className="font-label-lg text-label-lg text-on-surface font-bold">
-              Weaver Rejections ({rejectionsList.length})
+              {t('rejectionsTitle', { count: rejectionsList.length })}
             </h2>
             <button className="text-primary font-label-sm flex items-center gap-1 cursor-pointer">
               <span className="material-symbols-outlined text-[18px]">play_circle</span>
@@ -358,7 +359,7 @@ export default function ConsensusCheckPage() {
                   <div className="flex justify-between items-start">
                     <span className="font-label-lg text-label-lg text-on-surface font-bold">{c.name}</span>
                     <span className="px-2 py-0.5 rounded-full font-label-sm text-[10px] uppercase bg-rose-50 border border-rose-100 text-rose-800 font-bold">
-                      Can't Do It
+                      {t('cantDo')}
                     </span>
                   </div>
                   
@@ -397,7 +398,7 @@ export default function ConsensusCheckPage() {
             
             {rejectionsList.length === 0 && (
               <div className="text-center py-6 bg-white rounded-xl border border-outline-variant border-dashed text-on-surface-variant text-xs">
-                No rejections. Cooperative has complete consensus!
+                {t('noRejections')}
               </div>
             )}
           </div>
@@ -441,7 +442,7 @@ export default function ConsensusCheckPage() {
               className="w-full h-14 bg-white text-secondary border-2 border-outline-variant hover:border-secondary rounded-xl font-label-lg flex items-center justify-center gap-2 active:scale-95 duration-150 cursor-pointer"
             >
               <span className="material-symbols-outlined">gavel</span>
-              Renegotiate Price
+              {t('renegotiatePrice')}
             </button>
             <button 
               onClick={handleReviewConcerns}
@@ -457,14 +458,14 @@ export default function ConsensusCheckPage() {
         {showRenegotiateModal && (
           <div className="fixed inset-0 bg-black/60 z-[150] flex items-center justify-center p-container-padding animate-in fade-in duration-200">
             <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl border border-outline-variant animate-in zoom-in-95 duration-200">
-              <h3 className="font-headline-md text-headline-md text-on-surface mb-2">Renegotiate Target Price</h3>
+              <h3 className="font-headline-md text-headline-md text-on-surface mb-2">{t('renegotiateTitle')}</h3>
               <p className="text-xs text-on-surface-variant mb-4">
-                Changing the price will reset the order status back to Pending Review, clear all current weaver votes, and require a fresh consensus round.
+                {t('renegotiateSub')}
               </p>
               
               <form onSubmit={handleRenegotiateSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1.5">New Price (INR)</label>
+                  <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1.5">{t('newPriceLabel')}</label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant font-bold text-sm">₹</span>
                     <input 
@@ -484,7 +485,7 @@ export default function ConsensusCheckPage() {
                     onClick={() => setShowRenegotiateModal(false)}
                     className="flex-1 h-12 border border-outline text-outline font-label-lg rounded-xl active:scale-95 duration-100 cursor-pointer bg-white"
                   >
-                    Cancel
+                    {tCommon('cancel')}
                   </button>
                   <button
                     type="submit"
@@ -496,7 +497,7 @@ export default function ConsensusCheckPage() {
                     ) : (
                       <>
                         <span className="material-symbols-outlined text-[16px]">sync_alt</span>
-                        Submit Price
+                        {t('submitPrice')}
                       </>
                     )}
                   </button>

@@ -29,6 +29,7 @@ interface OrderData {
 
 export default function OrderDetailsPage() {
   const t = useTranslations('screen1');
+  const tCommon = useTranslations('common');
   const router = useRouter();
   const params = useParams();
   const { user, memberProfile } = useAuth();
@@ -85,29 +86,33 @@ export default function OrderDetailsPage() {
       // Redirect to Screen 2
       router.push(`/${locale}/orders/${orderId}/share`);
     } catch (err: any) {
-      alert("Error sharing order: " + err.message);
+      alert(tCommon('errorPrefix') + err.message);
     }
   };
 
   // Action: Share Confirmation Link
-  const handleShareLink = () => {
-    const confirmLink = `${window.location.origin}/${locale}/confirm/${orderId}`;
-    navigator.clipboard.writeText(confirmLink);
-    triggerToast("Confirmation link copied! Share this with the buyer.");
+  const handleShareLink = async () => {
+    const fullLink = `${window.location.origin}/${locale}/confirm/${orderId}`;
+    try {
+      await navigator.clipboard.writeText(fullLink);
+      triggerToast(t('toastConfirmationLinkCopied'));
+    } catch (err) {
+      alert(tCommon('errorPrefix') + err);
+    }
   };
 
   // Action: Decline Order
   const handleDecline = async () => {
     if (!order) return;
-    if (confirm("Are you sure you want to decline this order?")) {
+    if (confirm(t('confirmDecline'))) {
       try {
         await updateDoc(doc(db, 'orders', orderId), {
           status: 'declined'
         });
-        alert("Order declined.");
-        router.push('/');
+        triggerToast(t('toastOrderDeclined'));
+        router.push(`/${locale}/orders`);
       } catch (err: any) {
-        alert("Error declining order: " + err.message);
+        alert(tCommon('errorPrefix') + err.message);
       }
     }
   };
@@ -115,13 +120,13 @@ export default function OrderDetailsPage() {
   // Action: Delete Order
   const handleDelete = async () => {
     if (!order) return;
-    if (confirm("Are you sure you want to permanently delete this order? This action cannot be undone.")) {
+    if (confirm(t('confirmDelete'))) {
       try {
         await deleteDoc(doc(db, 'orders', orderId));
-        alert("Order successfully deleted.");
+        triggerToast(t('toastOrderDeleted'));
         router.push(`/${locale}/orders`);
       } catch (err: any) {
-        alert("Error deleting order: " + err.message);
+        alert(tCommon('errorPrefix') + err.message);
       }
     }
   };
@@ -197,7 +202,7 @@ export default function OrderDetailsPage() {
   };
 
   if (loading) {
-    return <BrandedLoader message="Loading details..." fullScreen />;
+    return <BrandedLoader message={t('loadingDetails')} fullScreen />;
   }
 
   if (!order) {
@@ -206,9 +211,9 @@ export default function OrderDetailsPage() {
         <Header showBack backPath="/" />
         <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
           <span className="material-symbols-outlined text-on-surface-variant text-5xl mb-4">error</span>
-          <h2 className="font-headline-md text-on-surface mb-2">Order Not Found</h2>
-          <p className="text-on-surface-variant mb-6">Make sure you ran the seed script (`npm run seed`) to setup database collections.</p>
-          <button onClick={() => router.push('/')} className="bg-primary text-on-primary px-6 py-2 rounded-lg">Go to Login</button>
+          <h2 className="font-headline-md text-on-surface mb-2">{t('orderNotFound')}</h2>
+          <p className="text-on-surface-variant mb-6">{t('seedDbAlert')}</p>
+          <button onClick={() => router.push('/')} className="bg-primary text-on-primary px-6 py-2 rounded-lg">{t('goToLogin')}</button>
         </div>
       </div>
     );
@@ -220,13 +225,13 @@ export default function OrderDetailsPage() {
 
       {memberProfile?.role === 'admin' && (
         <div className="bg-primary/5 border-b border-primary/20 py-2.5 px-container-padding flex justify-between items-center max-w-xl mx-auto w-full relative z-20">
-          <span className="font-label-sm text-primary font-bold">Admin Panel</span>
+          <span className="font-label-sm text-primary font-bold">{t('adminPanelTitle')}</span>
           <button 
             onClick={() => router.push(`/${locale}/orders/new`)}
             className="flex items-center gap-1 px-3 py-1.5 bg-primary text-on-primary rounded-xl font-bold text-xs shadow-sm hover:bg-primary-container transition-all active:scale-95 cursor-pointer"
           >
             <span className="material-symbols-outlined text-sm">add</span>
-            Post New Order
+            {t('postNewOrder')}
           </button>
         </div>
       )}
@@ -253,7 +258,15 @@ export default function OrderDetailsPage() {
               </p>
             </div>
             <div className="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full font-label-sm text-label-sm uppercase tracking-wider">
-              {order.status === 'pending_review' ? t('newRequest') : order.status}
+              {order.status === 'pending_review' 
+                ? t('newRequest') 
+                : order.status === 'discussing' 
+                ? t('statusDiscussing') 
+                : order.status === 'confirmed' 
+                ? t('statusConfirmed') 
+                : order.status === 'declined' 
+                ? t('statusDeclined') 
+                : order.status}
             </div>
           </div>
 
@@ -287,12 +300,12 @@ export default function OrderDetailsPage() {
                   {order.buyerConfirmed ? (
                     <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-0.5 mt-0.5">
                       <span className="material-symbols-outlined text-[12px] font-extrabold">check_circle</span>
-                      Buyer Confirmed ✓
+                      {t('buyerConfirmedLabel')}
                     </span>
                   ) : (
                     <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-0.5 mt-0.5">
                       <span className="material-symbols-outlined text-[12px] font-extrabold">pending</span>
-                      Awaiting Buyer Confirmation
+                      {t('awaitingBuyerConfirmLabel')}
                     </span>
                   )}
                 </div>
@@ -312,7 +325,7 @@ export default function OrderDetailsPage() {
                   <span className="material-symbols-outlined text-outline">shopping_basket</span>
                   <span className="font-body-md text-body-md">{t('quantity')}</span>
                 </div>
-                <span className="font-body-md text-body-md font-medium">{order.quantity} units</span>
+                <span className="font-body-md text-body-md font-medium">{order.quantity} {t('quantityUnit')}</span>
               </div>
               <div className="flex justify-between items-center py-3 border-b border-surface-container">
                 <div className="flex items-center gap-3">
@@ -324,14 +337,14 @@ export default function OrderDetailsPage() {
               <div className="flex justify-between items-center py-3 border-b border-surface-container">
                 <div className="flex items-center gap-3">
                   <span className="material-symbols-outlined text-outline">person</span>
-                  <span className="font-body-md text-body-md">Entered By</span>
+                  <span className="font-body-md text-body-md">{t('enteredBy')}</span>
                 </div>
                 <span className="font-body-md text-body-md font-medium">{order.enteredBy || 'System'}</span>
               </div>
               <div className="flex justify-between items-center py-3 border-b border-surface-container">
                 <div className="flex items-center gap-3">
                   <span className="material-symbols-outlined text-outline">calendar_month</span>
-                  <span className="font-body-md text-body-md">Entered At</span>
+                  <span className="font-body-md text-body-md">{t('enteredAt')}</span>
                 </div>
                 <span className="font-body-md text-body-md font-medium text-on-surface-variant">
                   {order.enteredAt ? (order.enteredAt.seconds ? new Date(order.enteredAt.seconds * 1000).toLocaleString(params.locale === 'hi' ? 'hi-IN' : 'en-IN') : new Date(order.enteredAt).toLocaleString(params.locale === 'hi' ? 'hi-IN' : 'en-IN')) : 'System'}
@@ -340,7 +353,7 @@ export default function OrderDetailsPage() {
               <div className="flex flex-col md:flex-row md:justify-between md:items-center py-3 gap-2">
                 <div className="flex items-center gap-3">
                   <span className="material-symbols-outlined text-outline">call</span>
-                  <span className="font-body-md text-body-md">Buyer Phone</span>
+                  <span className="font-body-md text-body-md">{t('buyerPhone')}</span>
                 </div>
                 <div className="flex flex-col items-end gap-1.5 w-full md:w-auto">
                   {order.status === 'pending_review' ? (
@@ -348,18 +361,18 @@ export default function OrderDetailsPage() {
                       type="tel"
                       value={buyerPhone}
                       onChange={(e) => setBuyerPhone(e.target.value)}
-                      placeholder="Enter buyer phone"
+                      placeholder={t('enterPhonePlaceholder')}
                       className="px-2 py-1 text-xs border border-outline rounded bg-white text-right w-full md:w-48 font-mono focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
                     />
                   ) : (
-                    <span className="font-body-md text-body-md font-medium">{order.buyerPhone || 'Not Entered'}</span>
+                    <span className="font-body-md text-body-md font-medium">{order.buyerPhone || t('notEntered')}</span>
                   )}
                   <button 
                     onClick={handleShareLink}
                     className="flex items-center gap-0.5 text-primary text-[11px] font-bold hover:underline cursor-pointer"
                   >
                     <span className="material-symbols-outlined text-[13px]">share</span>
-                    Share Confirmation Link
+                    {t('shareConfirmationLink')}
                   </button>
                 </div>
               </div>
@@ -393,7 +406,7 @@ export default function OrderDetailsPage() {
                   className="flex-1 h-touch-target border border-rose-200 text-rose-700 hover:bg-rose-50 rounded-lg font-label-lg text-label-lg flex items-center justify-center gap-2 transition-transform active:scale-95 cursor-pointer bg-white animate-in fade-in duration-200"
                 >
                   <span className="material-symbols-outlined">delete</span>
-                  Delete
+                  {t('deleteBtn')}
                 </button>
               )}
             </div>
@@ -404,7 +417,7 @@ export default function OrderDetailsPage() {
         <div className="fixed bottom-24 right-container-padding z-40 flex flex-col items-center">
           <div className="bg-white/80 backdrop-blur-md px-4 py-2 rounded-full shadow-sm mb-2 border border-outline-variant">
             <span className="font-label-sm text-label-sm text-primary">
-              {isListening ? 'Listening...' : voiceText ? `Cmd: "${voiceText}"` : 'Tap to Speak'}
+              {isListening ? tCommon('listening') : voiceText ? `Cmd: "${voiceText}"` : tCommon('tapToSpeak')}
             </span>
           </div>
           <button 
