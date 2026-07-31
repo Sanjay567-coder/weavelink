@@ -246,12 +246,11 @@ export default function FederationInsightsPage() {
                     <button 
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleInviteToPool('coop-silk-b', 'Mulberry Silk Yarn', '250kg', '₹12,500');
+                        router.push(`/${locale}/federation/coop-silk-b`);
                       }}
-                      className="mt-2 w-full py-1.5 bg-primary text-white text-[10px] font-bold rounded-md active:scale-95 cursor-pointer disabled:opacity-50"
-                      disabled={requests.some(r => r.fromCoopId === myCoopId && r.toCoopId === 'coop-silk-b' && r.status === 'pending')}
+                      className="mt-2 w-full py-1.5 bg-primary text-white text-[10px] font-bold rounded-md active:scale-95 cursor-pointer"
                     >
-                      {requests.some(r => r.fromCoopId === myCoopId && r.toCoopId === 'coop-silk-b' && r.status === 'pending') ? 'Invited' : 'Invite to Pool'}
+                      View Details
                     </button>
                   </div>
                 )}
@@ -285,11 +284,10 @@ export default function FederationInsightsPage() {
                   <p className="text-xs text-on-surface-variant">5km away • Mulberry Silk Yarn Specialist</p>
                 </div>
                 <button 
-                  onClick={() => handleInviteToPool('coop-silk-b', 'Mulberry Silk Yarn', '250kg', '₹12,500')}
-                  className="bg-primary text-on-primary px-3 py-1.5 rounded text-xs disabled:opacity-50"
-                  disabled={requests.some(r => r.fromCoopId === myCoopId && r.toCoopId === 'coop-silk-b' && r.status === 'pending')}
+                  onClick={() => router.push(`/${locale}/federation/coop-silk-b`)}
+                  className="bg-primary text-on-primary px-3 py-1.5 rounded text-xs cursor-pointer"
                 >
-                  {requests.some(r => r.fromCoopId === myCoopId && r.toCoopId === 'coop-silk-b' && r.status === 'pending') ? 'Invited' : 'Invite'}
+                  View Details
                 </button>
               </div>
               <div className="p-3 bg-surface-container-low rounded-lg flex justify-between items-center border border-outline-variant/20">
@@ -465,7 +463,7 @@ export default function FederationInsightsPage() {
           
           <div className="space-y-stack-sm">
             {/* Row Card 1 */}
-            <div className="bg-white p-5 rounded-xl border border-outline-variant shadow-sm flex flex-col sm:flex-row sm:items-center justify-between hover:border-primary transition-colors group">
+            <div onClick={() => router.push(`/${locale}/federation/coop-silk-b`)} className="bg-white p-5 rounded-xl border border-outline-variant shadow-sm flex flex-col sm:flex-row sm:items-center justify-between hover:border-primary transition-colors group cursor-pointer">
               <div className="flex items-center gap-4 mb-4 sm:mb-0">
                 <div className="w-14 h-14 bg-surface rounded-lg flex items-center justify-center overflow-hidden border border-outline-variant">
                   <img 
@@ -486,18 +484,20 @@ export default function FederationInsightsPage() {
                   <p className="text-headline-md font-bold text-on-surface text-xl">₹12,500</p>
                 </div>
                 <button 
-                  onClick={() => handleInviteToPool('coop-silk-b', 'Mulberry Silk Yarn', '250kg', '₹12,500')}
-                  className="px-6 py-3 bg-primary text-white font-bold rounded-lg hover:bg-surface-tint transition-all flex items-center gap-2 cursor-pointer shadow-sm disabled:opacity-50"
-                  disabled={requests.some(r => r.fromCoopId === myCoopId && r.toCoopId === 'coop-silk-b' && r.status === 'pending')}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    router.push(`/${locale}/federation/coop-silk-b`);
+                  }}
+                  className="px-6 py-3 bg-primary text-white font-bold rounded-lg hover:bg-surface-tint transition-all flex items-center gap-2 cursor-pointer shadow-sm"
                 >
-                  {requests.some(r => r.fromCoopId === myCoopId && r.toCoopId === 'coop-silk-b' && r.status === 'pending') ? 'Invited' : t('joinPool')}
+                  View Details
                   <span className="material-symbols-outlined text-sm">chevron_right</span>
                 </button>
               </div>
             </div>
 
             {/* Row Card 2 */}
-            <div className="bg-white p-5 rounded-xl border border-outline-variant shadow-sm flex flex-col sm:flex-row sm:items-center justify-between hover:border-primary transition-colors group">
+            <div onClick={() => router.push(`/${locale}/federation/coop-arani`)} className="bg-white p-5 rounded-xl border border-outline-variant shadow-sm flex flex-col sm:flex-row sm:items-center justify-between hover:border-primary transition-colors group cursor-pointer">
               <div className="flex items-center gap-4 mb-4 sm:mb-0">
                 <div className="w-14 h-14 bg-surface rounded-lg flex items-center justify-center overflow-hidden border border-outline-variant">
                   <img 
@@ -518,11 +518,13 @@ export default function FederationInsightsPage() {
                   <p className="text-headline-md font-bold text-on-surface text-xl">₹8,200</p>
                 </div>
                 <button 
-                  onClick={() => handleInviteToPool('coop-arani', 'Fine Zari Thread', '40kg', '₹8,200')}
-                  className="px-6 py-3 bg-primary text-white font-bold rounded-lg hover:bg-surface-tint transition-all flex items-center gap-2 cursor-pointer shadow-sm disabled:opacity-50"
-                  disabled={requests.some(r => r.fromCoopId === myCoopId && r.toCoopId === 'coop-arani' && r.status === 'pending')}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    router.push(`/${locale}/federation/coop-arani`);
+                  }}
+                  className="px-6 py-3 bg-primary text-white font-bold rounded-lg hover:bg-surface-tint transition-all flex items-center gap-2 cursor-pointer shadow-sm"
                 >
-                  {requests.some(r => r.fromCoopId === myCoopId && r.toCoopId === 'coop-arani' && r.status === 'pending') ? 'Invited' : t('joinPool')}
+                  View Details
                   <span className="material-symbols-outlined text-sm">chevron_right</span>
                 </button>
               </div>

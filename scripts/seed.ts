@@ -67,6 +67,11 @@ const seedData = async () => {
       uid: 'admin-uid-silk-b',
       phoneNumber: '+919999999998',
       displayName: 'Balaji S. (Admin B)',
+    },
+    {
+      uid: 'admin-uid-arani',
+      phoneNumber: '+919999999997',
+      displayName: 'Srinivas R. (Admin Arani)',
     }
   ];
 
@@ -100,28 +105,49 @@ const seedData = async () => {
       name: 'Kanchipuram Silk Cooperative',
       district: 'Kanchipuram',
       language: 'en',
-      availableForPooling: true
+      availableForPooling: true,
+      materials: [
+        { item: 'Silk Saree Threads', targetAmount: '150kg', savings: '₹9,500' }
+      ],
+      weaversCount: 18,
+      distance: '0km (Own)'
     },
     {
       id: 'coop-varanasi',
       name: 'Varanasi Weavers Cooperative',
       district: 'Varanasi',
       language: 'hi',
-      availableForPooling: false
+      availableForPooling: false,
+      materials: [
+        { item: 'Zari Border Threads', targetAmount: '80kg', savings: '₹14,000' }
+      ],
+      weaversCount: 15,
+      distance: '800km'
     },
     {
       id: 'coop-silk-b',
       name: 'Silk Weaver Coop B',
       district: 'Kanchipuram B',
       language: 'en',
-      availableForPooling: true
+      availableForPooling: true,
+      materials: [
+        { item: 'Mulberry Silk Yarn', targetAmount: '250kg', savings: '₹12,500' },
+        { item: 'Natural Indigo Dye', targetAmount: '50L', savings: '₹3,200' }
+      ],
+      weaversCount: 12,
+      distance: '5km'
     },
     {
       id: 'coop-arani',
       name: 'Arani Master Weavers',
       district: 'Arani',
       language: 'en',
-      availableForPooling: false
+      availableForPooling: false,
+      materials: [
+        { item: 'Fine Zari Thread', targetAmount: '40kg', savings: '₹8,200' }
+      ],
+      weaversCount: 8,
+      distance: '12km'
     }
   ];
 
@@ -179,6 +205,14 @@ const seedData = async () => {
       name: 'Balaji S.',
       role: 'admin',
       phone: '+919999999998',
+      capacity: 0,
+    },
+    {
+      id: 'admin-uid-arani',
+      coopId: 'coop-arani',
+      name: 'Srinivas R.',
+      role: 'admin',
+      phone: '+919999999997',
       capacity: 0,
     }
   ];
