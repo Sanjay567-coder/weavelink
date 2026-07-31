@@ -71,3 +71,5 @@ The seeding script registers specific test accounts in Auth using deterministic 
 - Run development server: `npm run dev`
 - Build production version: `npm run build`
 - Start built production version: `npm run start`
+
+<!-- Collaborator test config: verified successfully with rthivisha -->
