@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { doc, onSnapshot, collection, query, addDoc, where } from 'firebase/firestore';
+import { doc, onSnapshot, collection, query, addDoc, where, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/context/AuthContext';
 import { Header } from '@/components/Header';
@@ -182,6 +182,38 @@ export default function CooperativeDetailPage() {
     }
   };
 
+  const handleAcceptInvite = async (requestId: string) => {
+    if (memberProfile?.role !== 'admin') {
+      triggerToast("Only cooperative Admins can accept invitations.");
+      return;
+    }
+    try {
+      await updateDoc(doc(db, 'poolingRequests', requestId), {
+        status: 'accepted'
+      });
+      triggerToast("Pooling request accepted!");
+    } catch (err: any) {
+      console.error(err);
+      triggerToast("Error accepting invite: " + err.message);
+    }
+  };
+
+  const handleDeclineInvite = async (requestId: string) => {
+    if (memberProfile?.role !== 'admin') {
+      triggerToast("Only cooperative Admins can decline invitations.");
+      return;
+    }
+    try {
+      await updateDoc(doc(db, 'poolingRequests', requestId), {
+        status: 'declined'
+      });
+      triggerToast("Pooling request declined.");
+    } catch (err: any) {
+      console.error(err);
+      triggerToast("Error declining invite: " + err.message);
+    }
+  };
+
   return (
     <div className="bg-background text-on-surface font-body-md min-h-screen pb-32 flex flex-col">
       <Header />
@@ -257,34 +289,53 @@ export default function CooperativeDetailPage() {
         {/* Actions Section */}
         <section className="pt-4">
           {acceptedRequest ? (
-            <div className="w-full bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl p-4 flex items-center gap-3">
-              <span className="material-symbols-outlined text-emerald-600 text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>verified_user</span>
-              <div className="text-xs">
-                <p className="font-extrabold">Active Confirmed Pool</p>
-                <p className="text-emerald-700/90 mt-0.5">You are already pooling materials with this cooperative.</p>
-              </div>
-            </div>
+            <button
+              disabled
+              className="w-full h-12 bg-emerald-100 text-emerald-800 rounded-xl font-bold text-sm flex items-center justify-center gap-2 border border-emerald-200 cursor-not-allowed opacity-90 shadow-sm"
+            >
+              <span className="material-symbols-outlined text-sm font-bold" style={{ fontVariationSettings: "'FILL' 1" }}>verified_user</span>
+              Pool Active ✓
+            </button>
           ) : pendingRequest ? (
-            <div className="w-full bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-4 flex items-center gap-3">
-              <span className="material-symbols-outlined text-amber-600 text-xl">schedule</span>
-              <div className="text-xs">
-                <p className="font-extrabold">Invitation Pending</p>
-                <p className="text-amber-700/90 mt-0.5">Waiting for response from {coop.name}.</p>
-              </div>
-            </div>
+            <button
+              disabled
+              className="w-full h-12 bg-amber-100 text-amber-800 rounded-xl font-bold text-sm flex items-center justify-center gap-2 border border-amber-200 cursor-not-allowed opacity-90 shadow-sm"
+            >
+              <span className="material-symbols-outlined text-sm font-bold">schedule</span>
+              Invite Sent — Awaiting Response
+            </button>
           ) : incomingRequest ? (
-            <div className="w-full bg-primary-container/20 border border-primary/20 text-on-primary-container rounded-xl p-4 flex items-center gap-3">
-              <span className="material-symbols-outlined text-primary text-xl">mail</span>
-              <div className="text-xs flex-1">
-                <p className="font-extrabold">They Invited You</p>
-                <p className="text-on-surface-variant mt-0.5">Accept this request from your Federation board.</p>
+            <div className="flex flex-col gap-2">
+              <div className="bg-primary-container/20 border border-primary/20 text-on-primary-container rounded-xl p-4 flex items-center gap-3 mb-2">
+                <span className="material-symbols-outlined text-primary text-xl">mail</span>
+                <div className="text-xs">
+                  <p className="font-extrabold">Cooperative Invitation</p>
+                  <p className="text-on-surface-variant mt-0.5">{coop.name} invited you to pool materials.</p>
+                </div>
               </div>
-              <button 
-                onClick={() => router.push(`/${locale}/federation`)}
-                className="bg-primary text-on-primary px-3 py-1.5 rounded font-bold text-[10px] active:scale-95 transition-all cursor-pointer"
-              >
-                Go to Board
-              </button>
+              
+              {memberProfile?.role === 'admin' ? (
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => handleAcceptInvite(incomingRequest.id)}
+                    className="flex-1 h-12 bg-primary text-on-primary hover:bg-surface-tint rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-all duration-100 cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-sm font-bold" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                    Accept Invite
+                  </button>
+                  <button
+                    onClick={() => handleDeclineInvite(incomingRequest.id)}
+                    className="flex-1 h-12 border border-outline text-on-surface hover:bg-surface-container rounded-xl font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-all duration-100 cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-sm">cancel</span>
+                    Not Required
+                  </button>
+                </div>
+              ) : (
+                <div className="w-full bg-surface-container border border-outline-variant text-on-surface-variant rounded-xl p-4 text-center text-xs">
+                  Only cooperative Admins can accept invitations.
+                </div>
+              )}
             </div>
           ) : memberProfile?.role === 'admin' ? (
             <button
