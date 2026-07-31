@@ -51,11 +51,11 @@ export default function FederationInsightsPage() {
 
   const [coopDetails, setCoopDetails] = useState<Record<string, any>>({});
   const [allCoops, setAllCoops] = useState<any[]>([]);
-  const [myCoop, setMyCoop] = useState<any>(null);
   const [showNeedsForm, setShowNeedsForm] = useState(false);
   const [newMaterialName, setNewMaterialName] = useState('');
   const [newTargetQuantity, setNewTargetQuantity] = useState('');
   const [newSavingsPotential, setNewSavingsPotential] = useState('');
+  const [editingMaterials, setEditingMaterials] = useState<{ item: string; targetAmount: string; savings: string; }[]>([]);
 
   const triggerToast = (msg: string) => {
     setToastMsg(msg);
@@ -90,12 +90,7 @@ export default function FederationInsightsPage() {
       setAllCoops(list);
     });
 
-    // Subscribe to my own cooperative to display material needs
-    const unsubMyCoop = onSnapshot(doc(db, 'cooperatives', myCoopId), (docSnap) => {
-      if (docSnap.exists()) {
-        setMyCoop({ id: docSnap.id, ...docSnap.data() });
-      }
-    });
+
 
     // 2. Subscribe to pooling requests involving this coop using rule-compliant queries
     const q1 = query(collection(db, 'poolingRequests'), where('fromCoopId', '==', myCoopId));
@@ -134,7 +129,6 @@ export default function FederationInsightsPage() {
 
     return () => {
       unsubCoops();
-      unsubMyCoop();
       unsubRequests1();
       unsubRequests2();
     };
@@ -283,13 +277,12 @@ export default function FederationInsightsPage() {
     }
   };
 
-  const [editingMaterials, setEditingMaterials] = useState<{ item: string; targetAmount: string; savings: string; }[]>([]);
-
   if (authLoading || !memberProfile) {
     return <BrandedLoader message="Syncing federation workspace..." fullScreen />;
   }
 
   const myCoopId = memberProfile.coopId || 'coop-kanchipuram';
+  const myCoop = coopDetails[myCoopId];
   
   // Categorize requests client-side
   const waitingList = requests.filter(r => r.fromCoopId === myCoopId && r.status === 'pending');
