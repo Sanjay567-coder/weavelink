@@ -226,6 +226,22 @@ const seedData = async () => {
       role: 'admin',
       phone: '+919999999997',
       capacity: 0,
+    },
+    {
+      id: 'weaver-uid-105',
+      coopId: '',
+      name: 'Kavitha Murugan',
+      role: 'weaver',
+      phone: '+918888888005',
+      capacity: 6,
+    },
+    {
+      id: 'weaver-uid-106',
+      coopId: '',
+      name: 'Anbu Selvan',
+      role: 'weaver',
+      phone: '+918888888006',
+      capacity: 4,
     }
   ];
 

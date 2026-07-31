@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, updateDoc, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/context/AuthContext';
 import { useTranslations } from 'next-intl';
@@ -51,6 +51,18 @@ export default function HomeDashboardPage() {
   });
   const [loading, setLoading] = useState(true);
   const [poolingPartnersCount, setPoolingPartnersCount] = useState(0);
+
+  interface Candidate {
+    id: string;
+    name: string;
+    phone: string;
+    role: string;
+  }
+  const [showAddMemberModal, setShowAddMemberModal] = useState(false);
+  const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [loadingCandidates, setLoadingCandidates] = useState(false);
+  const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
+  const [toastMsg, setToastMsg] = useState('');
 
   useEffect(() => {
     if (authLoading || !user || !memberProfile) return;
@@ -164,6 +176,57 @@ export default function HomeDashboardPage() {
     return () => unsubOrders();
   }, [user, memberProfile, authLoading, locale, router]);
 
+  const handleOpenAddMember = async () => {
+    setLoadingCandidates(true);
+    setSelectedCandidate(null);
+    setShowAddMemberModal(true);
+    try {
+      const q = query(collection(db, 'members'));
+      const querySnapshot = await getDocs(q);
+      const list: Candidate[] = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        if (!data.coopId || data.coopId === '') {
+          list.push({
+            id: doc.id,
+            name: data.name || 'Anonymous',
+            phone: data.phone || '',
+            role: data.role || 'weaver'
+          });
+        }
+      });
+      setCandidates(list);
+    } catch (err) {
+      console.error("Error fetching candidates:", err);
+    } finally {
+      setLoadingCandidates(false);
+    }
+  };
+
+  const handleConfirmAddMember = async () => {
+    if (!selectedCandidate || !memberProfile) return;
+    const myCoopId = memberProfile.coopId || 'coop-kanchipuram';
+    try {
+      const memberRef = doc(db, 'members', selectedCandidate.id);
+      await updateDoc(memberRef, {
+        coopId: myCoopId,
+        role: 'weaver'
+      });
+      
+      setCandidates(prev => prev.filter(c => c.id !== selectedCandidate.id));
+      setSelectedCandidate(null);
+      
+      setToastMsg(tCommon('successAddMember'));
+      setTimeout(() => setToastMsg(''), 4000);
+      
+      setTimeout(() => setShowAddMemberModal(false), 800);
+    } catch (err: any) {
+      console.error("Error adding member:", err);
+      setToastMsg("Error: " + err.message);
+      setTimeout(() => setToastMsg(''), 4000);
+    }
+  };
+
   if (authLoading || loading || !memberProfile) {
     return <BrandedLoader message="Syncing dashboard information..." fullScreen />;
   }
@@ -242,6 +305,13 @@ export default function HomeDashboardPage() {
                       {poolingPartnersCount}
                     </span>
                   )}
+                </button>
+                <button 
+                  onClick={() => handleOpenAddMember()}
+                  className="w-full h-11 border border-outline text-on-surface hover:bg-surface-container rounded-xl font-bold text-xs flex items-center justify-center gap-2 active:scale-95 transition-transform duration-100 cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-sm">person_add</span>
+                  {tCommon('addMembers')}
                 </button>
               </div>
             </div>
@@ -415,6 +485,108 @@ export default function HomeDashboardPage() {
         )}
 
       </main>
+
+      {/* Add Member Modal */}
+      {showAddMemberModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-gutter">
+          <div className="bg-white border border-outline-variant rounded-2xl w-full max-w-md overflow-hidden shadow-2xl p-6 flex flex-col max-h-[85vh] animate-in fade-in zoom-in duration-200">
+            
+            {/* Modal Header */}
+            <div className="flex justify-between items-center pb-4 border-b border-surface-container mb-4">
+              <h3 className="font-bold text-base text-on-surface flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary">person_add</span>
+                {tCommon('addMembers')}
+              </h3>
+              <button 
+                onClick={() => setShowAddMemberModal(false)}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-outline hover:bg-surface-container active:scale-95 duration-100 cursor-pointer"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            {/* Candidate List */}
+            <div className="flex-1 overflow-y-auto space-y-3 pr-1 scrollbar-thin">
+              {loadingCandidates ? (
+                <div className="py-8 flex flex-col items-center justify-center text-xs text-on-surface-variant gap-2">
+                  <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                  <span>Loading candidates...</span>
+                </div>
+              ) : candidates.length === 0 ? (
+                <div className="py-12 text-center text-xs text-on-surface-variant flex flex-col items-center gap-2">
+                  <span className="material-symbols-outlined text-outline text-3xl">people_mute</span>
+                  <p>{tCommon('noCandidates')}</p>
+                </div>
+              ) : (
+                candidates.map((c) => {
+                  const isSelected = selectedCandidate?.id === c.id;
+                  return (
+                    <div 
+                      key={c.id}
+                      onClick={() => setSelectedCandidate(c)}
+                      className={`p-3 rounded-xl border flex items-center justify-between gap-3 cursor-pointer transition-all duration-150 active:scale-[0.99] ${
+                        isSelected 
+                          ? 'border-primary bg-primary-container/10 shadow-sm ring-1 ring-primary' 
+                          : 'border-outline-variant/60 bg-surface-container-lowest hover:border-outline-variant'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs ${
+                          isSelected ? 'bg-primary text-on-primary' : 'bg-primary-fixed text-on-primary-fixed'
+                        }`}>
+                          {c.name.charAt(0)}
+                        </div>
+                        <div className="flex flex-col text-left">
+                          <span className="font-label-md text-label-md font-bold text-on-surface">{c.name}</span>
+                          <span className="text-[10px] text-on-surface-variant font-mono">{c.phone}</span>
+                        </div>
+                      </div>
+                      
+                      <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${
+                        isSelected ? 'border-primary text-primary' : 'border-outline text-transparent'
+                      }`}>
+                        {isSelected && <span className="w-2.5 h-2.5 rounded-full bg-primary animate-scale-up"></span>}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Selection Details & Confirm */}
+            {selectedCandidate && (
+              <div className="mt-4 pt-4 border-t border-surface-container bg-surface-container-lowest/50 rounded-xl space-y-4 animate-in slide-in-from-bottom-2 duration-200">
+                <p className="text-xs text-on-surface-variant leading-relaxed px-1">
+                  {tCommon('confirmAddMember', { name: selectedCandidate.name })}
+                </p>
+                <div className="flex gap-3">
+                  <button 
+                    onClick={() => setSelectedCandidate(null)}
+                    className="flex-grow py-2.5 border border-outline text-outline font-bold text-xs text-center rounded-xl hover:bg-surface-container active:scale-95 duration-100 cursor-pointer bg-white"
+                  >
+                    {tCommon('cancel')}
+                  </button>
+                  <button 
+                    onClick={handleConfirmAddMember}
+                    className="flex-grow py-2.5 bg-primary text-on-primary font-bold text-xs rounded-xl shadow-md hover:bg-primary-container active:scale-95 duration-100 cursor-pointer flex items-center justify-center gap-1.5"
+                  >
+                    <span className="material-symbols-outlined text-sm font-bold">check</span>
+                    {tCommon('confirmBtn')}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Styled toast feedback */}
+      {toastMsg && (
+        <div className="fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl z-50 font-sans text-xs font-semibold flex items-center gap-2 border border-slate-700 animate-in fade-in slide-in-from-bottom-5 duration-300">
+          <span className="material-symbols-outlined text-emerald-400 text-[18px]">check_circle</span>
+          {toastMsg}
+        </div>
+      )}
 
       <Navbar />
       <DevBar />

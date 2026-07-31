@@ -22,7 +22,14 @@
     "send": "भेजें",
     "submit": "जमा करें",
     "errorPrefix": "त्रुटि: ",
-    "youLabel": "आप"
+    "youLabel": "आप",
+    "addMembers": "सदस्य जोड़ें",
+    "selectCandidate": "एक उम्मीदवार चुनें",
+    "confirmAddMember": "क्या आप वाकई {name} को अपनी सहकारी समिति में जोड़ना चाहते हैं?",
+    "successAddMember": "सदस्य सफलतापूर्वक जोड़ा गया।",
+    "noCandidates": "कोई असाइन न किया गया उम्मीदवार नहीं मिला।",
+    "confirmBtn": "पुष्टि करें",
+    "close": "बंद करें"
   },
   "screen1": {
     "headerTitle": "ऑर्डर प्राप्त हुआ",

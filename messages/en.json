@@ -22,7 +22,14 @@
     "send": "Send",
     "submit": "Submit",
     "errorPrefix": "Error: ",
-    "youLabel": "You"
+    "youLabel": "You",
+    "addMembers": "Add Members",
+    "selectCandidate": "Select a Candidate",
+    "confirmAddMember": "Are you sure you want to add {name} to your cooperative?",
+    "successAddMember": "Member added successfully.",
+    "noCandidates": "No unassigned candidates found.",
+    "confirmBtn": "Confirm",
+    "close": "Close"
   },
   "screen1": {
     "headerTitle": "Order Received",
