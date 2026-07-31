@@ -29,6 +29,10 @@ interface ChatMessage {
   isAudio: boolean;
   audioDuration?: string;
   timestamp: any;
+  systemMessageType?: string;
+  systemMessageMetadata?: {
+    name: string;
+  };
 }
 
 interface OrderData {
@@ -66,10 +70,21 @@ export default function GroupChatPage() {
   
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [activeOrder, setActiveOrder] = useState<OrderData | null>(null);
-  const [responsesCount, setResponsesCount] = useState({ agreed: 0, rejected: 0, concerned: 0, total: 18 });
+  const [responsesCount, setResponsesCount] = useState({ agreed: 0, rejected: 0, concerned: 0, total: 5 });
   const [userResponse, setUserResponse] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
+  
+  interface MemberData {
+    id: string;
+    coopId: string;
+    name: string;
+    role: 'admin' | 'weaver' | 'treasurer';
+    phone: string;
+    capacity?: number;
+  }
+  const [membersList, setMembersList] = useState<MemberData[]>([]);
+  const [showMembersModal, setShowMembersModal] = useState(false);
   
   const [inputText, setInputText] = useState('');
   const [isListening, setIsListening] = useState(false);
@@ -87,7 +102,11 @@ export default function GroupChatPage() {
     setTimeout(() => setToastMsg(''), 4000);
   };
 
-  const translateSystemMessage = (text: string) => {
+  const translateSystemMessage = (msg: ChatMessage) => {
+    if (msg.systemMessageType === 'member_added') {
+      return t("systemLogAdded", { name: msg.systemMessageMetadata?.name || 'A weaver' });
+    }
+    const text = msg.messageText;
     if (text.includes("responded: I AGREE")) {
       const name = text.replace("responded: I AGREE", "").trim();
       const displayName = name === "A weaver" ? t("defaultWeaverName") : name;
@@ -163,11 +182,18 @@ export default function GroupChatPage() {
       setErrorMsg(`Permission Denied or connection error while loading order details: ${err.message}`);
     });
 
-    // Fetch total members count in this cooperative to calculate real consensus percentages dynamically
+    // Fetch cooperative members list live
     const qMembers = query(collection(db, 'members'), where('coopId', '==', coopId));
-    let totalMembers = 3; // default fallback
     const unsubMembers = onSnapshot(qMembers, (memSnap) => {
-      totalMembers = memSnap.size || 3;
+      const list: MemberData[] = [];
+      memSnap.forEach((docSnap) => {
+        list.push({ id: docSnap.id, ...docSnap.data() } as MemberData);
+      });
+      setMembersList(list);
+      setResponsesCount(prev => ({
+        ...prev,
+        total: list.length || 3
+      }));
     });
 
     // 2. Fetch responses list for the active order
@@ -184,12 +210,12 @@ export default function GroupChatPage() {
           setUserResponse(data.response);
         }
       });
-      setResponsesCount({
+      setResponsesCount(prev => ({
+        ...prev,
         agreed: agreeCount,
         rejected: rejectCount,
-        concerned: concernCount,
-        total: totalMembers
-      });
+        concerned: concernCount
+      }));
     }, (err) => {
       console.error("Responses read error on Screen 3:", err);
       clearTimeout(timeoutId);
@@ -422,6 +448,40 @@ export default function GroupChatPage() {
       <div className="absolute inset-0 ikat-pattern pointer-events-none opacity-5" style={{ height: '300px' }}></div>
       <Header />
 
+      {/* Cooperative Members Info Header Bar */}
+      {membersList.length > 0 && (
+        <div 
+          onClick={() => setShowMembersModal(true)}
+          className="mt-3 bg-white border border-outline-variant rounded-xl p-3 shadow-sm flex items-center justify-between cursor-pointer hover:border-primary transition-all duration-200 active:scale-[0.99] mx-container-padding relative z-25"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex -space-x-1.5 overflow-hidden">
+              {membersList.slice(0, 3).map((m, idx) => (
+                <div 
+                  key={m.id}
+                  className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-[10px] ring-2 ring-white select-none ${
+                    idx % 3 === 0 ? 'bg-primary-fixed text-on-primary-fixed' :
+                    idx % 3 === 1 ? 'bg-secondary-fixed text-on-secondary-fixed' :
+                    'bg-tertiary-fixed text-on-tertiary-fixed'
+                  }`}
+                >
+                  {m.name.charAt(0)}
+                </div>
+              ))}
+            </div>
+            <div className="flex flex-col text-left">
+              <span className="font-label-md text-label-md font-bold text-on-surface">
+                {t('groupMembersCount', { count: membersList.length })}
+              </span>
+              <span className="text-[10px] text-on-surface-variant font-medium">
+                {t('tapToSeeMembers')}
+              </span>
+            </div>
+          </div>
+          <span className="material-symbols-outlined text-outline">chevron_right</span>
+        </div>
+      )}
+
       <main className="flex-grow w-full max-w-2xl mx-auto flex flex-col px-container-padding relative z-10">
         
         {/* Pinned Order Card */}
@@ -540,7 +600,7 @@ export default function GroupChatPage() {
             if (isSystem) {
               return (
                 <div key={msg.id} className="self-center bg-surface-variant/40 px-4 py-1 rounded-full border border-outline-variant/30 text-center mx-auto my-2">
-                  <p className="text-[12px] font-medium text-on-surface-variant uppercase tracking-wider">{translateSystemMessage(msg.messageText)}</p>
+                  <p className="text-[12px] font-medium text-on-surface-variant uppercase tracking-wider">{translateSystemMessage(msg)}</p>
                 </div>
               );
             }
@@ -735,6 +795,90 @@ export default function GroupChatPage() {
         <div className="fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl z-50 font-sans text-xs font-semibold flex items-center gap-2 border border-slate-700 animate-in fade-in slide-in-from-bottom-5 duration-300">
           <span className="material-symbols-outlined text-amber-400 text-[18px]">warning</span>
           {toastMsg}
+        </div>
+      )}
+
+      {/* Cooperative Members Roster Modal */}
+      {showMembersModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-gutter">
+          <div className="bg-white border border-outline-variant rounded-2xl w-full max-w-md overflow-hidden shadow-2xl p-6 flex flex-col max-h-[80vh] animate-in fade-in zoom-in duration-200">
+            
+            {/* Modal Header */}
+            <div className="flex justify-between items-center pb-4 border-b border-surface-container mb-4">
+              <h3 className="font-bold text-base text-on-surface flex items-center gap-2 select-none">
+                <span className="material-symbols-outlined text-primary">groups</span>
+                {t('groupMembersCount', { count: membersList.length })}
+              </h3>
+              <button 
+                onClick={() => setShowMembersModal(false)}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-outline hover:bg-surface-container active:scale-95 duration-100 cursor-pointer"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            {/* Members Roster List */}
+            <div className="flex-grow overflow-y-auto space-y-3 pr-1 scrollbar-thin">
+              {membersList.map((m, index) => {
+                const isUserAdmin = m.role === 'admin';
+                const isUserTreasurer = m.role === 'treasurer';
+                const roleLabel = isUserAdmin 
+                  ? tCommon('roleAdmin') 
+                  : isUserTreasurer 
+                  ? tCommon('roleTreasurer') 
+                  : tCommon('roleWeaver');
+
+                return (
+                  <div 
+                    key={m.id}
+                    className="p-3 rounded-xl border border-outline-variant/60 bg-surface-container-lowest flex items-center justify-between gap-3"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs select-none ${
+                        index % 3 === 0 ? 'bg-primary text-on-primary' :
+                        index % 3 === 1 ? 'bg-secondary text-on-secondary' :
+                        'bg-tertiary text-on-tertiary'
+                      }`}>
+                        {m.name.charAt(0)}
+                      </div>
+                      <div className="flex flex-col text-left">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-label-md text-label-md font-bold text-on-surface">{m.name}</span>
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold select-none ${
+                            isUserAdmin 
+                              ? 'bg-primary-container text-on-primary-container' 
+                              : isUserTreasurer 
+                              ? 'bg-secondary-container text-on-secondary-container' 
+                              : 'bg-surface-container text-on-surface-variant'
+                          }`}>
+                            {roleLabel}
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-on-surface-variant font-mono">{m.phone}</span>
+                      </div>
+                    </div>
+
+                    {!isUserAdmin && m.capacity && (
+                      <div className="text-right flex flex-col justify-center">
+                        <span className="text-[10px] font-bold text-outline select-none uppercase font-sans">Capacity</span>
+                        <span className="text-xs font-extrabold text-on-surface font-mono">{m.capacity}m</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Modal Actions */}
+            <div className="mt-4 pt-4 border-t border-surface-container flex">
+              <button 
+                onClick={() => setShowMembersModal(false)}
+                className="w-full py-2.5 bg-primary text-on-primary font-bold text-xs rounded-xl shadow-md hover:bg-primary-container active:scale-95 duration-100 cursor-pointer"
+              >
+                {tCommon('close')}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

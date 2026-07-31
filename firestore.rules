@@ -18,12 +18,23 @@ service cloud.firestore {
       
       match /messages/{messageId} {
         allow read: if request.auth != null;
-        allow write: if request.auth != null;
+        allow write: if request.auth != null && (
+          // Standard message: senderId must match authenticated user, and they must belong to this coop
+          (request.resource.data.senderId == request.auth.uid && 
+           getMemberData(request.auth.uid).coopId == coopId) ||
+          // System message: senderId is 'system', and the write is performed by an Admin of this coop
+          (request.resource.data.senderId == 'system' && 
+           getRole() == 'admin' && 
+           getMemberData(request.auth.uid).coopId == coopId)
+        );
       }
     }
     
     match /members/{memberId} {
-      allow read: if request.auth != null;
+      allow read: if request.auth != null && (
+        resource.data.coopId == getMemberData(request.auth.uid).coopId || 
+        resource.data.coopId == ''
+      );
       // Allow write if Admin (only if target coopId matches Admin's own coopId and resource was unassigned), 
       // OR if the user is updating their own pre-existing profile without changing their role
       allow write: if request.auth != null && (
