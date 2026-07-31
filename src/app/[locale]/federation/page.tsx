@@ -49,6 +49,13 @@ export default function FederationInsightsPage() {
     'coop-arani': 'Arani Master Weavers'
   });
 
+  const [allCoops, setAllCoops] = useState<any[]>([]);
+  const [myCoop, setMyCoop] = useState<any>(null);
+  const [showNeedsForm, setShowNeedsForm] = useState(false);
+  const [newMaterialName, setNewMaterialName] = useState('');
+  const [newTargetQuantity, setNewTargetQuantity] = useState('');
+  const [newSavingsPotential, setNewSavingsPotential] = useState('');
+
   const triggerToast = (msg: string) => {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(''), 3000);
@@ -63,31 +70,69 @@ export default function FederationInsightsPage() {
 
     const myCoopId = memberProfile.coopId || 'coop-kanchipuram';
 
-    // 1. Subscribe to all cooperatives to map IDs to names dynamically
+    // 1. Subscribe to all cooperatives to map IDs to names dynamically AND build opportunities list
     const unsubCoops = onSnapshot(collection(db, 'cooperatives'), (snap) => {
       const names: Record<string, string> = {};
-      snap.forEach((docSnap) => {
-        names[docSnap.id] = docSnap.data().name || docSnap.id;
-      });
-      setCoopNames((prev) => ({ ...prev, ...names }));
-    });
-
-    // 2. Subscribe to pooling requests involving this coop
-    const qRequests = query(collection(db, 'poolingRequests'));
-    const unsubRequests = onSnapshot(qRequests, (snap) => {
       const list: any[] = [];
       snap.forEach((docSnap) => {
+        const id = docSnap.id;
         const data = docSnap.data();
-        if (data.fromCoopId === myCoopId || data.toCoopId === myCoopId) {
-          list.push({ id: docSnap.id, ...data });
+        names[id] = data.name || id;
+        if (id !== myCoopId && data.availableForPooling === true) {
+          list.push({ id, ...data });
         }
       });
-      setRequests(list);
+      setCoopNames((prev) => ({ ...prev, ...names }));
+      setAllCoops(list);
     });
+
+    // Subscribe to my own cooperative to display material needs
+    const unsubMyCoop = onSnapshot(doc(db, 'cooperatives', myCoopId), (docSnap) => {
+      if (docSnap.exists()) {
+        setMyCoop({ id: docSnap.id, ...docSnap.data() });
+      }
+    });
+
+    // 2. Subscribe to pooling requests involving this coop using rule-compliant queries
+    const q1 = query(collection(db, 'poolingRequests'), where('fromCoopId', '==', myCoopId));
+    const q2 = query(collection(db, 'poolingRequests'), where('toCoopId', '==', myCoopId));
+
+    let list1: any[] = [];
+    let list2: any[] = [];
+
+    const updateRequestsList = (l1: any[], l2: any[]) => {
+      const merged = [...l1];
+      l2.forEach((item) => {
+        if (!merged.some((r) => r.id === item.id)) {
+          merged.push(item);
+        }
+      });
+      setRequests(merged);
+    };
+
+    const unsubRequests1 = onSnapshot(q1, (snap) => {
+      const list: any[] = [];
+      snap.forEach((docSnap) => {
+        list.push({ id: docSnap.id, ...docSnap.data() });
+      });
+      list1 = list;
+      updateRequestsList(list1, list2);
+    }, (err) => console.error("Error in q1:", err));
+
+    const unsubRequests2 = onSnapshot(q2, (snap) => {
+      const list: any[] = [];
+      snap.forEach((docSnap) => {
+        list.push({ id: docSnap.id, ...docSnap.data() });
+      });
+      list2 = list;
+      updateRequestsList(list1, list2);
+    }, (err) => console.error("Error in q2:", err));
 
     return () => {
       unsubCoops();
-      unsubRequests();
+      unsubMyCoop();
+      unsubRequests1();
+      unsubRequests2();
     };
   }, [user, memberProfile, authLoading, locale, router]);
 
@@ -160,6 +205,81 @@ export default function FederationInsightsPage() {
       triggerToast("Error declining invite: " + err.message);
     }
   };
+
+  const handleOpenNeedsForm = () => {
+    if (myCoop && myCoop.materials) {
+      setEditingMaterials([...myCoop.materials]);
+    } else {
+      setEditingMaterials([]);
+    }
+    setNewMaterialName('');
+    setNewTargetQuantity('');
+    setNewSavingsPotential('');
+    setShowNeedsForm(true);
+  };
+
+  const handleAddMaterial = () => {
+    if (!newMaterialName || !newTargetQuantity) {
+      triggerToast("Material name and target quantity are required.");
+      return;
+    }
+    const savings = newSavingsPotential || "₹5,000";
+    const formattedSavings = savings.startsWith('₹') ? savings : `₹${savings}`;
+    
+    setEditingMaterials((prev) => [
+      ...prev,
+      { item: newMaterialName, targetAmount: newTargetQuantity, savings: formattedSavings }
+    ]);
+    
+    setNewMaterialName('');
+    setNewTargetQuantity('');
+    setNewSavingsPotential('');
+  };
+
+  const handleDeleteMaterial = (index: number) => {
+    setEditingMaterials((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSaveMaterials = async (publish: boolean) => {
+    if (!user || !memberProfile) return;
+    const myCoopId = memberProfile.coopId || 'coop-kanchipuram';
+
+    try {
+      await updateDoc(doc(db, 'cooperatives', myCoopId), {
+        materials: editingMaterials,
+        availableForPooling: publish
+      });
+      triggerToast(publish ? "Material needs published to Common Pool!" : "Material needs saved as Draft.");
+      setShowNeedsForm(false);
+    } catch (err: any) {
+      console.error(err);
+      triggerToast("Error saving material needs: " + err.message);
+    }
+  };
+
+  const handleTogglePublish = async () => {
+    if (!user || !memberProfile || !myCoop) return;
+    const myCoopId = memberProfile.coopId || 'coop-kanchipuram';
+    
+    const newStatus = !myCoop.availableForPooling;
+    
+    if (newStatus && (!myCoop.materials || myCoop.materials.length === 0)) {
+      triggerToast("Please add at least one material requirement before publishing.");
+      return;
+    }
+
+    try {
+      await updateDoc(doc(db, 'cooperatives', myCoopId), {
+        availableForPooling: newStatus
+      });
+      triggerToast(newStatus ? "Published to Common Pool!" : "Unpublished. Now in Draft state.");
+    } catch (err: any) {
+      console.error(err);
+      triggerToast("Error toggling publish status: " + err.message);
+    }
+  };
+
+  const [editingMaterials, setEditingMaterials] = useState<{ item: string; targetAmount: string; savings: string; }[]>([]);
 
   if (authLoading || !memberProfile) {
     return <BrandedLoader message="Syncing federation workspace..." fullScreen />;
@@ -300,6 +420,178 @@ export default function FederationInsightsPage() {
             </div>
           )}
         </div>
+
+        {/* Self-Listing & Material Needs Management (Admin Only) */}
+        {memberProfile.role === 'admin' && myCoop && (
+          <section className="bg-white rounded-xl shadow-sm border border-outline-variant p-6 space-y-4 w-full">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-surface-container pb-3">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary">inventory</span>
+                <h3 className="font-label-lg text-on-surface font-extrabold text-xs uppercase tracking-wider">
+                  Manage Your Cooperative's Material Needs
+                </h3>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                {myCoop.availableForPooling ? (
+                  <span className="bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
+                    Published to Common Pool
+                  </span>
+                ) : (
+                  <span className="bg-amber-50 border border-amber-200 text-amber-800 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-600"></span>
+                    Draft / Private
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Editing Form (Modal-like Inline Drawer) */}
+            {showNeedsForm ? (
+              <div className="bg-surface-container-low p-4 rounded-xl border border-outline-variant/60 space-y-4">
+                <h4 className="font-bold text-xs text-on-surface">Edit Material Requirements</h4>
+                
+                {/* Requirements List */}
+                <div className="space-y-2">
+                  {editingMaterials.map((m, idx) => (
+                    <div key={idx} className="flex justify-between items-center bg-white p-3 rounded-lg border border-outline-variant/40 text-xs">
+                      <div>
+                        <p className="font-bold text-on-surface">{m.item}</p>
+                        <p className="text-on-surface-variant">Target: {m.targetAmount} • Savings: {m.savings}</p>
+                      </div>
+                      <button 
+                        onClick={() => handleDeleteMaterial(idx)}
+                        className="text-error font-bold text-xs hover:underline cursor-pointer flex items-center gap-0.5"
+                      >
+                        <span className="material-symbols-outlined text-sm">delete</span>
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                  {editingMaterials.length === 0 && (
+                    <p className="text-xs text-on-surface-variant italic py-2 text-center">No requirements added yet.</p>
+                  )}
+                </div>
+
+                {/* Add Requirement Fields */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                  <div>
+                    <label className="block text-[10px] uppercase font-bold text-on-surface-variant mb-1">Material Name *</label>
+                    <input 
+                      type="text"
+                      value={newMaterialName}
+                      onChange={(e) => setNewMaterialName(e.target.value)}
+                      placeholder="e.g. Mulberry Silk Yarn"
+                      className="w-full border border-outline rounded-lg px-3 py-2 text-xs bg-white focus:outline-none focus:border-primary"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] uppercase font-bold text-on-surface-variant mb-1">Target Quantity *</label>
+                    <input 
+                      type="text"
+                      value={newTargetQuantity}
+                      onChange={(e) => setNewTargetQuantity(e.target.value)}
+                      placeholder="e.g. 250kg or 50L"
+                      className="w-full border border-outline rounded-lg px-3 py-2 text-xs bg-white focus:outline-none focus:border-primary"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] uppercase font-bold text-on-surface-variant mb-1">Est. Savings (Optional)</label>
+                    <input 
+                      type="text"
+                      value={newSavingsPotential}
+                      onChange={(e) => setNewSavingsPotential(e.target.value)}
+                      placeholder="e.g. ₹12,500"
+                      className="w-full border border-outline rounded-lg px-3 py-2 text-xs bg-white focus:outline-none focus:border-primary"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center pt-2 gap-3">
+                  <button 
+                    onClick={handleAddMaterial}
+                    className="h-9 px-4 border border-primary text-primary hover:bg-primary/5 rounded-lg font-bold text-xs flex items-center justify-center gap-1 active:scale-95 transition-all cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-sm">add</span>
+                    Add Material
+                  </button>
+
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => setShowNeedsForm(false)}
+                      className="h-9 px-4 border border-outline text-on-surface hover:bg-surface-container rounded-lg font-bold text-xs active:scale-95 transition-all cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      onClick={() => handleSaveMaterials(false)}
+                      className="h-9 px-4 border border-outline bg-white text-on-surface hover:bg-surface-container rounded-lg font-bold text-xs active:scale-95 transition-all cursor-pointer"
+                    >
+                      Save Draft
+                    </button>
+                    <button 
+                      onClick={() => handleSaveMaterials(true)}
+                      className="h-9 px-4 bg-primary text-on-primary hover:bg-surface-tint rounded-lg font-bold text-xs active:scale-95 transition-all cursor-pointer"
+                    >
+                      Publish
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* List requirements */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {myCoop.materials && myCoop.materials.length > 0 ? (
+                    myCoop.materials.map((m: any, idx: number) => (
+                      <div key={idx} className="bg-surface-container-low p-3.5 rounded-xl border border-outline-variant/50 text-xs flex justify-between items-center">
+                        <div>
+                          <p className="font-bold text-on-surface">{m.item}</p>
+                          <p className="text-on-surface-variant font-semibold mt-0.5">Target: {m.targetAmount}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[9px] text-on-surface-variant uppercase font-bold">Est. Savings</p>
+                          <p className="font-extrabold text-primary">{m.savings}</p>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="col-span-2 text-center py-4 bg-surface-container-low rounded-xl border border-dashed border-outline-variant/30 text-xs text-on-surface-variant italic">
+                      No material needs registered yet. List your requirements so other cooperatives can find you!
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex gap-2 justify-end border-t border-surface-container pt-3">
+                  <button 
+                    onClick={handleOpenNeedsForm}
+                    className="h-9 px-4 border border-outline text-on-surface hover:bg-surface-container rounded-lg font-bold text-xs flex items-center justify-center gap-1 active:scale-95 transition-all cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-sm">edit</span>
+                    Edit Requirements
+                  </button>
+
+                  {myCoop.materials && myCoop.materials.length > 0 && (
+                    <button 
+                      onClick={handleTogglePublish}
+                      className={`h-9 px-4 rounded-lg font-bold text-xs flex items-center justify-center gap-1 active:scale-95 transition-all cursor-pointer ${
+                        myCoop.availableForPooling 
+                          ? 'border border-error text-error hover:bg-error/5' 
+                          : 'bg-primary text-on-primary hover:bg-surface-tint'
+                      }`}
+                    >
+                      <span className="material-symbols-outlined text-sm">
+                        {myCoop.availableForPooling ? 'unpublished' : 'publish'}
+                      </span>
+                      {myCoop.availableForPooling ? 'Unpublish / Draft' : 'Publish to Common Pool'}
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </section>
+        )}
 
         {/* 2. Live Pooling Status (New Section) */}
         <section className="bg-white rounded-xl shadow-sm border border-outline-variant p-6 space-y-6 w-full">
@@ -462,73 +754,63 @@ export default function FederationInsightsPage() {
           <h3 className="font-label-lg text-on-surface">{t('nearbyOpportunities')}</h3>
           
           <div className="space-y-stack-sm">
-            {/* Row Card 1 */}
-            <div onClick={() => router.push(`/${locale}/federation/coop-silk-b`)} className="bg-white p-5 rounded-xl border border-outline-variant shadow-sm flex flex-col sm:flex-row sm:items-center justify-between hover:border-primary transition-colors group cursor-pointer">
-              <div className="flex items-center gap-4 mb-4 sm:mb-0">
-                <div className="w-14 h-14 bg-surface rounded-lg flex items-center justify-center overflow-hidden border border-outline-variant">
-                  <img 
-                    className="w-full h-full object-cover" 
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuBUfLIgVKUxP2Gb7G8DOHgx7n6ISHr_c9xyjK9iRUNRobCFaI0wNrVsr9yvFKio9wQaffdsPRZ_cFj_8QMsCtbFz3Qzjfjx0-qpQIlWyHWAmFSkYa9sQGP-ZgDywQJx7aut4K0KLN26p4a6Ij6_ap1ZDggkhlJBkUOHFzmQ3KVbXAWhnRHkaa6MEtqDTqXLnqMjAcUR6n8Iyzg6xee9OkrMXwM-Gnb5N056Bm8Zbhq_fOa-tcrEGIXt4XVzUgc6L9M0WupoHE3pzQFt" 
-                    alt="Raw Silk Yarn" 
-                  />
-                </div>
-                <div>
-                  <h4 className="font-label-lg text-on-surface font-bold">Silk Weaver Coop B</h4>
-                  <p className="text-sm text-on-surface-variant">Mulberry Silk Yarn • 250kg Target</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center justify-between sm:justify-end gap-6 border-t sm:border-t-0 pt-4 sm:pt-0">
-                <div className="text-right">
-                  <p className="text-xs font-bold text-primary uppercase">{t('savingsPotentialTitle')}</p>
-                  <p className="text-headline-md font-bold text-on-surface text-xl">₹12,500</p>
-                </div>
-                <button 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    router.push(`/${locale}/federation/coop-silk-b`);
-                  }}
-                  className="px-6 py-3 bg-primary text-white font-bold rounded-lg hover:bg-surface-tint transition-all flex items-center gap-2 cursor-pointer shadow-sm"
-                >
-                  View Details
-                  <span className="material-symbols-outlined text-sm">chevron_right</span>
-                </button>
-              </div>
-            </div>
+            {allCoops.map((coop) => {
+              const image = coop.id === 'coop-silk-b' 
+                ? "https://lh3.googleusercontent.com/aida-public/AB6AXuBUfLIgVKUxP2Gb7G8DOHgx7n6ISHr_c9xyjK9iRUNRobCFaI0wNrVsr9yvFKio9wQaffdsPRZ_cFj_8QMsCtbFz3Qzjfjx0-qpQIlWyHWAmFSkYa9sQGP-ZgDywQJx7aut4K0KLN26p4a6Ij6_ap1ZDggkhlJBkUOHFzmQ3KVbXAWhnRHkaa6MEtqDTqXLnqMjAcUR6n8Iyzg6xee9OkrMXwM-Gnb5N056Bm8Zbhq_fOa-tcrEGIXt4XVzUgc6L9M0WupoHE3pzQFt"
+                : "https://lh3.googleusercontent.com/aida-public/AB6AXuDL91WtHeeP9SZ5blu9ofwOYti1chObexKla0Y6id1ttAYXzpotqNfSatbUG7Qwx3XK3CzyJsh5rNvn___h-_QZ7XR-7XVVnAc_CyPb2q2ALafv2ZOyEPMgU1AsDxv5K6_OYdkbNmGqtfDdbTUeCSvQV9pKtwtY-B4K44NPHgvmpd8LEZ2esynSnvKjx2Of6UV9XLcc-749xt7XabeXC53C0Ulquyv8vRt7PMkxfQ5v4M3safzvKb9-Ch4FqRlB_u8Umjhuf0MykOoM";
 
-            {/* Row Card 2 */}
-            <div onClick={() => router.push(`/${locale}/federation/coop-arani`)} className="bg-white p-5 rounded-xl border border-outline-variant shadow-sm flex flex-col sm:flex-row sm:items-center justify-between hover:border-primary transition-colors group cursor-pointer">
-              <div className="flex items-center gap-4 mb-4 sm:mb-0">
-                <div className="w-14 h-14 bg-surface rounded-lg flex items-center justify-center overflow-hidden border border-outline-variant">
-                  <img 
-                    className="w-full h-full object-cover" 
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuDL91WtHeeP9SZ5blu9ofwOYti1chObexKla0Y6id1ttAYXzpotqNfSatbUG7Qwx3XK3CzyJsh5rNvn___h-_QZ7XR-7XVVnAc_CyPb2q2ALafv2ZOyEPMgU1AsDxv5K6_OYdkbNmGqtfDdbTUeCSvQV9pKtwtY-B4K44NPHgvmpd8LEZ2esynSnvKjx2Of6UV9XLcc-749xt7XabeXC53C0Ulquyv8vRt7PMkxfQ5v4M3safzvKb9-Ch4FqRlB_u8Umjhuf0MykOoM" 
-                    alt="Handloom Shuttle" 
-                  />
-                </div>
-                <div>
-                  <h4 className="font-label-lg text-on-surface font-bold">Arani Master Weavers</h4>
-                  <p className="text-sm text-on-surface-variant">Fine Zari Thread • 40kg Target</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center justify-between sm:justify-end gap-6 border-t sm:border-t-0 pt-4 sm:pt-0">
-                <div className="text-right">
-                  <p className="text-xs font-bold text-primary uppercase">{t('savingsPotentialTitle')}</p>
-                  <p className="text-headline-md font-bold text-on-surface text-xl">₹8,200</p>
-                </div>
-                <button 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    router.push(`/${locale}/federation/coop-arani`);
-                  }}
-                  className="px-6 py-3 bg-primary text-white font-bold rounded-lg hover:bg-surface-tint transition-all flex items-center gap-2 cursor-pointer shadow-sm"
+              const materialSummary = coop.materials
+                ? coop.materials.map((m: any) => `${m.item} (${m.targetAmount})`).join(' • ')
+                : 'Bulk Materials Requirement';
+
+              const totalSavings = coop.materials
+                ? coop.materials.reduce((sum: number, m: any) => sum + (parseInt(m.savings.replace(/[^\d]/g, '')) || 0), 0)
+                : 0;
+
+              return (
+                <div 
+                  key={coop.id}
+                  onClick={() => router.push(`/${locale}/federation/${coop.id}`)} 
+                  className="bg-white p-5 rounded-xl border border-outline-variant shadow-sm flex flex-col sm:flex-row sm:items-center justify-between hover:border-primary transition-colors group cursor-pointer"
                 >
-                  View Details
-                  <span className="material-symbols-outlined text-sm">chevron_right</span>
-                </button>
+                  <div className="flex items-center gap-4 mb-4 sm:mb-0">
+                    <div className="w-14 h-14 bg-surface rounded-lg flex items-center justify-center overflow-hidden border border-outline-variant">
+                      <img 
+                        className="w-full h-full object-cover" 
+                        src={image} 
+                        alt="Raw Material" 
+                      />
+                    </div>
+                    <div>
+                      <h4 className="font-label-lg text-on-surface font-bold">{coop.name || coop.id}</h4>
+                      <p className="text-sm text-on-surface-variant">{materialSummary}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between sm:justify-end gap-6 border-t sm:border-t-0 pt-4 sm:pt-0">
+                    <div className="text-right">
+                      <p className="text-xs font-bold text-primary uppercase">{t('savingsPotentialTitle')}</p>
+                      <p className="text-headline-md font-bold text-on-surface text-xl">₹{totalSavings.toLocaleString('en-IN')}</p>
+                    </div>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        router.push(`/${locale}/federation/${coop.id}`);
+                      }}
+                      className="px-6 py-3 bg-primary text-white font-bold rounded-lg hover:bg-surface-tint transition-all flex items-center gap-2 cursor-pointer shadow-sm"
+                    >
+                      View Details
+                      <span className="material-symbols-outlined text-sm">chevron_right</span>
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+            {allCoops.length === 0 && (
+              <div className="text-center py-6 bg-white rounded-xl border border-outline-variant shadow-sm text-xs text-on-surface-variant italic">
+                No nearby collaborative pooling opportunities currently available.
               </div>
-            </div>
+            )}
           </div>
         </section>
 

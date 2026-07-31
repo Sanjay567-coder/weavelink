@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { doc, onSnapshot, collection, query, addDoc } from 'firebase/firestore';
+import { doc, onSnapshot, collection, query, addDoc, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/context/AuthContext';
 import { Header } from '@/components/Header';
@@ -57,18 +57,45 @@ export default function CooperativeDetailPage() {
       setLoading(false);
     });
 
-    // Subscribe to pooling requests to check status
-    const unsubReqs = onSnapshot(collection(db, 'poolingRequests'), (snap) => {
+    // Subscribe to pooling requests involving this coop using rule-compliant queries
+    const q1 = query(collection(db, 'poolingRequests'), where('fromCoopId', '==', myCoopId));
+    const q2 = query(collection(db, 'poolingRequests'), where('toCoopId', '==', myCoopId));
+
+    let list1: any[] = [];
+    let list2: any[] = [];
+
+    const updateRequestsList = (l1: any[], l2: any[]) => {
+      const merged = [...l1];
+      l2.forEach((item) => {
+        if (!merged.some((r) => r.id === item.id)) {
+          merged.push(item);
+        }
+      });
+      setRequests(merged);
+    };
+
+    const unsubReqs1 = onSnapshot(q1, (snap) => {
       const list: any[] = [];
       snap.forEach((d) => {
         list.push({ id: d.id, ...d.data() });
       });
-      setRequests(list);
-    });
+      list1 = list;
+      updateRequestsList(list1, list2);
+    }, (err) => console.error("Error in q1:", err));
+
+    const unsubReqs2 = onSnapshot(q2, (snap) => {
+      const list: any[] = [];
+      snap.forEach((d) => {
+        list.push({ id: d.id, ...d.data() });
+      });
+      list2 = list;
+      updateRequestsList(list1, list2);
+    }, (err) => console.error("Error in q2:", err));
 
     return () => {
       unsubCoop();
-      unsubReqs();
+      unsubReqs1();
+      unsubReqs2();
     };
   }, [coopId, user, memberProfile, authLoading, locale, router]);
 
