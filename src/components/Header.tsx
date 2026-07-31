@@ -241,17 +241,17 @@ export const Header: React.FC<HeaderProps> = ({ showBack = false, backPath, titl
 
         <div 
           onClick={() => router.push(`/${pathname.split('/')[1]}`)}
-          className="font-headline-lg-mobile text-headline-lg-mobile font-bold text-primary cursor-pointer select-none"
+          className="font-headline-lg-mobile text-headline-lg-mobile font-bold text-primary cursor-pointer select-none truncate max-w-[120px] xs:max-w-[160px] sm:max-w-none"
         >
           {title || t('title')}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           {/* Add Members Icon for Admin */}
           {isAdmin && (
             <button 
               onClick={handleOpenAddMember}
-              className="hover:bg-surface-container-high p-1.5 rounded-full transition-colors active:scale-95 duration-150 relative cursor-pointer mr-1"
+              className="hover:bg-surface-container-high p-1.5 rounded-full transition-colors active:scale-95 duration-150 relative cursor-pointer mr-0.5"
               title={t('addMembers') || "Add Members"}
             >
               <span className="material-symbols-outlined text-primary text-[20px] font-bold">group_add</span>
@@ -262,10 +262,11 @@ export const Header: React.FC<HeaderProps> = ({ showBack = false, backPath, titl
           <div className="relative">
             <button 
               onClick={() => setDropdownOpen(!dropdownOpen)} 
-              className="flex items-center gap-1.5 hover:bg-surface-container px-3 py-1.5 rounded-xl border border-outline-variant bg-surface-container-low transition-all duration-200 active:scale-95 cursor-pointer text-xs font-bold text-on-surface-variant hover:text-on-surface"
+              className="flex items-center gap-1 sm:gap-1.5 hover:bg-surface-container px-2 sm:px-3 py-1.5 rounded-xl border border-outline-variant bg-surface-container-low transition-all duration-200 active:scale-95 cursor-pointer text-xs font-bold text-on-surface-variant hover:text-on-surface"
             >
               <span className="material-symbols-outlined text-primary text-sm font-bold" style={{ fontVariationSettings: "'FILL' 1" }}>language</span>
-              <span>{localeNames[currentLocale] || currentLocale}</span>
+              <span className="hidden sm:inline">{localeNames[currentLocale] || currentLocale}</span>
+              <span className="inline sm:hidden uppercase font-mono text-[10px]">{currentLocale}</span>
               <span className={`material-symbols-outlined text-xs transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`}>expand_more</span>
             </button>
 
@@ -302,19 +303,18 @@ export const Header: React.FC<HeaderProps> = ({ showBack = false, backPath, titl
 
           {/* Sync / Online Indicator */}
           {isSyncing ? (
-            <div className="flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-700 rounded-full border border-amber-200">
+            <div className="flex items-center gap-1 px-1.5 sm:px-3 py-1 bg-amber-50 text-amber-700 rounded-full border border-amber-200" title={t('syncing') || "Syncing"}>
               <span className="material-symbols-outlined text-xs animate-spin">sync</span>
-              <span className="text-[10px] font-bold uppercase">{t('syncing')}</span>
+              <span className="text-[10px] font-bold uppercase hidden sm:inline">{t('syncing')}</span>
             </div>
           ) : isOnline ? (
-            <div className="flex items-center gap-2">
-              <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse"></div>
-              <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>cloud_done</span>
+            <div className="flex items-center gap-1.5 px-1.5 py-1 bg-emerald-50 text-emerald-800 rounded-full border border-emerald-100" title="Online">
+              <span className="material-symbols-outlined text-primary text-xs" style={{ fontVariationSettings: "'FILL' 1" }}>cloud_done</span>
             </div>
           ) : (
-            <div className="flex items-center gap-1.5 px-3 py-1 bg-rose-50 text-rose-700 rounded-full border border-rose-200">
+            <div className="flex items-center gap-1 px-1.5 sm:px-3 py-1 bg-rose-50 text-rose-700 rounded-full border border-rose-200" title="Offline">
               <span className="material-symbols-outlined text-xs">cloud_off</span>
-              <span className="text-[10px] font-bold uppercase">Offline</span>
+              <span className="text-[10px] font-bold uppercase hidden sm:inline">Offline</span>
             </div>
           )}
 
@@ -322,7 +322,7 @@ export const Header: React.FC<HeaderProps> = ({ showBack = false, backPath, titl
           {user && (
             <button 
               onClick={logout} 
-              className="ml-2 hover:bg-surface-container-high p-1.5 rounded-full transition-colors active:scale-95 duration-150"
+              className="ml-1 hover:bg-surface-container-high p-1.5 rounded-full transition-colors active:scale-95 duration-150"
               title="Log Out"
             >
               <span className="material-symbols-outlined text-on-surface-variant text-lg">logout</span>

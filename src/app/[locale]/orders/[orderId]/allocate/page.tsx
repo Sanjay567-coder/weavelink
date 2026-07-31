@@ -369,7 +369,7 @@ export default function WorkAllocationPage() {
           </div>
 
           {/* Table Header */}
-          <div className="grid grid-cols-12 gap-4 px-gutter py-3 bg-surface-container-low text-on-surface-variant font-label-sm border-b border-outline-variant uppercase tracking-wider">
+          <div className="hidden sm:grid grid-cols-12 gap-4 px-gutter py-3 bg-surface-container-low text-on-surface-variant font-label-sm border-b border-outline-variant uppercase tracking-wider">
             <div className="col-span-5">{t('weaverName')}</div>
             <div className="col-span-4">{t('capacity')}</div>
             <div className="col-span-3 text-right">{t('allocation')}</div>
@@ -380,25 +380,36 @@ export default function WorkAllocationPage() {
             {weavers.map((weaver) => (
               <div 
                 key={weaver.id}
-                className="grid grid-cols-12 gap-4 px-gutter py-4 items-center hover:bg-surface-container-low transition-colors"
+                className="flex flex-col sm:grid sm:grid-cols-12 gap-3 sm:gap-4 px-gutter py-4 hover:bg-surface-container-low transition-colors"
               >
-                <div className="col-span-5 flex items-center gap-3">
-                  <div 
-                    className="w-10 h-10 rounded-full bg-cover" 
-                    style={{ backgroundImage: `url('${weaver.avatarUrl}')` }}
-                  ></div>
-                  <div>
-                    <p className="font-label-lg text-label-lg">{weaver.name}</p>
-                    <p className="text-label-sm text-on-surface-variant text-[11px]">{weaver.loomId} • {weaver.grade}{weaver.specialization && ` • ${weaver.specialization}`}</p>
+                <div className="sm:col-span-5 flex items-center justify-between sm:justify-start gap-3 w-full">
+                  <div className="flex items-center gap-3">
+                    <div 
+                      className="w-10 h-10 rounded-full bg-cover shrink-0" 
+                      style={{ backgroundImage: `url('${weaver.avatarUrl}')` }}
+                    ></div>
+                    <div className="text-left">
+                      <p className="font-label-lg text-label-lg font-bold">{weaver.name}</p>
+                      <p className="text-label-sm text-on-surface-variant text-[11px] font-medium leading-tight">
+                        {weaver.loomId} • {weaver.grade}
+                        {weaver.specialization && (
+                          <span className="ml-1 px-1.5 py-0.5 rounded bg-primary-container/20 text-primary font-bold text-[9px] inline-block">{weaver.specialization}</span>
+                        )}
+                      </p>
+                    </div>
                   </div>
+                  {/* Small badge for allocated units on mobile */}
+                  <span className="sm:hidden text-xs font-extrabold bg-primary-container text-on-primary-container px-2 py-1 rounded-full">
+                    {allocations[weaver.id] || 0} units
+                  </span>
                 </div>
                 
-                <div className="col-span-4">
-                  <div className="flex justify-between text-xs mb-1 font-medium">
+                <div className="sm:col-span-4 w-full text-left">
+                  <div className="flex justify-between text-[11px] mb-1 font-semibold text-on-surface-variant">
                     <span>{t('busy', { pct: weaver.busyPercentage })}</span>
                     <span>{t('capacityLeft', { units: weaver.capacity })}</span>
                   </div>
-                  <div className="w-full h-2 bg-surface-container-highest rounded-full overflow-hidden">
+                  <div className="w-full h-2 bg-surface-container rounded-full overflow-hidden border border-outline-variant/20">
                     <div 
                       className={`h-full capacity-bar-transition ${weaver.busyPercentage > 80 ? 'bg-error' : 'bg-secondary'}`}
                       style={{ width: `${weaver.busyPercentage}%` }}
@@ -406,7 +417,8 @@ export default function WorkAllocationPage() {
                   </div>
                 </div>
 
-                <div className="col-span-3 flex justify-end items-center">
+                <div className="sm:col-span-3 flex justify-between sm:justify-end items-center mt-1 sm:mt-0 w-full">
+                  <span className="sm:hidden text-xs text-on-surface-variant font-bold">Adjust Allocation</span>
                   <div className="flex items-center gap-1 bg-surface p-1 rounded-lg border border-outline h-touch-target">
                     <button 
                       onClick={() => handleAdjustAllocation(weaver.id, -1)}
@@ -414,7 +426,7 @@ export default function WorkAllocationPage() {
                     >
                       <span className="material-symbols-outlined text-sm">remove_circle</span>
                     </button>
-                    <span className="font-headline-lg-mobile text-headline-lg-mobile px-2 min-w-[20px] text-center">
+                    <span className="font-headline-lg-mobile text-headline-lg-mobile px-2 min-w-[20px] text-center font-mono">
                       {allocations[weaver.id] || 0}
                     </span>
                     <button 

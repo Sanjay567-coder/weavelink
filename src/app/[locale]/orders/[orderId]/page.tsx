@@ -327,12 +327,14 @@ export default function OrderDetailsPage() {
                 </div>
                 <span className="font-body-md text-body-md font-medium">{order.quantity} {t('quantityUnit')}</span>
               </div>
-              <div className="flex justify-between items-center py-3 border-b border-surface-container">
+              <div className="flex justify-between items-center flex-wrap gap-2 py-3 border-b border-surface-container">
                 <div className="flex items-center gap-3">
                   <span className="material-symbols-outlined text-outline">event_available</span>
                   <span className="font-body-md text-body-md">{t('deadline')}</span>
                 </div>
-                <span className="font-body-md text-body-md font-medium text-primary">{new Date(order.deadline).toLocaleDateString(params.locale === 'hi' ? 'hi-IN' : 'en-IN', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+                <span className="font-body-md text-xs xs:text-sm font-medium text-primary text-right max-w-[180px] xs:max-w-none break-words">
+                  {new Date(order.deadline).toLocaleDateString(params.locale === 'hi' ? 'hi-IN' : 'en-IN', { year: 'numeric', month: 'short', day: 'numeric' })}
+                </span>
               </div>
               <div className="flex justify-between items-center py-3 border-b border-surface-container">
                 <div className="flex items-center gap-3">
@@ -341,12 +343,12 @@ export default function OrderDetailsPage() {
                 </div>
                 <span className="font-body-md text-body-md font-medium">{order.enteredBy || 'System'}</span>
               </div>
-              <div className="flex justify-between items-center py-3 border-b border-surface-container">
+              <div className="flex justify-between items-center flex-wrap gap-2 py-3 border-b border-surface-container">
                 <div className="flex items-center gap-3">
                   <span className="material-symbols-outlined text-outline">calendar_month</span>
                   <span className="font-body-md text-body-md">{t('enteredAt')}</span>
                 </div>
-                <span className="font-body-md text-body-md font-medium text-on-surface-variant">
+                <span className="font-body-md text-xs xs:text-sm font-medium text-on-surface-variant text-right max-w-[180px] xs:max-w-none break-words">
                   {order.enteredAt ? (order.enteredAt.seconds ? new Date(order.enteredAt.seconds * 1000).toLocaleString(params.locale === 'hi' ? 'hi-IN' : 'en-IN') : new Date(order.enteredAt).toLocaleString(params.locale === 'hi' ? 'hi-IN' : 'en-IN')) : 'System'}
                 </span>
               </div>
