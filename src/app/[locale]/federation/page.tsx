@@ -238,20 +238,36 @@ export default function FederationInsightsPage() {
     setEditingMaterials((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleSaveMaterials = async (publish: boolean) => {
+  const handleSaveMaterials = async () => {
     if (!user || !memberProfile) return;
     const myCoopId = memberProfile.coopId || 'coop-kanchipuram';
 
+    let finalMaterials = [...editingMaterials];
+    if (newMaterialName && newTargetQuantity) {
+      const savings = newSavingsPotential || "₹5,000";
+      const formattedSavings = savings.startsWith('₹') ? savings : `₹${savings}`;
+      finalMaterials.push({
+        item: newMaterialName,
+        targetAmount: newTargetQuantity,
+        savings: formattedSavings
+      });
+      setNewMaterialName('');
+      setNewTargetQuantity('');
+      setNewSavingsPotential('');
+    }
+
+    const isPublished = myCoop?.availableForPooling || false;
+
     try {
       await updateDoc(doc(db, 'cooperatives', myCoopId), {
-        materials: editingMaterials,
-        availableForPooling: publish
+        materials: finalMaterials,
+        availableForPooling: isPublished
       });
-      triggerToast(publish ? "Material needs published to Common Pool!" : "Material needs saved as Draft.");
+      triggerToast("Material needs updated successfully.");
       setShowNeedsForm(false);
     } catch (err: any) {
       console.error(err);
-      triggerToast("Error saving material needs: " + err.message);
+      triggerToast("Error updating material needs: " + err.message);
     }
   };
 
@@ -522,16 +538,11 @@ export default function FederationInsightsPage() {
                       Cancel
                     </button>
                     <button 
-                      onClick={() => handleSaveMaterials(false)}
-                      className="h-9 px-4 border border-outline bg-white text-on-surface hover:bg-surface-container rounded-lg font-bold text-xs active:scale-95 transition-all cursor-pointer"
+                      onClick={handleSaveMaterials}
+                      className="h-9 px-4 bg-primary text-on-primary hover:bg-surface-tint rounded-lg font-bold text-xs active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-0.5 shadow-sm"
                     >
-                      Save Draft
-                    </button>
-                    <button 
-                      onClick={() => handleSaveMaterials(true)}
-                      className="h-9 px-4 bg-primary text-on-primary hover:bg-surface-tint rounded-lg font-bold text-xs active:scale-95 transition-all cursor-pointer"
-                    >
-                      Publish
+                      <span className="material-symbols-outlined text-[14px]">save</span>
+                      Save Requirements
                     </button>
                   </div>
                 </div>

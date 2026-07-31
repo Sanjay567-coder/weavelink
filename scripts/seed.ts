@@ -407,6 +407,16 @@ const seedData = async () => {
       item: 'Raw Dye Vat Chemicals',
       targetAmount: '500L',
       savings: '₹15,000'
+    },
+    {
+      id: 'pool-req-4',
+      fromCoopId: 'coop-varanasi',
+      toCoopId: 'coop-kanchipuram',
+      status: 'pending',
+      createdAt: new Date(),
+      item: 'Zari Border Threads',
+      targetAmount: '80kg',
+      savings: '₹14,000'
     }
   ];
   for (const req of initialPoolRequests) {
