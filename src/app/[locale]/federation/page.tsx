@@ -305,6 +305,15 @@ export default function FederationInsightsPage() {
   const invitedList = requests.filter(r => r.toCoopId === myCoopId && r.status === 'pending');
   const confirmedList = requests.filter(r => (r.fromCoopId === myCoopId || r.toCoopId === myCoopId) && r.status === 'accepted');
 
+  // Filter out opportunities that already have active/pending relationships with my cooperative
+  const visibleOpportunities = allCoops.filter((coop) => {
+    const hasRelationship = requests.some((r) => 
+      (r.fromCoopId === coop.id || r.toCoopId === coop.id) && 
+      (r.status === 'pending' || r.status === 'accepted')
+    );
+    return !hasRelationship;
+  });
+
   return (
     <div className="bg-background text-on-surface font-body-md min-h-screen pb-32 flex flex-col">
       <Header />
@@ -789,7 +798,7 @@ export default function FederationInsightsPage() {
           <h3 className="font-label-lg text-on-surface">{t('nearbyOpportunities')}</h3>
           
           <div className="space-y-stack-sm">
-            {allCoops.map((coop) => {
+            {visibleOpportunities.map((coop) => {
               const image = coop.id === 'coop-silk-b' 
                 ? "https://lh3.googleusercontent.com/aida-public/AB6AXuBUfLIgVKUxP2Gb7G8DOHgx7n6ISHr_c9xyjK9iRUNRobCFaI0wNrVsr9yvFKio9wQaffdsPRZ_cFj_8QMsCtbFz3Qzjfjx0-qpQIlWyHWAmFSkYa9sQGP-ZgDywQJx7aut4K0KLN26p4a6Ij6_ap1ZDggkhlJBkUOHFzmQ3KVbXAWhnRHkaa6MEtqDTqXLnqMjAcUR6n8Iyzg6xee9OkrMXwM-Gnb5N056Bm8Zbhq_fOa-tcrEGIXt4XVzUgc6L9M0WupoHE3pzQFt"
                 : "https://lh3.googleusercontent.com/aida-public/AB6AXuDL91WtHeeP9SZ5blu9ofwOYti1chObexKla0Y6id1ttAYXzpotqNfSatbUG7Qwx3XK3CzyJsh5rNvn___h-_QZ7XR-7XVVnAc_CyPb2q2ALafv2ZOyEPMgU1AsDxv5K6_OYdkbNmGqtfDdbTUeCSvQV9pKtwtY-B4K44NPHgvmpd8LEZ2esynSnvKjx2Of6UV9XLcc-749xt7XabeXC53C0Ulquyv8vRt7PMkxfQ5v4M3safzvKb9-Ch4FqRlB_u8Umjhuf0MykOoM";

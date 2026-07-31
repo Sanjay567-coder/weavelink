@@ -148,6 +148,18 @@ const seedData = async () => {
       ],
       weaversCount: 8,
       distance: '12km'
+    },
+    {
+      id: 'coop-handlooms',
+      name: 'Kanchipuram Handlooms Association',
+      district: 'Kanchipuram',
+      language: 'en',
+      availableForPooling: true,
+      materials: [
+        { item: 'Fine Zari Thread', targetAmount: '60kg', savings: '₹11,000' }
+      ],
+      weaversCount: 15,
+      distance: '3km'
     }
   ];
 
@@ -390,13 +402,13 @@ const seedData = async () => {
     },
     {
       id: 'pool-req-2',
-      fromCoopId: 'coop-silk-b',
+      fromCoopId: 'coop-handlooms',
       toCoopId: 'coop-kanchipuram',
       status: 'pending',
       createdAt: new Date(),
-      item: 'Mulberry Silk Yarn',
-      targetAmount: '250kg',
-      savings: '₹12,500'
+      item: 'Fine Zari Thread',
+      targetAmount: '60kg',
+      savings: '₹11,000'
     },
     {
       id: 'pool-req-3',
@@ -407,16 +419,6 @@ const seedData = async () => {
       item: 'Raw Dye Vat Chemicals',
       targetAmount: '500L',
       savings: '₹15,000'
-    },
-    {
-      id: 'pool-req-4',
-      fromCoopId: 'coop-varanasi',
-      toCoopId: 'coop-kanchipuram',
-      status: 'pending',
-      createdAt: new Date(),
-      item: 'Zari Border Threads',
-      targetAmount: '80kg',
-      savings: '₹14,000'
     }
   ];
   for (const req of initialPoolRequests) {
