@@ -57,6 +57,7 @@ export default function FederationInsightsPage() {
   const [newTargetQuantity, setNewTargetQuantity] = useState('');
   const [newSavingsPotential, setNewSavingsPotential] = useState('');
   const [editingMaterials, setEditingMaterials] = useState<{ item: string; targetAmount: string; savings: string; }[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const triggerToast = (msg: string) => {
     setToastMsg(msg);
@@ -89,6 +90,7 @@ export default function FederationInsightsPage() {
       setCoopNames((prev) => ({ ...prev, ...names }));
       setCoopDetails(details);
       setAllCoops(list);
+      setLoading(false);
     });
 
 
@@ -294,7 +296,7 @@ export default function FederationInsightsPage() {
     }
   };
 
-  if (authLoading || !memberProfile) {
+  if (authLoading || loading || !memberProfile) {
     return <BrandedLoader message="Syncing federation workspace..." fullScreen />;
   }
 

@@ -3,13 +3,23 @@
 WeaveLink is a mobile-first Progressive Web App (PWA) designed for handloom weaving cooperatives in India, bridging the gap between traditional craftsmanship and modern cooperative commerce.
 
 ## Technology Stack
-- **Framework**: Next.js 14+ (App Router), TypeScript
-- **Styling**: Tailwind CSS (customized with the Artisanal Digital Coop design tokens)
-- **Icons & Fonts**: IBM Plex Sans, Material Symbols Outlined
+- **Framework**: Next.js (App Router), TypeScript
+- **Styling**: Vanilla CSS with Artisanal Digital Coop theme tokens & Tailwind CSS
+- **Icons & Fonts**: Outfit, IBM Plex Sans, Material Symbols Outlined
 - **Database/Auth**: Firebase Firestore (Offline Persistence) & Phone Auth
 - **PWA**: PWA configuration using `@ducanh2912/next-pwa`
-- **i18n**: Multi-language support (English/Hindi) via `next-intl`
+- **i18n**: Multi-language support (English/Hindi/Tamil) via `next-intl`
 - **Charts**: Recharts (for District Price Benchmarking)
+
+---
+
+## Key Features Built
+
+1. **Multi-Role Dashboards**: Adaptive views for Admin (quote reviewing, pooling), Weaver (loom tracking, chat), and Treasurer (disbursements pool).
+2. **Direct Member Addition & Toggle**: Segmented form allowing Admins to add a brand-new member directly (fields: Name, Phone, Age, Experience, Specialization, Village/Area) or search and claim existing unassigned candidates.
+3. **SMS Profile Self-Migration**: Transaction-safe profile self-migration. Newly registered weavers logging in with Phone Auth automatically claim their Admin-created profile document via telephone mapping in a single atomic database batch transaction.
+4. **Group Chat Consensus & Structured Systems**: Live consensus polling inside the group chat (Agree, Concern, Cant-Do options) supporting voice note logging, live translation, and structured system logs (`member_added` events resolving dynamically in English, Hindi, and Tamil).
+5. **Mobile Responsive Precision**: Responsive reflowing layout cards, auto-collapsing bottom navbar for short screens/landscape orientation (< 540px), and truncated headings preventing layout overflows on narrow viewports (~360px).
 
 ---
 
@@ -67,9 +77,15 @@ The seeding script registers specific test accounts in Auth using deterministic 
 
 ---
 
+## Known Limitations & Design Tradeoffs
+
+1. **Seeded Order Hardcoding (`order-4421`)**: To ensure complete visual flow on stage without requiring initial manual setup, Weaver progress logging and Treasurer payout panels default to linking to the seeded active order `order-4421` on the Home screen.
+2. **Double-Claim Race Condition**: In the event that two Admins from different cooperatives try to claim the exact same unassigned candidate at nearly the same time, last-write-wins mechanics apply, and no error is surfaced to either Admin.
+3. **Web Speech API**: Dictation features rely on browser implementation. Google Chrome is recommended for the best speech experience during demo presentations.
+
+---
+
 ## Commands
 - Run development server: `npm run dev`
 - Build production version: `npm run build`
 - Start built production version: `npm run start`
-
-<!-- Collaborator test config: verified successfully with rthivisha -->

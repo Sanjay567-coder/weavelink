@@ -40,7 +40,7 @@ export default function ConsensusCheckPage() {
   const router = useRouter();
   const params = useParams();
   const { isInstallable, triggerInstall } = usePWA();
-  const { user } = useAuth();
+  const { user, memberProfile } = useAuth();
   
   const orderId = params.orderId as string;
   const [order, setOrder] = useState<OrderData | null>(null);
@@ -73,7 +73,10 @@ export default function ConsensusCheckPage() {
         // Mock profile names & avatars for design visual representation
         let name = 'Coop Member';
         let avatarUrl = 'https://images.unsplash.com/photo-1544005313-94ddf0286df2';
-        if (docSnap.id === 'weaver-uid-888') {
+        if (user && docSnap.id === user.uid && memberProfile) {
+          name = memberProfile.name;
+          avatarUrl = (memberProfile as any).avatarUrl || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2';
+        } else if (docSnap.id === 'weaver-uid-888') {
           name = 'Ramesh Vankar';
           avatarUrl = 'https://lh3.googleusercontent.com/aida-public/AB6AXuDF81uvfEdCzffLhKuRMJBl1iJPjEQ7FtDo_uFjO0NpS6U_vU-eKCt_mJjr7Oz7ite4G-Yge4P59rtAO1u5MTByF_a1yxUT7n6vbCpUaSGdiJe3rZ3wQI06QwWVPk2m-Zs2hjJhDlO24R4G2OKTmC10LeTVGp89Gn115M8UtLPQRUnzFuf07bL30NB4TzncvD2dbpnsvqE0rH1DSvO8Uoqd-I4q9UbKVGjwFe1xBkhs16JNzsSRZkKwCwRN01yBOKDDL0eNKtI7up0U';
         } else if (docSnap.id === 'weaver-uid-101') {

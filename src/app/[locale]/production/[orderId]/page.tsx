@@ -128,7 +128,13 @@ export default function ProductionTrackingPage() {
           let status: 'track' | 'late' = 'track';
           let lateDays = 0;
 
-          if (docSnap.id === 'weaver-uid-888') {
+          if (user && docSnap.id === user.uid && memberProfile) {
+            name = memberProfile.name;
+            avatarUrl = (memberProfile as any).avatarUrl || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2';
+            loomId = (memberProfile as any).loomId ? `Loom #${(memberProfile as any).loomId}` : 'Loom #12';
+            itemDesign = 'Silk Ikat';
+            status = 'track';
+          } else if (docSnap.id === 'weaver-uid-888') {
             name = 'Ramesh V.';
             avatarUrl = 'https://lh3.googleusercontent.com/aida-public/AB6AXuBvR6Ca9bBG7GG6xYaNoUuVWqBp6qh19bt1JIBwykDfQwhR1w-lMoHfgWlCPDox234GTfB_5U6WjOtbFNj_quXgU1VWUpqZ0wWZbV1f1Gu1PEW38eYZTCAggemDz8nd-9f7PzB_6YUOf6arDIA5-90npN4p4-mY-MOLYXZSssNQzNNGJ7g6qAnkp3KCUwQ21H-Td-YEcmCbXsCarCn8jlk8PEjw8FkwFIeRjAh7JSOv14i5s3XOhzQs1gns-Y-qcAGbbAft_gAPdlpH';
             loomId = 'Loom #12';
@@ -426,31 +432,37 @@ export default function ProductionTrackingPage() {
             </div>
             
             <div className="flex flex-col gap-2 bg-white border border-outline-variant/30 rounded-xl overflow-hidden shadow-sm">
-              {weaverProgressList.map((wp) => (
-                <div 
-                  key={wp.memberId} 
-                  className="p-4 flex items-center justify-between border-b border-outline-variant/20 last:border-0 hover:bg-surface-container-low transition-colors"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full overflow-hidden border border-outline-variant/30">
-                      <img className="w-full h-full object-cover" src={wp.avatarUrl} alt={wp.name} />
-                    </div>
-                    <div>
-                      <p className="font-label-lg text-label-lg text-on-surface">{wp.name}</p>
-                      <p className="font-label-sm text-[11px] text-on-surface-variant">{wp.loomId} • {wp.itemDesign}</p>
-                    </div>
-                  </div>
-                  
-                  <span className={`font-label-sm flex items-center gap-1 ${
-                    wp.status === 'track' ? 'text-tertiary' : 'text-error'
-                  }`}>
-                    <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>
-                      {wp.status === 'track' ? 'check_circle' : 'warning'}
-                    </span>
-                    {wp.status === 'track' ? t('onTrack') : t('late', { days: wp.lateDays ?? 0 })}
-                  </span>
+              {weaverProgressList.length === 0 ? (
+                <div className="p-8 text-center text-xs text-on-surface-variant italic">
+                  {t('noStationUpdates') || "No looms currently allocated to this production batch."}
                 </div>
-              ))}
+              ) : (
+                weaverProgressList.map((wp) => (
+                  <div 
+                    key={wp.memberId} 
+                    className="p-4 flex items-center justify-between border-b border-outline-variant/20 last:border-0 hover:bg-surface-container-low transition-colors"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-full overflow-hidden border border-outline-variant/30">
+                        <img className="w-full h-full object-cover" src={wp.avatarUrl} alt={wp.name} />
+                      </div>
+                      <div>
+                        <p className="font-label-lg text-label-lg text-on-surface">{wp.name}</p>
+                        <p className="font-label-sm text-[11px] text-on-surface-variant">{wp.loomId} • {wp.itemDesign}</p>
+                      </div>
+                    </div>
+                    
+                    <span className={`font-label-sm flex items-center gap-1 ${
+                      wp.status === 'track' ? 'text-tertiary' : 'text-error'
+                    }`}>
+                      <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>
+                        {wp.status === 'track' ? 'check_circle' : 'warning'}
+                      </span>
+                      {wp.status === 'track' ? t('onTrack') : t('late', { days: wp.lateDays ?? 0 })}
+                    </span>
+                  </div>
+                ))
+              )}
             </div>
           </section>
         )}

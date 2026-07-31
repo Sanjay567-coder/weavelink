@@ -81,12 +81,15 @@ export default function PaymentLedgerPage() {
     const isAdminOrTreasurer = memberProfile.role === 'admin' || memberProfile.role === 'treasurer';
 
     const parsePaymentDoc = (docId: string, data: any): PaymentData => {
-      // Mock visuals
       let name = 'Coop Weaver';
       let avatarUrl = 'https://images.unsplash.com/photo-1544005313-94ddf0286df2';
       let loomId = 'Loom ID: BHU-092';
 
-      if (docId === 'weaver-uid-888') {
+      if (user && docId === user.uid && memberProfile) {
+        name = memberProfile.name;
+        avatarUrl = (memberProfile as any).avatarUrl || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2';
+        loomId = (memberProfile as any).loomId ? `Loom ID: ${(memberProfile as any).loomId}` : 'Loom ID: BHU-092';
+      } else if (docId === 'weaver-uid-888') {
         name = 'Ramesh Vankar';
         avatarUrl = 'https://lh3.googleusercontent.com/aida-public/AB6AXuDF81uvfEdCzffLhKuRMJBl1iJPjEQ7FtDo_uFjO0NpS6U_vU-eKCt_mJjr7Oz7ite4G-Yge4P59rtAO1u5MTByF_a1yxUT7n6vbCpUaSGdiJe3rZ3wQI06QwWVPk2m-Zs2hjJhDlO24R4G2OKTmC10LeTVGp89Gn115M8UtLPQRUnzFuf07bL30NB4TzncvD2dbpnsvqE0rH1DSvO8Uoqd-I4q9UbKVGjwFe1xBkhs16JNzsSRZkKwCwRN01yBOKDDL0eNKtI7up0U';
         loomId = 'Loom ID: BHU-092';
@@ -317,25 +320,31 @@ export default function PaymentLedgerPage() {
               </div>
               
               <div className="divide-y divide-outline-variant">
-                {payments.map((p) => (
-                  <div key={p.memberId} className="p-container-padding flex justify-between items-center ledger-line">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-primary-fixed">
-                        <img className="w-full h-full object-cover" src={p.avatarUrl} alt={p.name} />
-                      </div>
-                      <div>
-                        <p className="font-label-lg text-on-surface">{p.name}</p>
-                        <p className="font-label-sm text-on-surface-variant text-xs">{p.loomId}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-label-lg text-primary">₹{p.amountOwed.toLocaleString('en-IN')}.00</p>
-                      <p className={`font-label-sm text-xs font-bold ${p.status === 'paid' ? 'text-emerald-600' : 'text-tertiary'}`}>
-                        {p.status === 'paid' ? t('paidStatus') : t('dueStatus', { date: translateExpectedDate(p.expectedDate) })}
-                      </p>
-                    </div>
+                {payments.length === 0 ? (
+                  <div className="p-8 text-center text-xs text-on-surface-variant italic">
+                    {t('noPayments') || "No disbursements recorded for this order."}
                   </div>
-                ))}
+                ) : (
+                  payments.map((p) => (
+                    <div key={p.memberId} className="p-container-padding flex justify-between items-center ledger-line">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-primary-fixed">
+                          <img className="w-full h-full object-cover" src={p.avatarUrl} alt={p.name} />
+                        </div>
+                        <div>
+                          <p className="font-label-lg text-on-surface">{p.name}</p>
+                          <p className="font-label-sm text-on-surface-variant text-xs">{p.loomId}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-label-lg text-primary">₹{p.amountOwed.toLocaleString('en-IN')}.00</p>
+                        <p className={`font-label-sm text-xs font-bold ${p.status === 'paid' ? 'text-emerald-600' : 'text-tertiary'}`}>
+                          {p.status === 'paid' ? t('paidStatus') : t('dueStatus', { date: translateExpectedDate(p.expectedDate) })}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </section>

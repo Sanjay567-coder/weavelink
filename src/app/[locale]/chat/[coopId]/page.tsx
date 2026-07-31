@@ -446,8 +446,81 @@ export default function GroupChatPage() {
     return <BrandedLoader message="Loading cooperative chat..." fullScreen />;
   }
 
+  const renderedMessages = (() => {
+    if (messages.length === 0) {
+      return (
+        <div className="text-center py-12 text-on-surface-variant text-xs italic flex flex-col items-center justify-center gap-2">
+          <span className="material-symbols-outlined text-4xl text-outline-variant/60">forum</span>
+          {t('noMessages') || "No messages in this chat yet. Start typing below."}
+        </div>
+      );
+    }
+    return messages.map((msg) => {
+      const isMe = !!user && !!msg.senderId && msg.senderId === user.uid;
+      const isSystem = msg.senderId === 'system';
+
+      if (isSystem) {
+        return (
+          <div key={msg.id} className="self-center bg-surface-variant/40 px-4 py-1 rounded-full border border-outline-variant/30 text-center mx-auto my-2">
+            <p className="text-[12px] font-medium text-on-surface-variant uppercase tracking-wider">{translateSystemMessage(msg)}</p>
+          </div>
+        );
+      }
+
+      return (
+        <div 
+          key={msg.id} 
+          className={`flex flex-col max-w-[85%] ${isMe ? 'self-end items-end ml-auto' : 'items-start mr-auto'}`}
+        >
+          <div className="flex items-center gap-2 mb-1">
+            {!isMe && <span className="font-label-sm text-on-surface-variant text-xs">{msg.senderName}</span>}
+            <span className="text-[9px] text-on-surface-variant">
+              {formatMessageTime(msg.timestamp)}
+            </span>
+            {isMe && <span className="font-label-sm text-primary text-xs">{tCommon('youLabel')}</span>}
+          </div>
+
+          {msg.isAudio ? (
+            // Audio Message Box
+            <div className={`p-3 rounded-2xl shadow-sm flex items-center gap-3 ${isMe ? 'bg-primary-container text-on-primary-container rounded-tr-none' : 'bg-surface-container-high text-on-surface rounded-tl-none border border-outline-variant'}`}>
+              <button 
+                onClick={() => playVoiceNote(msg.id)}
+                className="w-10 h-10 rounded-full bg-on-primary-container/20 flex items-center justify-center cursor-pointer"
+              >
+                <span className="material-symbols-outlined">
+                  {activeVoicePlaying === msg.id ? 'pause' : 'play_arrow'}
+                </span>
+              </button>
+              <div className="voice-wave">
+                <div className={`voice-bar ${activeVoicePlaying === msg.id ? '' : 'paused'}`} style={{ height: '12px', animationDelay: '0.1s' }}></div>
+                <div className={`voice-bar ${activeVoicePlaying === msg.id ? '' : 'paused'}`} style={{ height: '16px', animationDelay: '0.2s' }}></div>
+                <div className={`voice-bar ${activeVoicePlaying === msg.id ? '' : 'paused'}`} style={{ height: '8px', animationDelay: '0.3s' }}></div>
+                <div className={`voice-bar ${activeVoicePlaying === msg.id ? '' : 'paused'}`} style={{ height: '14px', animationDelay: '0.4s' }}></div>
+                <div className={`voice-bar ${activeVoicePlaying === msg.id ? '' : 'paused'}`} style={{ height: '10px', animationDelay: '0.5s' }}></div>
+                <div className={`voice-bar ${activeVoicePlaying === msg.id ? '' : 'paused'}`} style={{ height: '18px', animationDelay: '0.6s' }}></div>
+                <div className={`voice-bar ${activeVoicePlaying === msg.id ? '' : 'paused'}`} style={{ height: '6px', animationDelay: '0.7s' }}></div>
+              </div>
+              <span className="font-label-sm">{msg.audioDuration || '0:14'}</span>
+            </div>
+          ) : (
+            // Text Message Box
+            <div className={`p-3 rounded-2xl ${isMe ? 'bg-primary-container text-on-primary-container rounded-tr-none shadow-sm' : 'bg-surface-container-high text-on-surface rounded-tl-none border border-outline-variant'}`}>
+              <p className="font-body-md whitespace-pre-wrap">{msg.messageText}</p>
+            </div>
+          )}
+        </div>
+      );
+    });
+  })();
+
   return (
-    <div className="bg-background font-body-md text-on-surface min-h-screen flex flex-col pb-[290px] relative overflow-hidden">
+    <div className="chat-container bg-background font-body-md text-on-surface min-h-screen flex flex-col pb-[290px] relative overflow-hidden">
+      <style>{`
+        @media (max-height: 540px) {
+          .chat-input-panel { bottom: 44px !important; padding-top: 6px !important; padding-bottom: 6px !important; gap: 6px !important; }
+          .chat-container { padding-bottom: 220px !important; }
+        }
+      `}</style>
       {/* Background Ikat texture overlay */}
       <div className="absolute inset-0 ikat-pattern pointer-events-none opacity-5" style={{ height: '300px' }}></div>
       <Header />
@@ -463,201 +536,155 @@ export default function GroupChatPage() {
               {membersList.slice(0, 3).map((m, idx) => (
                 <div 
                   key={m.id}
-                  className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-[10px] ring-2 ring-white select-none ${
-                    idx % 3 === 0 ? 'bg-primary-fixed text-on-primary-fixed' :
-                    idx % 3 === 1 ? 'bg-secondary-fixed text-on-secondary-fixed' :
-                    'bg-tertiary-fixed text-on-tertiary-fixed'
-                  }`}
+                  className="w-8 h-8 rounded-full border border-white flex items-center justify-center text-xs font-bold font-mono select-none"
+                  style={{ 
+                    backgroundColor: idx % 3 === 0 ? '#b08f83' : idx % 3 === 1 ? '#d6c5c0' : '#8d7168',
+                    color: '#ffffff'
+                  }}
                 >
                   {m.name.charAt(0)}
                 </div>
               ))}
             </div>
-            <div className="flex flex-col text-left">
-              <span className="font-label-md text-label-md font-bold text-on-surface">
+            
+            <div className="text-left select-none">
+              <div className="flex items-center gap-1.5">
+                <span className="font-label-lg font-bold text-on-surface">{t('groupChatTitle')}</span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider bg-emerald-50 border border-emerald-200 text-emerald-800 animate-pulse">
+                  {t('activeAlert')}
+                </span>
+              </div>
+              <p className="text-[10px] text-on-surface-variant leading-none mt-0.5">
                 {t('groupMembersCount', { count: membersList.length })}
-              </span>
-              <span className="text-[10px] text-on-surface-variant font-medium">
-                {t('tapToSeeMembers')}
-              </span>
+              </p>
             </div>
           </div>
-          <span className="material-symbols-outlined text-outline">chevron_right</span>
+
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-primary text-[20px] shrink-0 font-bold hover:scale-105 active:scale-95 duration-100">info</span>
+          </div>
         </div>
       )}
 
       <main className="flex-grow w-full max-w-2xl mx-auto flex flex-col px-container-padding relative z-10">
-        
-        {/* Pinned Order Card */}
-        {activeOrder && (
-          <div className="pt-stack-md">
+
+      {/* Active Consensus Details Callout (Renders dynamic review metrics for live cooperation context) */}
+      {activeOrder && (
+        <div className="bg-white border border-outline-variant rounded-xl p-gutter shadow-sm space-y-3 mx-container-padding mt-3 relative z-20">
+          <div className="flex justify-between items-start gap-4">
             <div 
               onClick={() => router.push(`/${locale}/orders/${activeOrder.id}`)}
-              className="bg-white border border-outline-variant rounded-xl p-4 shadow-sm flex items-center justify-between gap-4 cursor-pointer hover:border-primary transition-colors"
+              className="flex-grow flex items-center gap-3 cursor-pointer group"
             >
-              <div className="flex items-center gap-4">
-                <div 
-                  className="w-12 h-12 rounded-lg bg-cover bg-center" 
-                  style={{ backgroundImage: `url('https://lh3.googleusercontent.com/aida-public/AB6AXuCivaz3HtK7yLT-FmqQtya3bQ57HI10CVv1se4peq9xph55kAzDDgve0wE9oQdZGuTJmV21-lGb_d3qczRmnbvD8Nto7sha652CldLwQ4qn5LfYKs0oC6nn2FsP6TN2XFTz9-7gJVg1wPSI5bKDE90vm8BiEV568L8CoEC2k_PCMqryTHYpa_MAkqaburTXTN6GDYyP94wXCSw6zF31V66yg2XU0cnih0PIW_4TxrIiTe6AG3tNRC98q0pZpBii-biniQQRuyfTcusE')` }}
-                ></div>
-                <div>
-                  <p className="font-label-lg text-on-surface">Order #{activeOrder.id.replace('order-', '')}: {activeOrder.item}</p>
-                  <p className="text-sm text-on-surface-variant">
-                    {t('remaining', { date: new Date(activeOrder.deadline).toLocaleDateString('en-US', { day: 'numeric', month: 'short' }), meters: 45 })}
-                  </p>
-                  <div className="mt-1 flex items-center gap-1 text-[11px] text-on-surface-variant/80 font-medium">
-                    <span className="material-symbols-outlined text-[13px] text-outline">person_check</span>
-                    <span>Entered by: {activeOrder.enteredBy || 'System'} ({activeOrder.enteredAt ? (activeOrder.enteredAt.seconds ? new Date(activeOrder.enteredAt.seconds * 1000).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : new Date(activeOrder.enteredAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })) : 'System'})</span>
-                  </div>
-                  <div className="mt-1.5 flex items-center gap-1.5 text-[9px] font-bold">
-                    {activeOrder.buyerConfirmed ? (
-                      <span className="bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
-                        <span className="material-symbols-outlined text-[11px]">check_circle</span>
-                        Buyer Confirmed ✓
-                      </span>
-                    ) : (
-                      <span className="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
-                        <span className="material-symbols-outlined text-[11px]">pending</span>
-                        Awaiting Buyer Confirmation
-                      </span>
-                    )}
-                  </div>
+              <div 
+                className="w-12 h-12 rounded-lg bg-cover bg-center" 
+                style={{ backgroundImage: `url('https://lh3.googleusercontent.com/aida-public/AB6AXuCivaz3HtK7yLT-FmqQtya3bQ57HI10CVv1se4peq9xph55kAzDDgve0wE9oQdZGuTJmV21-lGb_d3qczRmnbvD8Nto7sha652CldLwQ4qn5LfYKs0oC6nn2FsP6TN2XFTz9-7gJVg1wPSI5bKDE90vm8BiEV568L8CoEC2k_PCMqryTHYpa_MAkqaburTXTN6GDYyP94wXCSw6zF31V66yg2XU0cnih0PIW_4TxrIiTe6AG3tNRC98q0pZpBii-biniQQRuyfTcusE')` }}
+              ></div>
+              <div>
+                <p className="font-label-lg text-on-surface">Order #{activeOrder.id.replace('order-', '')}: {activeOrder.item}</p>
+                <p className="text-sm text-on-surface-variant">
+                  {t('remaining', { date: new Date(activeOrder.deadline).toLocaleDateString('en-US', { day: 'numeric', month: 'short' }), meters: 45 })}
+                </p>
+                <div className="mt-1 flex items-center gap-1 text-[11px] text-on-surface-variant/80 font-medium">
+                  <span className="material-symbols-outlined text-[13px] text-outline">person_check</span>
+                  <span>Entered by: {activeOrder.enteredBy || 'System'} ({activeOrder.enteredAt ? (activeOrder.enteredAt.seconds ? new Date(activeOrder.enteredAt.seconds * 1000).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : new Date(activeOrder.enteredAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })) : 'System'})</span>
+                </div>
+                <div className="mt-1.5 flex items-center gap-1.5 text-[9px] font-bold">
+                  {activeOrder.buyerConfirmed ? (
+                    <span className="bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                      <span className="material-symbols-outlined text-[11px]">check_circle</span>
+                      Buyer Confirmed ✓
+                    </span>
+                  ) : (
+                    <span className="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                      <span className="material-symbols-outlined text-[11px]">pending</span>
+                      Awaiting Buyer Confirmation
+                    </span>
+                  )}
                 </div>
               </div>
-              <span className="material-symbols-outlined text-on-surface-variant">push_pin</span>
             </div>
+            <span className="material-symbols-outlined text-on-surface-variant">push_pin</span>
           </div>
-        )}
-        {/* Pinned Live Consensus Status Header */}
-        {activeOrder && (
-          <div className="bg-white border border-outline-variant rounded-xl p-4 shadow-sm space-y-3 mb-2 animate-in fade-in duration-200 mt-3">
-            <div className="flex justify-between items-center pb-2 border-b border-surface-container">
-              <span className="font-label-lg font-bold text-xs uppercase tracking-wider text-primary">{t('liveConsensusStatus')}</span>
-              
-              {/* Derived Consensus Status Badge */}
-              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
-                (responsesCount.agreed + responsesCount.rejected + responsesCount.concerned) < responsesCount.total
-                  ? 'bg-amber-50 border border-amber-200 text-amber-800 animate-pulse'
-                  : responsesCount.rejected > 0
-                    ? 'bg-rose-50 border border-rose-200 text-rose-800'
-                    : responsesCount.concerned > 0
-                      ? 'bg-amber-50 border border-amber-200 text-amber-800'
-                      : 'bg-emerald-50 border border-emerald-200 text-emerald-800'
-              }`}>
-                {(responsesCount.agreed + responsesCount.rejected + responsesCount.concerned) < responsesCount.total
-                  ? t('waitingForResponses')
-                  : responsesCount.rejected > 0
-                    ? t('actionRejections')
-                    : responsesCount.concerned > 0
-                      ? t('actionConcerns')
-                      : t('consensusReached')}
+        </div>
+      )}
+      {/* Pinned Live Consensus Status Header */}
+      {activeOrder && (
+        <div className="bg-white border border-outline-variant rounded-xl p-4 shadow-sm space-y-3 mb-2 animate-in fade-in duration-200 mt-3">
+          <div className="flex justify-between items-center pb-2 border-b border-surface-container">
+            <span className="font-label-lg font-bold text-xs uppercase tracking-wider text-primary">{t('liveConsensusStatus')}</span>
+            
+            {/* Derived Consensus Status Badge */}
+            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
+              (responsesCount.agreed + responsesCount.rejected + responsesCount.concerned) < responsesCount.total
+                ? 'bg-amber-50 border border-amber-200 text-amber-800 animate-pulse'
+                : responsesCount.rejected > 0
+                  ? 'bg-rose-50 border border-rose-200 text-rose-800'
+                  : responsesCount.concerned > 0
+                    ? 'bg-amber-50 border border-amber-200 text-amber-800'
+                    : 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+            }`}>
+              {(responsesCount.agreed + responsesCount.rejected + responsesCount.concerned) < responsesCount.total
+                ? t('waitingForResponses')
+                : responsesCount.rejected > 0
+                  ? t('actionRejections')
+                  : responsesCount.concerned > 0
+                    ? t('actionConcerns')
+                    : t('consensusReached')}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-4 gap-2 text-center text-xs">
+            <div className="bg-surface-container-low p-2 rounded-lg border border-outline-variant/30 flex flex-col justify-between">
+              <span className="text-[9px] text-on-surface-variant font-bold uppercase tracking-wider block leading-tight">{t('respondedLabel')}</span>
+              <span className="font-bold text-on-surface text-xs mt-1 block">
+                {responsesCount.agreed + responsesCount.rejected + responsesCount.concerned} / {responsesCount.total}
               </span>
             </div>
-
-            <div className="grid grid-cols-4 gap-2 text-center text-xs">
-              <div className="bg-surface-container-low p-2 rounded-lg border border-outline-variant/30 flex flex-col justify-between">
-                <span className="text-[9px] text-on-surface-variant font-bold uppercase tracking-wider block leading-tight">{t('respondedLabel')}</span>
-                <span className="font-bold text-on-surface text-xs mt-1 block">
-                  {responsesCount.agreed + responsesCount.rejected + responsesCount.concerned} / {responsesCount.total}
-                </span>
-              </div>
-              <div className="bg-emerald-50/50 p-2 rounded-lg border border-emerald-200/30 flex flex-col justify-between">
-                <span className="text-[9px] text-emerald-800 font-bold uppercase tracking-wider block leading-tight">✅ {t('agreeLabel')}</span>
-                <span className="font-bold text-emerald-700 text-xs mt-1 block">
-                  {responsesCount.agreed}
-                </span>
-              </div>
-              <div className="bg-amber-50/50 p-2 rounded-lg border border-amber-200/30 flex flex-col justify-between">
-                <span className="text-[9px] text-amber-800 font-bold uppercase tracking-wider block leading-tight">⚠️ {t('concernLabel')}</span>
-                <span className="font-bold text-amber-700 text-xs mt-1 block">
-                  {responsesCount.concerned}
-                </span>
-              </div>
-              <div className="bg-rose-50/50 p-2 rounded-lg border border-rose-200/30 flex flex-col justify-between">
-                <span className="text-[9px] text-rose-800 font-bold uppercase tracking-wider block leading-tight">❌ {t('cantDoLabel')}</span>
-                <span className="font-bold text-rose-700 text-xs mt-1 block">
-                  {responsesCount.rejected}
-                </span>
-              </div>
+            <div className="bg-emerald-50/50 p-2 rounded-lg border border-emerald-200/30 flex flex-col justify-between">
+              <span className="text-[9px] text-emerald-800 font-bold uppercase tracking-wider block leading-tight">✅ {t('agreeLabel')}</span>
+              <span className="font-bold text-emerald-700 text-xs mt-1 block">
+                {responsesCount.agreed}
+              </span>
             </div>
-
-            {memberProfile?.role === 'admin' && (
-              <div className="pt-2 border-t border-surface-container flex justify-end">
-                <button
-                  onClick={() => router.push(`/${locale}/orders/${orderId}/consensus`)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 border border-primary text-primary rounded-xl font-bold text-[11px] shadow-sm hover:bg-primary/5 active:scale-95 duration-100 cursor-pointer"
-                >
-                  <span className="material-symbols-outlined text-sm font-bold">analytics</span>
-                  {t('viewConsensusDetails')}
-                </button>
-              </div>
-            )}
+            <div className="bg-amber-50/50 p-2 rounded-lg border border-amber-200/30 flex flex-col justify-between">
+              <span className="text-[9px] text-amber-800 font-bold uppercase tracking-wider block leading-tight">⚠️ {t('concernLabel')}</span>
+              <span className="font-bold text-amber-700 text-xs mt-1 block">
+                {responsesCount.concerned}
+              </span>
+            </div>
+            <div className="bg-rose-50/50 p-2 rounded-lg border border-rose-200/30 flex flex-col justify-between">
+              <span className="text-[9px] text-rose-800 font-bold uppercase tracking-wider block leading-tight">❌ {t('cantDoLabel')}</span>
+              <span className="font-bold text-rose-700 text-xs mt-1 block">
+                {responsesCount.rejected}
+              </span>
+            </div>
           </div>
-        )}
 
-        {/* Chat Area (Flexbox Alignment Enabled) */}
-        <div className="flex-1 overflow-y-auto max-h-[380px] space-y-4 py-4 pr-1 scrollbar-thin flex flex-col">
-          {messages.map((msg) => {
-            const isMe = !!user && !!msg.senderId && msg.senderId === user.uid;
-            const isSystem = msg.senderId === 'system';
-
-            if (isSystem) {
-              return (
-                <div key={msg.id} className="self-center bg-surface-variant/40 px-4 py-1 rounded-full border border-outline-variant/30 text-center mx-auto my-2">
-                  <p className="text-[12px] font-medium text-on-surface-variant uppercase tracking-wider">{translateSystemMessage(msg)}</p>
-                </div>
-              );
-            }
-
-            return (
-              <div 
-                key={msg.id} 
-                className={`flex flex-col max-w-[85%] ${isMe ? 'self-end items-end ml-auto' : 'items-start mr-auto'}`}
+          {memberProfile?.role === 'admin' && (
+            <div className="pt-2 border-t border-surface-container flex justify-end">
+              <button
+                onClick={() => router.push(`/${locale}/orders/${orderId}/consensus`)}
+                className="flex items-center gap-1.5 px-3 py-1.5 border border-primary text-primary rounded-xl font-bold text-[11px] shadow-sm hover:bg-primary/5 active:scale-95 duration-100 cursor-pointer"
               >
-                <div className="flex items-center gap-2 mb-1">
-                  {!isMe && <span className="font-label-sm text-on-surface-variant text-xs">{msg.senderName}</span>}
-                  <span className="text-[9px] text-on-surface-variant">
-                    {formatMessageTime(msg.timestamp)}
-                  </span>
-                  {isMe && <span className="font-label-sm text-primary text-xs">{tCommon('youLabel')}</span>}
-                </div>
+                <span className="material-symbols-outlined text-sm font-bold">analytics</span>
+                {t('viewConsensusDetails')}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
-                {msg.isAudio ? (
-                  // Audio Message Box
-                  <div className={`p-3 rounded-2xl shadow-sm flex items-center gap-3 ${isMe ? 'bg-primary-container text-on-primary-container rounded-tr-none' : 'bg-surface-container-high text-on-surface rounded-tl-none border border-outline-variant'}`}>
-                    <button 
-                      onClick={() => playVoiceNote(msg.id)}
-                      className="w-10 h-10 rounded-full bg-on-primary-container/20 flex items-center justify-center cursor-pointer"
-                    >
-                      <span className="material-symbols-outlined">
-                        {activeVoicePlaying === msg.id ? 'pause' : 'play_arrow'}
-                      </span>
-                    </button>
-                    <div className="voice-wave">
-                      <div className={`voice-bar ${activeVoicePlaying === msg.id ? '' : 'paused'}`} style={{ height: '12px', animationDelay: '0.1s' }}></div>
-                      <div className={`voice-bar ${activeVoicePlaying === msg.id ? '' : 'paused'}`} style={{ height: '16px', animationDelay: '0.2s' }}></div>
-                      <div className={`voice-bar ${activeVoicePlaying === msg.id ? '' : 'paused'}`} style={{ height: '8px', animationDelay: '0.3s' }}></div>
-                      <div className={`voice-bar ${activeVoicePlaying === msg.id ? '' : 'paused'}`} style={{ height: '14px', animationDelay: '0.4s' }}></div>
-                      <div className={`voice-bar ${activeVoicePlaying === msg.id ? '' : 'paused'}`} style={{ height: '10px', animationDelay: '0.5s' }}></div>
-                      <div className={`voice-bar ${activeVoicePlaying === msg.id ? '' : 'paused'}`} style={{ height: '18px', animationDelay: '0.6s' }}></div>
-                      <div className={`voice-bar ${activeVoicePlaying === msg.id ? '' : 'paused'}`} style={{ height: '6px', animationDelay: '0.7s' }}></div>
-                    </div>
-                    <span className="font-label-sm">{msg.audioDuration || '0:14'}</span>
-                  </div>
-                ) : (
-                  // Text Message Box
-                  <div className={`p-3 rounded-2xl ${isMe ? 'bg-primary-container text-on-primary-container rounded-tr-none shadow-sm' : 'bg-surface-container-high text-on-surface rounded-tl-none border border-outline-variant'}`}>
-                    <p className="font-body-md whitespace-pre-wrap">{msg.messageText}</p>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+      {/* Chat Area (Flexbox Alignment Enabled) */}
+      <div className="flex-grow w-full max-w-2xl mx-auto flex flex-col px-container-padding relative z-10">
+        <div className="flex-1 overflow-y-auto max-h-[calc(100vh-250px)] sm:max-h-[380px] space-y-4 py-4 pr-1 scrollbar-thin flex flex-col">
+          {renderedMessages}
           <div ref={chatEndRef}></div>
         </div>
+      </div>
 
         {/* Quick Response Bar */}
-        <div className="fixed bottom-[72px] left-0 w-full bg-surface border-t border-outline-variant px-container-padding py-4 z-30 flex flex-col gap-4">
+        <div className="chat-input-panel fixed bottom-[72px] left-0 w-full bg-surface border-t border-outline-variant px-container-padding py-4 z-30 flex flex-col gap-4">
           <div className="max-w-2xl mx-auto w-full space-y-4">
             {/* Agreement Quick Votes (3-state model) */}
             <div className="grid grid-cols-3 gap-2">
