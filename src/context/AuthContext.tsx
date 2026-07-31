@@ -56,6 +56,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         unsubProfile = onSnapshot(memberRef, (docSnap) => {
           if (docSnap.exists()) {
             setMemberProfile(docSnap.data() as MemberProfile);
+            setLoading(false);
           } else {
             console.warn(`No member profile found in Firestore for UID: ${currentUser.uid}`);
             
