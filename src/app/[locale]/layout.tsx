@@ -5,6 +5,7 @@ import { getMessages } from 'next-intl/server';
 import { AuthProvider } from '../../context/AuthContext';
 import { DemoSteps } from "@/components/DemoSteps";
 import { RouteGuard } from "@/components/RouteGuard";
+import SWRegister from "@/components/SWRegister";
 import "../globals.css";
 
 const ibmPlexSans = IBM_Plex_Sans({
@@ -61,6 +62,7 @@ export default async function LocaleLayout({
           <AuthProvider>
             <RouteGuard>
               <DemoSteps />
+              <SWRegister />
               {children}
             </RouteGuard>
           </AuthProvider>
