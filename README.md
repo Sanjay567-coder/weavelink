@@ -1,6 +1,6 @@
 # WeaveLink
 
-![Login screen](01-login.png)
+
 
 **A mobile-first Progressive Web App for handloom weaving cooperatives in India** — bridging traditional craftsmanship and modern cooperative commerce.
 
@@ -24,21 +24,6 @@ WeaveLink replaces that with a structured, accountable workflow: from the moment
 
 ---
 
-## Screenshots
-
-| Cooperative Hub | Post New Order |
-|---|---|
-| ![Image 1: Dashboard](screenshots/02-dashboard.png) | ![Image 2: Post order](screenshots/03-post-order.png) |
-
-| Order Details | Group Chat & Consensus | Workforce Allocation |
-|---|---|---|
-| ![Image 5: Order details](screenshots/04-order-details.png) | ![Image 4: Consensus voting](screenshots/05-group-chat-consensus.png) | ![Image 3: Work allocation](screenshots/06-work-allocation.png) [...]
-
-| Production Tracking | Material Pooling | Cooperative Orders |
-|---|---|---|
-| ![Production tracking](screenshots/07-production-tracking.png) | ![Material pooling](screenshots/08-material-pooling.png) | ![Orders list](screenshots/09-cooperative-orders.png) |
-
----
 
 ## Workflow demonstration
 
