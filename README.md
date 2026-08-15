@@ -1,5 +1,7 @@
 # WeaveLink
 
+![Login screen](01-login.png)
+
 **A mobile-first Progressive Web App for handloom weaving cooperatives in India** — bridging traditional craftsmanship and modern cooperative commerce.
 
 ### 🔗 [Try the live demo →](https://weavelink-wheat.vercel.app/)
@@ -16,9 +18,9 @@ Use one of the test accounts below to sign in instantly, no OTP required in demo
 
 ## What problem this solves
 
-Weaving cooperatives typically take orders informally — a buyer calls or messages the admin with a price and a quantity, and everything downstream lives in memory, a notebook, or a scattered chat thread.
+Weaving cooperatives typically take orders informally — a buyer calls or messages the admin with a price and a quantity, and everything downstream lives in memory, a notebook, or a scattered cha[...]
 
-WeaveLink replaces that with a structured, accountable workflow: from the moment a buyer quotes a price, to group consensus, to production tracking, to payment — every step is recorded, visible, and verifiable across roles.
+WeaveLink replaces that with a structured, accountable workflow: from the moment a buyer quotes a price, to group consensus, to production tracking, to payment — every step is recorded, visible,[...]
 
 ---
 
@@ -30,7 +32,7 @@ WeaveLink replaces that with a structured, accountable workflow: from the moment
 
 | Order Details | Group Chat & Consensus | Workforce Allocation |
 |---|---|---|
-| ![Image 5: Order details](screenshots/04-order-details.png) | ![Image 4: Consensus voting](screenshots/05-group-chat-consensus.png) | ![Image 3: Work allocation](screenshots/06-work-allocation.png) |
+| ![Image 5: Order details](screenshots/04-order-details.png) | ![Image 4: Consensus voting](screenshots/05-group-chat-consensus.png) | ![Image 3: Work allocation](screenshots/06-work-allocation.png) [...]
 
 | Production Tracking | Material Pooling | Cooperative Orders |
 |---|---|---|
@@ -42,11 +44,11 @@ WeaveLink replaces that with a structured, accountable workflow: from the moment
 
 **Order #7269** demonstrates the complete WeaveLink flow:
 
-- **Image 6: Workforce Allocation** — After consensus, the system recommends optimal unit distribution (3 units each for 5 weavers) based on loom compatibility. Weavers are listed with their capacity status (20–85% busy), available capacity, and quick-access allocation controls. Production timeline: 14 days.
+- **Image 6: Workforce Allocation** — After consensus, the system recommends optimal unit distribution (3 units each for 5 weavers) based on loom compatibility. Weavers are listed with their cap[...]
 
-- **Image 7: Group Chat & Consensus** — The cooperative discusses the order in a live chat thread where members vote ("I Agree," "Raise Concern," "Can't Do It"). System logs track key events (e.g., "KAAVIYA SREEUT43 ADDED TO THE GROUP," "NEW ORDER 7269 POSTED BY AMIT PATEL"). Messages show real-time objections and confirmations before final allocation.
+- **Image 7: Group Chat & Consensus** — The cooperative discusses the order in a live chat thread where members vote ("I Agree," "Raise Concern," "Can't Do It"). System logs track key events (e.[...]
 
-- **Image 8: Order Details Card** — The order summary displays buyer (nkvd), price (₹50,000), item (dscvzxds), quantity (3 units), deadline (11 Sept 2026), and a high-quality product image. Status badge shows "Awaiting Buyer Confirmation" and the order expires in 48 hours.
+- **Image 8: Order Details Card** — The order summary displays buyer (nkvd), price (₹50,000), item (dscvzxds), quantity (3 units), deadline (11 Sept 2026), and a high-quality product image. St[...]
 
 ---
 
@@ -54,27 +56,27 @@ WeaveLink replaces that with a structured, accountable workflow: from the moment
 
 **Order #6149 and #4378** demonstrate the cooperative orders management:
 
-- **Image 9: Cooperative Orders** — Active and historical orders are listed with buyer names, prices (₹20,000), and confirmation status ("Buyer Confirmed ✓"). Orders show expiry status and can be managed via the "Active Orders" / "All History" tabs. Treasurers and admins track all cooperative contracts in one view.
+- **Image 9: Cooperative Orders** — Active and historical orders are listed with buyer names, prices (₹20,000), and confirmation status ("Buyer Confirmed ✓"). Orders show expiry status and c[...]
 
-- **Image 10: Material Pooling Map** — Cooperatives discover each other's material needs on an interactive map. Red pins mark "Available for Pooling" cooperatives, blue pins mark those "At Capacity." The "Arani Cluster (12km away)" tooltip shows nearby pooling partners. Below, admins can publish material requirements to the common pool (e.g., "Silk Saree Threads, Target: 150kg, Est. Savings: ₹9,500").
+- **Image 10: Material Pooling Map** — Cooperatives discover each other's material needs on an interactive map. Red pins mark "Available for Pooling" cooperatives, blue pins mark those "At Capac[...]
 
 ---
 
 ## Production tracking & alerts
 
-- **Image 11: Overall Progress & Loom Station Updates** — For Cooperative Batch #7269 (0% Complete), the dashboard shows production timelines (30 Days Remaining, Started: Oct 12, Deadline: Sep 11). Production alerts flag weavers behind schedule ("Lakshmi S. is behind schedule") with a "Call Weaver" button for quick intervention. Loom Station Updates list each weaver's progress — "Coop Weaver" (Loom #12, Silk Ikat) is "On Track" ✓, while "Lakshmi S." (Loom #08, Cotton Jamdani) is "2 Days Late" ⚠️.
+- **Image 11: Overall Progress & Loom Station Updates** — For Cooperative Batch #7269 (0% Complete), the dashboard shows production timelines (30 Days Remaining, Started: Oct 12, Deadline: Sep 1[...]
 
 ---
 
 ## Key features
 
 1. **Multi-role dashboards** — adaptive views for Admin (quote reviewing, pooling), Weaver (loom tracking, chat), and Treasurer (disbursements pool).
-2. **Order → consensus → allocation → production pipeline** — a buyer's phone quote becomes a recorded order, the whole cooperative votes (Agree / Concern / Can't Do It), work is allocated by experience and specialization.
+2. **Order → consensus → allocation → production pipeline** — a buyer's phone quote becomes a recorded order, the whole cooperative votes (Agree / Concern / Can't Do It), work is allocated[...]
 3. **Direct member addition & toggle** — admins add a brand-new member directly (Name, Phone, Age, Experience, Specialization, Village/Area) or search and claim existing unassigned candidates.
-4. **SMS profile self-migration** — transaction-safe: a newly registered weaver logging in via Phone Auth automatically claims their admin-created profile through phone-number mapping, in a single atomic write.
-5. **Group chat consensus & structured systems** — live consensus polling inside chat, with voice-note logging, live translation, and structured system logs (e.g. `member_added`) that resolve dynamically.
+4. **SMS profile self-migration** — transaction-safe: a newly registered weaver logging in via Phone Auth automatically claims their admin-created profile through phone-number mapping, in a sing[...]
+5. **Group chat consensus & structured systems** — live consensus polling inside chat, with voice-note logging, live translation, and structured system logs (e.g. `member_added`) that resolve dy[...]
 6. **Inter-cooperative material pooling** — cooperatives see each other's material needs on a map and pool bulk raw-material orders together to unlock better pricing.
-7. **Mobile responsive precision** — reflowing layout cards, an auto-collapsing bottom navbar for short screens/landscape (< 540px), and truncated headings that prevent overflow on narrow viewports.
+7. **Mobile responsive precision** — reflowing layout cards, an auto-collapsing bottom navbar for short screens/landscape (< 540px), and truncated headings that prevent overflow on narrow viewpo[...]
 8. **Real-time production tracking & alerts** — monitor loom station progress, flag delays, and contact weavers instantly.
 
 ---
@@ -133,7 +135,7 @@ Seed your Firebase project with initial cooperatives, weaver accounts, allocatio
 npm run seed
 ```
 
-**Verification / test phone numbers** — the seed script registers these with deterministic UIDs. To sign in via the real Phone Auth path without SMS costs, add them under **Firebase Console → Auth → Phone**.
+**Verification / test phone numbers** — the seed script registers these with deterministic UIDs. To sign in via the real Phone Auth path without SMS costs, add them under **Firebase Console →[...]
 
 | Role | Phone | Verification code |
 |---|---|---|
@@ -144,7 +146,7 @@ npm run seed
 ### 5. reCAPTCHA configuration warning
 
 > [!IMPORTANT]
-> **reCAPTCHA Enterprise enforcement must stay OFF** in your Firebase project. Enabling it without linked Enterprise site keys causes the client SDK to fall back to standard v2, which leaks invisible token.
+> **reCAPTCHA Enterprise enforcement must stay OFF** in your Firebase project. Enabling it without linked Enterprise site keys causes the client SDK to fall back to standard v2, which leaks invis[...]
 >
 > Verify it's disabled under **Firebase Console → Authentication → Settings → User actions → reCAPTCHA protection**, or set it programmatically with the Admin SDK:
 > ```typescript
@@ -167,8 +169,8 @@ npm run seed
 
 ## Known limitations & design tradeoffs
 
-1. **Seeded order hardcoding (`order-4421`)** — to ensure a complete visual flow on stage without manual setup, Weaver progress logging and Treasurer payout panels default to the seeded active order on first load.
-2. **Double-claim race condition** — if two admins from different cooperatives try to claim the same unassigned candidate at nearly the same time, last-write-wins applies and no error is surfaced to either party.
+1. **Seeded order hardcoding (`order-4421`)** — to ensure a complete visual flow on stage without manual setup, Weaver progress logging and Treasurer payout panels default to the seeded active [...]
+2. **Double-claim race condition** — if two admins from different cooperatives try to claim the same unassigned candidate at nearly the same time, last-write-wins applies and no error is surfac[...]
 3. **Web Speech API** — dictation relies on the browser's implementation. Chrome is recommended for the best speech experience during demos.
 
 ---
