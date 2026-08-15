@@ -1,4 +1,3 @@
-
 # WeaveLink
 
 **A mobile-first Progressive Web App for handloom weaving cooperatives in India** — bridging traditional craftsmanship and modern cooperative commerce.
@@ -17,17 +16,17 @@ Use one of the test accounts below to sign in instantly, no OTP required in demo
 
 ## What problem this solves
 
-Weaving cooperatives typically take orders informally — a buyer calls or messages the admin with a price and a quantity, and everything downstream lives in memory, a notebook, or a scattered chat thread. Prices get misquoted or quietly changed, and there's no single record either side can trust.
+Weaving cooperatives typically take orders informally — a buyer calls or messages the admin with a price and a quantity, and everything downstream lives in memory, a notebook, or a scattered chat thread.
 
-WeaveLink replaces that with a structured, accountable workflow: from the moment a buyer quotes a price, to group consensus, to production tracking, to payment — every step is recorded, visible, and tied to a real person.
+WeaveLink replaces that with a structured, accountable workflow: from the moment a buyer quotes a price, to group consensus, to production tracking, to payment — every step is recorded, visible, and verifiable across roles.
 
 ---
 
 ## Screenshots
 
-| Login | Cooperative hub | Post a new order |
-|---|---|---|
-| ![Login](screenshots/01-login.png) | ![Dashboard](screenshots/02-dashboard.png) | ![Post order](screenshots/03-post-order.png) |
+| Cooperative Hub | Post New Order |
+|---|---|
+| ![Image 1: Dashboard](screenshots/02-dashboard.png) | ![Image 2: Post order](screenshots/03-post-order.png) |
 
 | Order details | Group chat & consensus voting | Workforce allocation |
 |---|---|---|
@@ -42,12 +41,12 @@ WeaveLink replaces that with a structured, accountable workflow: from the moment
 ## Key features
 
 1. **Multi-role dashboards** — adaptive views for Admin (quote reviewing, pooling), Weaver (loom tracking, chat), and Treasurer (disbursements pool).
-2. **Order → consensus → allocation → production pipeline** — a buyer's phone quote becomes a recorded order, the whole cooperative votes (Agree / Concern / Can't Do It), work is allocated by loom capacity, and progress is tracked cooperative-wide with alerts for delays.
+2. **Order → consensus → allocation → production pipeline** — a buyer's phone quote becomes a recorded order, the whole cooperative votes (Agree / Concern / Can't Do It), work is allocated by experience and specialization.
 3. **Direct member addition & toggle** — admins add a brand-new member directly (Name, Phone, Age, Experience, Specialization, Village/Area) or search and claim existing unassigned candidates.
-4. **SMS profile self-migration** — transaction-safe: a newly registered weaver logging in via Phone Auth automatically claims their admin-created profile through phone-number mapping, in a single atomic batch transaction.
-5. **Group chat consensus & structured systems** — live consensus polling inside chat, with voice-note logging, live translation, and structured system logs (e.g. `member_added`) that resolve dynamically in English, Hindi, and Tamil.
+4. **SMS profile self-migration** — transaction-safe: a newly registered weaver logging in via Phone Auth automatically claims their admin-created profile through phone-number mapping, in a single atomic write.
+5. **Group chat consensus & structured systems** — live consensus polling inside chat, with voice-note logging, live translation, and structured system logs (e.g. `member_added`) that resolve dynamically.
 6. **Inter-cooperative material pooling** — cooperatives see each other's material needs on a map and pool bulk raw-material orders together to unlock better pricing.
-7. **Mobile responsive precision** — reflowing layout cards, an auto-collapsing bottom navbar for short screens/landscape (< 540px), and truncated headings that prevent overflow on narrow viewports (~360px).
+7. **Mobile responsive precision** — reflowing layout cards, an auto-collapsing bottom navbar for short screens/landscape (< 540px), and truncated headings that prevent overflow on narrow viewports.
 
 ---
 
@@ -104,7 +103,7 @@ Seed your Firebase project with initial cooperatives, weaver accounts, allocatio
 npm run seed
 ```
 
-**Verification / test phone numbers** — the seed script registers these with deterministic UIDs. To sign in via the real Phone Auth path without SMS costs, add them under **Firebase Console → Authentication → Sign-in method → Phone → Phone numbers for testing**:
+**Verification / test phone numbers** — the seed script registers these with deterministic UIDs. To sign in via the real Phone Auth path without SMS costs, add them under **Firebase Console → Auth → Phone**.
 
 | Role | Phone | Verification code |
 |---|---|---|
@@ -115,7 +114,7 @@ npm run seed
 ### 5. reCAPTCHA configuration warning
 
 > [!IMPORTANT]
-> **reCAPTCHA Enterprise enforcement must stay OFF** in your Firebase project. Enabling it without linked Enterprise site keys causes the client SDK to fall back to standard v2, which leaks invisible challenge iframes and overlays.
+> **reCAPTCHA Enterprise enforcement must stay OFF** in your Firebase project. Enabling it without linked Enterprise site keys causes the client SDK to fall back to standard v2, which leaks invisible token.
 >
 > Verify it's disabled under **Firebase Console → Authentication → Settings → User actions → reCAPTCHA protection**, or set it programmatically with the Admin SDK:
 > ```typescript
@@ -138,8 +137,8 @@ npm run seed
 
 ## Known limitations & design tradeoffs
 
-1. **Seeded order hardcoding (`order-4421`)** — to ensure a complete visual flow on stage without manual setup, Weaver progress logging and Treasurer payout panels default to the seeded active order `order-4421` on the Home screen.
-2. **Double-claim race condition** — if two admins from different cooperatives try to claim the same unassigned candidate at nearly the same time, last-write-wins applies and no error is surfaced to either admin.
+1. **Seeded order hardcoding (`order-4421`)** — to ensure a complete visual flow on stage without manual setup, Weaver progress logging and Treasurer payout panels default to the seeded active order on first load.
+2. **Double-claim race condition** — if two admins from different cooperatives try to claim the same unassigned candidate at nearly the same time, last-write-wins applies and no error is surfaced to either party.
 3. **Web Speech API** — dictation relies on the browser's implementation. Chrome is recommended for the best speech experience during demos.
 
 ---
