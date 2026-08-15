@@ -2,7 +2,7 @@
 
 
 
-**A mobile-first Progressive Web App for handloom weaving cooperatives in India** — bridging traditional craftsmanship and modern cooperative commerce.
+**A mobile-first Progressive Web App for handloom weaving cooperatives in India**- the small, close-knit groups of artisans who take on bulk orders together, share looms and raw materials, and depend on trust between members to function. It bridges traditional craftsmanship with modern cooperative commerce: the weaving itself stays exactly as skilled and manual as it's always been, but everything around the weaving — how an order gets accepted, how work gets split fairly, how a delay gets caught in time, how payment gets divided — moves from informal, memory-based coordination into a structured, transparent system that every member can see and trust. It's installable straight to a phone's home screen like a native app, works in English, Hindi, and Tamil, and is built around a simple principle: nothing that affects the whole cooperative should depend on one person remembering it correctly.
 
 ### 🔗 [Try the live demo →](https://weavelink-wheat.vercel.app/)
 
