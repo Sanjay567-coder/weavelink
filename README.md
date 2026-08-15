@@ -28,11 +28,11 @@ WeaveLink replaces that with a structured, accountable workflow: from the moment
 |---|---|
 | ![Image 1: Dashboard](screenshots/02-dashboard.png) | ![Image 2: Post order](screenshots/03-post-order.png) |
 
-| Order details | Group chat & consensus voting | Workforce allocation |
+| Order Details | Group Chat & Consensus | Workforce Allocation |
 |---|---|---|
-| ![Order details](screenshots/04-order-details.png) | ![Consensus voting](screenshots/05-group-chat-consensus.png) | ![Work allocation](screenshots/06-work-allocation.png) |
+| ![Image 5: Order details](screenshots/04-order-details.png) | ![Image 4: Consensus voting](screenshots/05-group-chat-consensus.png) | ![Image 3: Work allocation](screenshots/06-work-allocation.png) |
 
-| Production tracking | Material pooling | Cooperative orders |
+| Production Tracking | Material Pooling | Cooperative Orders |
 |---|---|---|
 | ![Production tracking](screenshots/07-production-tracking.png) | ![Material pooling](screenshots/08-material-pooling.png) | ![Orders list](screenshots/09-cooperative-orders.png) |
 
@@ -47,6 +47,18 @@ WeaveLink replaces that with a structured, accountable workflow: from the moment
 5. **Group chat consensus & structured systems** — live consensus polling inside chat, with voice-note logging, live translation, and structured system logs (e.g. `member_added`) that resolve dynamically.
 6. **Inter-cooperative material pooling** — cooperatives see each other's material needs on a map and pool bulk raw-material orders together to unlock better pricing.
 7. **Mobile responsive precision** — reflowing layout cards, an auto-collapsing bottom navbar for short screens/landscape (< 540px), and truncated headings that prevent overflow on narrow viewports.
+
+---
+
+## Workflow demonstration
+
+**Order #7269** demonstrates the complete WeaveLink flow:
+
+- **Image 6: Workforce Allocation** — After consensus, the system recommends optimal unit distribution (3 units each for 5 weavers) based on loom compatibility. Weavers are listed with their capacity status (20–85% busy), available capacity, and quick-access allocation controls. Production timeline: 14 days.
+
+- **Image 7: Group Chat & Consensus** — The cooperative discusses the order in a live chat thread where members vote ("I Agree," "Raise Concern," "Can't Do It"). System logs track key events (e.g., "KAAVIYA SREEUT43 ADDED TO THE GROUP," "NEW ORDER 7269 POSTED BY AMIT PATEL"). Messages show real-time objections and confirmations before final allocation.
+
+- **Image 8: Order Details Card** — The order summary displays buyer (nkvd), price (₹50,000), item (dscvzxds), quantity (3 units), deadline (11 Sept 2026), and a high-quality product image. Status badge shows "Awaiting Buyer Confirmation" and the order expires in 48 hours.
 
 ---
 
