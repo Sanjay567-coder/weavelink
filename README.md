@@ -38,18 +38,6 @@ WeaveLink replaces that with a structured, accountable workflow: from the moment
 
 ---
 
-## Key features
-
-1. **Multi-role dashboards** — adaptive views for Admin (quote reviewing, pooling), Weaver (loom tracking, chat), and Treasurer (disbursements pool).
-2. **Order → consensus → allocation → production pipeline** — a buyer's phone quote becomes a recorded order, the whole cooperative votes (Agree / Concern / Can't Do It), work is allocated by experience and specialization.
-3. **Direct member addition & toggle** — admins add a brand-new member directly (Name, Phone, Age, Experience, Specialization, Village/Area) or search and claim existing unassigned candidates.
-4. **SMS profile self-migration** — transaction-safe: a newly registered weaver logging in via Phone Auth automatically claims their admin-created profile through phone-number mapping, in a single atomic write.
-5. **Group chat consensus & structured systems** — live consensus polling inside chat, with voice-note logging, live translation, and structured system logs (e.g. `member_added`) that resolve dynamically.
-6. **Inter-cooperative material pooling** — cooperatives see each other's material needs on a map and pool bulk raw-material orders together to unlock better pricing.
-7. **Mobile responsive precision** — reflowing layout cards, an auto-collapsing bottom navbar for short screens/landscape (< 540px), and truncated headings that prevent overflow on narrow viewports.
-
----
-
 ## Workflow demonstration
 
 **Order #7269** demonstrates the complete WeaveLink flow:
@@ -59,6 +47,35 @@ WeaveLink replaces that with a structured, accountable workflow: from the moment
 - **Image 7: Group Chat & Consensus** — The cooperative discusses the order in a live chat thread where members vote ("I Agree," "Raise Concern," "Can't Do It"). System logs track key events (e.g., "KAAVIYA SREEUT43 ADDED TO THE GROUP," "NEW ORDER 7269 POSTED BY AMIT PATEL"). Messages show real-time objections and confirmations before final allocation.
 
 - **Image 8: Order Details Card** — The order summary displays buyer (nkvd), price (₹50,000), item (dscvzxds), quantity (3 units), deadline (11 Sept 2026), and a high-quality product image. Status badge shows "Awaiting Buyer Confirmation" and the order expires in 48 hours.
+
+---
+
+## Order tracking & material pooling
+
+**Order #6149 and #4378** demonstrate the cooperative orders management:
+
+- **Image 9: Cooperative Orders** — Active and historical orders are listed with buyer names, prices (₹20,000), and confirmation status ("Buyer Confirmed ✓"). Orders show expiry status and can be managed via the "Active Orders" / "All History" tabs. Treasurers and admins track all cooperative contracts in one view.
+
+- **Image 10: Material Pooling Map** — Cooperatives discover each other's material needs on an interactive map. Red pins mark "Available for Pooling" cooperatives, blue pins mark those "At Capacity." The "Arani Cluster (12km away)" tooltip shows nearby pooling partners. Below, admins can publish material requirements to the common pool (e.g., "Silk Saree Threads, Target: 150kg, Est. Savings: ₹9,500").
+
+---
+
+## Production tracking & alerts
+
+- **Image 11: Overall Progress & Loom Station Updates** — For Cooperative Batch #7269 (0% Complete), the dashboard shows production timelines (30 Days Remaining, Started: Oct 12, Deadline: Sep 11). Production alerts flag weavers behind schedule ("Lakshmi S. is behind schedule") with a "Call Weaver" button for quick intervention. Loom Station Updates list each weaver's progress — "Coop Weaver" (Loom #12, Silk Ikat) is "On Track" ✓, while "Lakshmi S." (Loom #08, Cotton Jamdani) is "2 Days Late" ⚠️.
+
+---
+
+## Key features
+
+1. **Multi-role dashboards** — adaptive views for Admin (quote reviewing, pooling), Weaver (loom tracking, chat), and Treasurer (disbursements pool).
+2. **Order → consensus → allocation → production pipeline** — a buyer's phone quote becomes a recorded order, the whole cooperative votes (Agree / Concern / Can't Do It), work is allocated by experience and specialization.
+3. **Direct member addition & toggle** — admins add a brand-new member directly (Name, Phone, Age, Experience, Specialization, Village/Area) or search and claim existing unassigned candidates.
+4. **SMS profile self-migration** — transaction-safe: a newly registered weaver logging in via Phone Auth automatically claims their admin-created profile through phone-number mapping, in a single atomic write.
+5. **Group chat consensus & structured systems** — live consensus polling inside chat, with voice-note logging, live translation, and structured system logs (e.g. `member_added`) that resolve dynamically.
+6. **Inter-cooperative material pooling** — cooperatives see each other's material needs on a map and pool bulk raw-material orders together to unlock better pricing.
+7. **Mobile responsive precision** — reflowing layout cards, an auto-collapsing bottom navbar for short screens/landscape (< 540px), and truncated headings that prevent overflow on narrow viewports.
+8. **Real-time production tracking & alerts** — monitor loom station progress, flag delays, and contact weavers instantly.
 
 ---
 
@@ -73,6 +90,7 @@ WeaveLink replaces that with a structured, accountable workflow: from the moment
 | PWA | `@ducanh2912/next-pwa` |
 | i18n | `next-intl` — English / Hindi / Tamil |
 | Charts | Recharts (district price benchmarking) |
+| Maps | Leaflet or similar for material pooling visualization |
 
 ---
 
