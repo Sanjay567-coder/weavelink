@@ -24,14 +24,16 @@ WeaveLink turns the day-to-day running of a handloom cooperative — accepting o
 
 Take a real order end to end, the way it actually flows through the app:
 
-A buyer quotes a price. The admin logs it the moment the call ends — buyer, item, quantity, price, deadline — so it's on record instead of in someone's memory.
-The cooperative discusses it. The order is shared to the group chat, where the admin can add a plain-language summary or a voice note, in English, Hindi, or Tamil.
-Every member votes. Instead of one person deciding for everyone, each weaver responds Agree, Raise a Concern, or Can't Do It — with their own reason attached — and a live consensus percentage builds in real time.
-The buyer locks the price. Once consensus is reached, the buyer confirms the order themselves on a public link, no account needed. From that point the price is frozen; changing it requires a formal renegotiation that resets the whole consensus vote.
-Work gets allocated fairly. The system recommends how many units each weaver should take based on their current loom capacity and load, which the admin can fine-tune.
-Production stays visible. Weavers log their own progress, and the cooperative sees a live rollup — so if someone falls behind, it's flagged immediately instead of discovered at the deadline.
-Payment stays transparent. The treasurer sees every weaver's split and status; each weaver sees their own record. No single role controls price, consensus, and payment all at once.
-Cooperatives buy materials together. Separate cooperatives can see each other's raw-material needs on a map and pool bulk orders, turning isolated groups into a network that negotiates better prices collectively.
+Take a real order end to end, the way it actually flows through the app:
+
+1. A buyer quotes a price — the admin logs it the moment the call ends: buyer, item, quantity, price, deadline, so it's on record instead of in someone's memory.
+2. The cooperative discusses it — the order is shared to the group chat, where the admin can add a plain-language summary or a voice note, in English, Hindi, or Tamil.
+3. Every member votes — instead of one person deciding for everyone, each weaver responds Agree, Raise a Concern, or Can't Do It, with their own reason attached, and a live consensus percentage builds in real time.
+4. The buyer locks the price — once consensus is reached, the buyer confirms the order themselves on a public link, no account needed. From that point the price is frozen; changing it requires a formal renegotiation that resets the whole consensus vote.
+5. Work gets allocated fairly — the system recommends how many units each weaver should take based on their current loom capacity and load, which the admin can fine-tune.
+6. Production stays visible — weavers log their own progress, and the cooperative sees a live rollup, so if someone falls behind, it's flagged immediately instead of discovered at the deadline.
+7. Payment stays transparent — the treasurer sees every weaver's split and status; each weaver sees their own record. No single role controls price, consensus, and payment all at once.
+8. Cooperatives buy materials together — separate cooperatives can see each other's raw-material needs on a map and pool bulk orders, turning isolated groups into a network that negotiates better prices collectively.
 ---
 
 ## Key features
