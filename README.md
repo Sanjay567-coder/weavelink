@@ -135,14 +135,6 @@ npm run seed
 
 ---
 
-## Known limitations & design tradeoffs
-
-1. **Seeded order hardcoding (`order-4421`)** — to ensure a complete visual flow on stage without manual setup, Weaver progress logging and Treasurer payout panels default to the seeded active [...]
-2. **Double-claim race condition** — if two admins from different cooperatives try to claim the same unassigned candidate at nearly the same time, last-write-wins applies and no error is surfac[...]
-3. **Web Speech API** — dictation relies on the browser's implementation. Chrome is recommended for the best speech experience during demos.
 
 ---
 
-## License
-
-Add your license here.
