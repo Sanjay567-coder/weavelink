@@ -1,43 +1,88 @@
+
 # WeaveLink
 
-WeaveLink is a mobile-first Progressive Web App (PWA) designed for handloom weaving cooperatives in India, bridging the gap between traditional craftsmanship and modern cooperative commerce.
+**A mobile-first Progressive Web App for handloom weaving cooperatives in India** — bridging traditional craftsmanship and modern cooperative commerce.
 
-## Technology Stack
-- **Framework**: Next.js (App Router), TypeScript
-- **Styling**: Vanilla CSS with Artisanal Digital Coop theme tokens & Tailwind CSS
-- **Icons & Fonts**: Outfit, IBM Plex Sans, Material Symbols Outlined
-- **Database/Auth**: Firebase Firestore (Offline Persistence) & Phone Auth
-- **PWA**: PWA configuration using `@ducanh2912/next-pwa`
-- **i18n**: Multi-language support (English/Hindi/Tamil) via `next-intl`
-- **Charts**: Recharts (for District Price Benchmarking)
+### 🔗 [Try the live demo →](https://weavelink-wheat.vercel.app/)
 
----
+Use one of the test accounts below to sign in instantly, no OTP required in demo mode.
 
-## Key Features Built
-
-1. **Multi-Role Dashboards**: Adaptive views for Admin (quote reviewing, pooling), Weaver (loom tracking, chat), and Treasurer (disbursements pool).
-2. **Direct Member Addition & Toggle**: Segmented form allowing Admins to add a brand-new member directly (fields: Name, Phone, Age, Experience, Specialization, Village/Area) or search and claim existing unassigned candidates.
-3. **SMS Profile Self-Migration**: Transaction-safe profile self-migration. Newly registered weavers logging in with Phone Auth automatically claim their Admin-created profile document via telephone mapping in a single atomic database batch transaction.
-4. **Group Chat Consensus & Structured Systems**: Live consensus polling inside the group chat (Agree, Concern, Cant-Do options) supporting voice note logging, live translation, and structured system logs (`member_added` events resolving dynamically in English, Hindi, and Tamil).
-5. **Mobile Responsive Precision**: Responsive reflowing layout cards, auto-collapsing bottom navbar for short screens/landscape orientation (< 540px), and truncated headings preventing layout overflows on narrow viewports (~360px).
+| Role | Phone | Code |
+|---|---|---|
+| Admin | `+919999999999` | `123456` |
+| Weaver | `+918888888888` | `123456` |
+| Treasurer | `+917777777777` | `123456` |
 
 ---
 
-## Getting Started
+## What problem this solves
+
+Weaving cooperatives typically take orders informally — a buyer calls or messages the admin with a price and a quantity, and everything downstream lives in memory, a notebook, or a scattered chat thread. Prices get misquoted or quietly changed, and there's no single record either side can trust.
+
+WeaveLink replaces that with a structured, accountable workflow: from the moment a buyer quotes a price, to group consensus, to production tracking, to payment — every step is recorded, visible, and tied to a real person.
+
+---
+
+## Screenshots
+
+| Login | Cooperative hub | Post a new order |
+|---|---|---|
+| ![Login](screenshots/01-login.png) | ![Dashboard](screenshots/02-dashboard.png) | ![Post order](screenshots/03-post-order.png) |
+
+| Order details | Group chat & consensus voting | Workforce allocation |
+|---|---|---|
+| ![Order details](screenshots/04-order-details.png) | ![Consensus voting](screenshots/05-group-chat-consensus.png) | ![Work allocation](screenshots/06-work-allocation.png) |
+
+| Production tracking | Material pooling | Cooperative orders |
+|---|---|---|
+| ![Production tracking](screenshots/07-production-tracking.png) | ![Material pooling](screenshots/08-material-pooling.png) | ![Orders list](screenshots/09-cooperative-orders.png) |
+
+---
+
+## Key features
+
+1. **Multi-role dashboards** — adaptive views for Admin (quote reviewing, pooling), Weaver (loom tracking, chat), and Treasurer (disbursements pool).
+2. **Order → consensus → allocation → production pipeline** — a buyer's phone quote becomes a recorded order, the whole cooperative votes (Agree / Concern / Can't Do It), work is allocated by loom capacity, and progress is tracked cooperative-wide with alerts for delays.
+3. **Direct member addition & toggle** — admins add a brand-new member directly (Name, Phone, Age, Experience, Specialization, Village/Area) or search and claim existing unassigned candidates.
+4. **SMS profile self-migration** — transaction-safe: a newly registered weaver logging in via Phone Auth automatically claims their admin-created profile through phone-number mapping, in a single atomic batch transaction.
+5. **Group chat consensus & structured systems** — live consensus polling inside chat, with voice-note logging, live translation, and structured system logs (e.g. `member_added`) that resolve dynamically in English, Hindi, and Tamil.
+6. **Inter-cooperative material pooling** — cooperatives see each other's material needs on a map and pool bulk raw-material orders together to unlock better pricing.
+7. **Mobile responsive precision** — reflowing layout cards, an auto-collapsing bottom navbar for short screens/landscape (< 540px), and truncated headings that prevent overflow on narrow viewports (~360px).
+
+---
+
+## Technology stack
+
+| Layer | Technology |
+|---|---|
+| Framework | Next.js (App Router), TypeScript |
+| Styling | Vanilla CSS with Artisanal Digital Coop theme tokens & Tailwind CSS |
+| Icons & fonts | Outfit, IBM Plex Sans, Material Symbols Outlined |
+| Database / Auth | Firebase Firestore (offline persistence) & Phone Auth |
+| PWA | `@ducanh2912/next-pwa` |
+| i18n | `next-intl` — English / Hindi / Tamil |
+| Charts | Recharts (district price benchmarking) |
+
+---
+
+## Getting started
 
 ### 1. Prerequisites
 - Node.js v18 or later
-- Firebase project set up
+- A Firebase project
 
-### 2. Local Setup
+### 2. Local setup
 
-Clone the project and install dependencies:
 ```bash
+git clone <this-repo>
+cd weavelink
 npm install
 ```
 
-### 3. Firebase & Environment Configuration
+### 3. Firebase & environment configuration
+
 Create a `.env.local` file in the root directory:
+
 ```env
 NEXT_PUBLIC_FIREBASE_API_KEY=your-api-key
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your-auth-domain
@@ -51,23 +96,28 @@ FIREBASE_CLIENT_EMAIL=your-firebase-client-email
 FIREBASE_PRIVATE_KEY="your-firebase-private-key"
 ```
 
-### 4. Database Seeding & Test Accounts
-To seed your Firebase project with initial cooperatives, weaver accounts, allocations, and orders, run the seed script:
+### 4. Database seeding & test accounts
+
+Seed your Firebase project with initial cooperatives, weaver accounts, allocations, and orders:
+
 ```bash
 npm run seed
 ```
 
-#### Verification/Test Phone Numbers
-The seeding script registers specific test accounts in Auth using deterministic UIDs. To test the real Phone Auth sign-in path without SMS costs, add these test numbers in your **Firebase Console > Authentication > Sign-in method > Phone > Phone numbers for testing**:
-* **Admin Account**: `+919999999999` (Verification Code: `123456`)
-* **Weaver Account**: `+918888888888` (Verification Code: `123456`)
-* **Treasurer Account**: `+917777777777` (Verification Code: `123456`)
+**Verification / test phone numbers** — the seed script registers these with deterministic UIDs. To sign in via the real Phone Auth path without SMS costs, add them under **Firebase Console → Authentication → Sign-in method → Phone → Phone numbers for testing**:
 
-### 5. reCAPTCHA Configuration Warning
+| Role | Phone | Verification code |
+|---|---|---|
+| Admin | `+919999999999` | `123456` |
+| Weaver | `+918888888888` | `123456` |
+| Treasurer | `+917777777777` | `123456` |
+
+### 5. reCAPTCHA configuration warning
+
 > [!IMPORTANT]
-> **reCAPTCHA Enterprise enforcement must stay OFF** in your Firebase project configurations. Enabling reCAPTCHA Enterprise on Firebase without linked Enterprise site keys causes the client SDK to trigger an internal fallback flow to standard v2 which leaks invisible challenge iframes and overlays.
+> **reCAPTCHA Enterprise enforcement must stay OFF** in your Firebase project. Enabling it without linked Enterprise site keys causes the client SDK to fall back to standard v2, which leaks invisible challenge iframes and overlays.
 >
-> To ensure this remains disabled, verify that **reCAPTCHA Enterprise** is disabled under **Firebase Console > Authentication > Settings > User actions > reCAPTCHA protection**, or programmatically set the following options using the Admin SDK:
+> Verify it's disabled under **Firebase Console → Authentication → Settings → User actions → reCAPTCHA protection**, or set it programmatically with the Admin SDK:
 > ```typescript
 > recaptchaConfig: {
 >   phoneEnforcementState: 'OFF',
@@ -75,17 +125,25 @@ The seeding script registers specific test accounts in Auth using deterministic 
 > }
 > ```
 
+### Commands
+
+| Command | Description |
+|---|---|
+| `npm run dev` | Run the development server |
+| `npm run build` | Build the production version |
+| `npm run start` | Start the built production version |
+| `npm run seed` | Seed Firebase with test data |
+
 ---
 
-## Known Limitations & Design Tradeoffs
+## Known limitations & design tradeoffs
 
-1. **Seeded Order Hardcoding (`order-4421`)**: To ensure complete visual flow on stage without requiring initial manual setup, Weaver progress logging and Treasurer payout panels default to linking to the seeded active order `order-4421` on the Home screen.
-2. **Double-Claim Race Condition**: In the event that two Admins from different cooperatives try to claim the exact same unassigned candidate at nearly the same time, last-write-wins mechanics apply, and no error is surfaced to either Admin.
-3. **Web Speech API**: Dictation features rely on browser implementation. Google Chrome is recommended for the best speech experience during demo presentations.
+1. **Seeded order hardcoding (`order-4421`)** — to ensure a complete visual flow on stage without manual setup, Weaver progress logging and Treasurer payout panels default to the seeded active order `order-4421` on the Home screen.
+2. **Double-claim race condition** — if two admins from different cooperatives try to claim the same unassigned candidate at nearly the same time, last-write-wins applies and no error is surfaced to either admin.
+3. **Web Speech API** — dictation relies on the browser's implementation. Chrome is recommended for the best speech experience during demos.
 
 ---
 
-## Commands
-- Run development server: `npm run dev`
-- Build production version: `npm run build`
-- Start built production version: `npm run start`
+## License
+
+Add your license here.
