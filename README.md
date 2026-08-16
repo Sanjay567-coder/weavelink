@@ -5,6 +5,7 @@
 [![Firebase](https://img.shields.io/badge/Firebase-12.16.0-orange?style=flat-square&logo=firebase)](https://firebase.google.com)
 [![PWA](https://img.shields.io/badge/PWA-Supported-emerald?style=flat-square&logo=progressive-web-apps)](https://web.dev/progressive-web-apps/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
+[![Vercel Deployment](https://img.shields.io/badge/Vercel-Deployed-black?style=flat-square&logo=vercel)](https://weavelink-wheat.vercel.app/)
 
 **A mobile-first Progressive Web App for handloom weaving cooperatives in India**
 
